@@ -45,44 +45,60 @@ window.testWinner = async function() {
 
 // Check if user is a winner (wrapper function)
 async function checkIfWinnerWrapper() {
+    console.log('========================================');
+    console.log('🔍 INICIANDO VERIFICAÇÃO DE GANHADOR');
+    console.log('========================================');
+    
     if (!userPhone) {
-        console.log('⚠️ userPhone não definido. Verifique se você preencheu o formulário.');
+        console.error('❌ ERRO: userPhone não definido!', userPhone);
+        console.log('📝 Dados do localStorage:', localStorage.getItem('webinar_registration'));
         return false;
     }
     
     const userPhoneNormalized = userPhone.replace(/\D/g, '');
-    console.log('🔍 Verificando se é ganhador...');
-    console.log('📱 Celular formatado:', userPhone);
-    console.log('📱 Celular normalizado:', userPhoneNormalized);
+    console.log('📱 Celular do usuário FORMATADO:', userPhone);
+    console.log('📱 Celular do usuário NORMALIZADO:', userPhoneNormalized);
     
     // Primeiro verifica localStorage (mais rápido e funciona sempre)
     try {
-        const localWinners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
-        console.log('📦 Ganhadores no localStorage:', localWinners.length);
+        const winnersStr = localStorage.getItem('webinar_winners') || '[]';
+        console.log('📦 String de ganhadores:', winnersStr);
+        const localWinners = JSON.parse(winnersStr);
+        console.log('📦 Total de ganhadores no localStorage:', localWinners.length);
         
         if (localWinners.length > 0) {
-            console.log('📋 Lista de ganhadores:', localWinners.map(w => ({ nome: w.nome, celular: w.celular })));
+            console.log('📋 LISTA COMPLETA DE GANHADORES:');
+            localWinners.forEach((w, idx) => {
+                const winPhoneNorm = (w.celular || '').replace(/\D/g, '');
+                console.log(`  ${idx + 1}. ${w.nome} - Celular: "${w.celular}" (normalizado: "${winPhoneNorm}")`);
+                console.log(`     Comparação: "${winPhoneNorm}" === "${userPhoneNormalized}" ? ${winPhoneNorm === userPhoneNormalized}`);
+            });
             
             const isWinnerLocal = localWinners.some(winner => {
                 const winnerPhoneNormalized = (winner.celular || '').replace(/\D/g, '');
                 const matches = winnerPhoneNormalized === userPhoneNormalized;
                 if (matches) {
-                    console.log('✅ Match encontrado! Ganhador:', winner.nome, '- Celular:', winner.celular);
+                    console.log('✅✅✅ MATCH ENCONTRADO! ✅✅✅');
+                    console.log('   Ganhador:', winner.nome);
+                    console.log('   Celular original:', winner.celular);
+                    console.log('   Celular normalizado:', winnerPhoneNormalized);
                 }
                 return matches;
             });
             
             if (isWinnerLocal) {
-                console.log('🎉 É GANHADOR! (verificado via localStorage)');
+                console.log('🎉🎉🎉 É GANHADOR! (verificado via localStorage) 🎉🎉🎉');
+                console.log('========================================');
                 return true;
             } else {
-                console.log('❌ Não é ganhador (localStorage)');
+                console.log('❌ NÃO é ganhador - nenhum match encontrado');
+                console.log('   Comparando:', userPhoneNormalized, 'com os ganhadores acima');
             }
         } else {
-            console.log('⚠️ Nenhum ganhador no localStorage');
+            console.log('⚠️ Nenhum ganhador no localStorage ainda');
         }
     } catch (error) {
-        console.error('❌ Erro ao verificar localStorage:', error);
+        console.error('❌ ERRO ao verificar localStorage:', error);
     }
     
     // Depois verifica Supabase (fallback)
@@ -99,7 +115,8 @@ async function checkIfWinnerWrapper() {
         console.error('Erro ao verificar Supabase:', error);
     }
     
-    console.log('❌ Não é ganhador');
+    console.log('❌ Não é ganhador - verificação completa');
+    console.log('========================================');
     return false;
 }
 
@@ -190,25 +207,40 @@ function hideWinnerModal() {
 let forceCheck = false; // Flag para forçar verificação mesmo se já foi mostrado
 
 async function checkWinnerStatus(force = false) {
+    console.log('🔔 checkWinnerStatus chamado!', force ? '(FORÇADO)' : '');
     try {
         const isWinner = await checkIfWinnerWrapper();
+        console.log('🎯 Resultado da verificação:', isWinner ? 'É GANHADOR!' : 'NÃO é ganhador');
+        
         if (isWinner) {
             const phoneKey = (userPhone || '').replace(/\D/g, '');
             const alreadyShown = localStorage.getItem('winner_shown_' + phoneKey);
+            console.log('📌 Modal já foi mostrado?', alreadyShown ? 'SIM' : 'NÃO');
             
             // Se for forçado ou se ainda não foi mostrado, mostrar
             if (force || !alreadyShown) {
-                console.log('🎉 Mostrando modal de ganhador!', force ? '(FORÇADO)' : '');
+                console.log('🎉🎉🎉 MOSTRANDO MODAL DE GANHADOR! 🎉🎉🎉', force ? '(FORÇADO)' : '');
                 await showWinnerModal();
                 localStorage.setItem('winner_shown_' + phoneKey, 'true');
+                console.log('✅ Modal exibido e flag salvo!');
             } else {
-                console.log('ℹ️ Modal já foi mostrado anteriormente');
+                console.log('ℹ️ Modal já foi mostrado anteriormente (pulando)');
             }
+        } else {
+            console.log('ℹ️ Não é ganhador, não mostrando modal');
         }
     } catch (error) {
-        console.error('Erro ao verificar status de ganhador:', error);
+        console.error('❌ ERRO ao verificar status de ganhador:', error);
     }
 }
+
+// Função global de debug para testar manualmente
+window.debugWinner = async function() {
+    console.log('🧪 === TESTE MANUAL DE GANHADOR ===');
+    console.log('📱 userPhone:', userPhone);
+    console.log('📦 Ganhadores:', JSON.parse(localStorage.getItem('webinar_winners') || '[]'));
+    await checkWinnerStatus(true);
+};
 
 // Load video configuration
 async function loadVideoEmbed() {
@@ -246,16 +278,25 @@ async function loadVideoEmbed() {
 
 // Listen for admin winner confirmations (same tab)
 window.addEventListener('winners-confirmed', async function(e) {
-    console.log('🎉 Evento winners-confirmed recebido! FORÇANDO VERIFICAÇÃO!', e.detail);
+    console.log('========================================');
+    console.log('🎉🎉🎉 EVENTO WINNERS-CONFIRMED RECEBIDO! 🎉🎉🎉');
+    console.log('Detalhes:', e.detail);
+    console.log('========================================');
     // Verificação IMEDIATA - FORÇADA (ignora se já foi mostrado)
-    lastWinnersTimestamp = e.detail.timestamp ? e.detail.timestamp.toString() : Date.now().toString();
-    await checkWinnerStatus(true); // TRUE = força mostrar mesmo se já foi exibido
+    if (e.detail.timestamp) {
+        lastWinnersTimestamp = e.detail.timestamp.toString();
+    }
+    await checkWinnerStatus(e.detail.force !== false); // TRUE = força mostrar mesmo se já foi exibido
 });
 
 // Listen for storage changes (cross-tab)
 window.addEventListener('storage', async function(e) {
     if (e.key === 'webinar_winners' || e.key === 'webinar_winners_timestamp') {
-        console.log('📢 Storage event recebido:', e.key, e.newValue);
+        console.log('========================================');
+        console.log('📢 STORAGE EVENT RECEBIDO!');
+        console.log('Key:', e.key);
+        console.log('New Value:', e.newValue);
+        console.log('========================================');
         // Atualizar timestamp local
         if (e.key === 'webinar_winners_timestamp') {
             lastWinnersTimestamp = e.newValue || '0';
@@ -299,7 +340,10 @@ try {
     const winnerChannel = new BroadcastChannel('winner-notifications');
     winnerChannel.addEventListener('message', async function(e) {
         if (e.data && e.data.type === 'winners-updated') {
-            console.log('📢 BroadcastChannel: Ganhadores atualizados! VERIFICANDO AGORA!', e.data);
+            console.log('========================================');
+            console.log('📢📢📢 BROADCASTCHANNEL RECEBIDO! 📢📢📢');
+            console.log('Dados:', e.data);
+            console.log('========================================');
             // Atualizar timestamp local IMEDIATAMENTE
             if (e.data.timestamp) {
                 lastWinnersTimestamp = e.data.timestamp.toString();

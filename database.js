@@ -163,16 +163,42 @@ async function getParticipantByPhone(celular) {
 // Salvar ganhadores
 async function saveWinners(winners) {
     try {
+        console.log('💾 saveWinners chamado com:', winners);
+        
+        // Normalizar os dados antes de salvar
+        const normalizedForSave = winners.map(w => ({
+            nome: w.nome || '',
+            celular: w.celular || '',
+            celular_normalizado: (w.celular || '').replace(/\D/g, ''),
+            id: w.id || null,
+            participante_id: w.participante_id || w.id || null
+        }));
+        
+        console.log('💾 Dados normalizados para salvar:', normalizedForSave);
+        
         // Sempre salvar no localStorage primeiro para trigger imediato
-        localStorage.setItem('webinar_winners', JSON.stringify(winners));
-        localStorage.setItem('webinar_winners_timestamp', Date.now().toString());
+        const oldWinners = localStorage.getItem('webinar_winners');
+        localStorage.setItem('webinar_winners', JSON.stringify(normalizedForSave));
+        const timestamp = Date.now().toString();
+        localStorage.setItem('webinar_winners_timestamp', timestamp);
+        
+        console.log('✅ Salvo no localStorage:', {
+            ganhadores: normalizedForSave.length,
+            timestamp: timestamp,
+            dados: normalizedForSave
+        });
         
         // Disparar evento de storage para outras abas
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: 'webinar_winners',
-            newValue: JSON.stringify(winners),
-            oldValue: localStorage.getItem('webinar_winners')
-        }));
+        try {
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'webinar_winners',
+                newValue: JSON.stringify(normalizedForSave),
+                oldValue: oldWinners
+            }));
+            console.log('✅ StorageEvent disparado');
+        } catch (e) {
+            console.warn('Erro ao disparar StorageEvent:', e);
+        }
         
         const db = await getSupabase();
         if (!db) {

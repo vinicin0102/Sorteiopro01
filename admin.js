@@ -830,20 +830,44 @@ async function confirmWinners() {
                     oldValue: saved.length > 0 ? JSON.stringify(saved) : null,
                     storageArea: localStorage
                 }));
-                console.log('📢 StorageEvent disparado IMEDIATAMENTE');
+                console.log('📢 StorageEvent (winners) disparado IMEDIATAMENTE');
             } catch (e) {
                 console.warn('Erro ao criar StorageEvent:', e);
             }
             
             // 4. Disparar evento de timestamp também
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'webinar_winners_timestamp',
-                newValue: timestamp.toString(),
-                oldValue: localStorage.getItem('webinar_winners_timestamp'),
-                storageArea: localStorage
-            }));
+            try {
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'webinar_winners_timestamp',
+                    newValue: timestamp.toString(),
+                    oldValue: localStorage.getItem('webinar_winners_timestamp'),
+                    storageArea: localStorage
+                }));
+                console.log('📢 StorageEvent (timestamp) disparado IMEDIATAMENTE');
+            } catch (e) {
+                console.warn('Erro ao criar StorageEvent timestamp:', e);
+            }
             
-            alert(`✅ Ganhadores confirmados!\n\n${normalizedWinners.length} ganhador(es) verão a notificação AGORA!\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}`);
+            // 5. Log final para debug
+            console.log('========================================');
+            console.log('✅ GANHADORES CONFIRMADOS:');
+            normalizedWinners.forEach((w, idx) => {
+                console.log(`  ${idx + 1}. ${w.nome} - ${w.celular} (normalizado: ${(w.celular || '').replace(/\D/g, '')})`);
+            });
+            console.log('📦 Verificar no localStorage: webinar_winners');
+            console.log('========================================');
+            
+            // Forçar uma verificação adicional após 500ms (caso os eventos não tenham chegado)
+            setTimeout(() => {
+                console.log('🔄 Verificação adicional após 500ms...');
+                // Disparar evento novamente como backup
+                const backupEvent = new CustomEvent('winners-confirmed', { 
+                    detail: { winners: normalizedWinners, timestamp: timestamp, force: true } 
+                });
+                window.dispatchEvent(backupEvent);
+            }, 500);
+            
+            alert(`✅ Ganhadores confirmados!\n\n${normalizedWinners.length} ganhador(es) verão a notificação AGORA!\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}\n\n💡 Dica: Se não aparecer, abra o console (F12) na aba do webinar e execute: debugWinner()`);
         } else {
             alert('⚠️ Erro ao salvar ganhadores. Tente novamente.');
         }
