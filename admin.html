@@ -245,6 +245,22 @@
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Garantir que supabaseJs está disponível globalmente
+        window.addEventListener('DOMContentLoaded', function() {
+            // Aguardar a biblioteca carregar
+            setTimeout(function() {
+                if (typeof supabaseJs === 'undefined' && window.supabase) {
+                    window.supabaseJs = window.supabase;
+                    console.log('Supabase disponibilizado como supabaseJs');
+                }
+                // Tentar inicializar
+                if (typeof initSupabase === 'function') {
+                    initSupabase();
+                }
+            }, 200);
+        });
+    </script>
     <script src="config.js"></script>
     <script src="database.js"></script>
     <script src="admin.js"></script>

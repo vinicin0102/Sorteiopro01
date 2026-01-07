@@ -2,10 +2,24 @@
 
 // Wait for Supabase to be loaded
 async function getSupabase() {
-    if (!supabase && typeof supabaseJs !== 'undefined') {
-        supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Se já foi inicializado, retorna
+    if (supabase) {
+        return supabase;
     }
-    return supabase;
+    
+    // Tenta inicializar
+    if (typeof supabaseJs !== 'undefined' && supabaseJs.createClient) {
+        supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase inicializado em getSupabase()');
+        return supabase;
+    } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase inicializado via window.supabase em getSupabase()');
+        return supabase;
+    }
+    
+    console.warn('Supabase não disponível, usando fallback localStorage');
+    return null;
 }
 
 // ============ PARTICIPANTES ============
@@ -83,18 +97,26 @@ async function getAllParticipants() {
     try {
         const db = await getSupabase();
         if (!db) {
+            console.log('Usando fallback localStorage para participantes');
             return JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
         }
 
+        console.log('Buscando participantes do Supabase...');
         const { data, error } = await db
             .from('participantes')
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Erro ao buscar participantes do Supabase:', error);
+            throw error;
+        }
+        
+        console.log(`Participantes encontrados no Supabase: ${data?.length || 0}`);
         return data || [];
     } catch (error) {
         console.error('Erro ao buscar participantes:', error);
+        console.log('Tentando usar fallback localStorage...');
         return JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
     }
 }

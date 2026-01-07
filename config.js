@@ -7,9 +7,25 @@ let supabase = null;
 
 // Função para inicializar Supabase quando a biblioteca carregar
 function initSupabase() {
-    if (typeof supabaseJs !== 'undefined') {
+    // Tenta diferentes formas de acessar a biblioteca
+    if (typeof supabaseJs !== 'undefined' && supabaseJs.createClient) {
         supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase inicializado via supabaseJs');
+        return true;
+    } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase inicializado via window.supabase');
+        return true;
+    } else if (typeof window.supabaseJs !== 'undefined' && window.supabaseJs.createClient) {
+        supabase = window.supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase inicializado via window.supabaseJs');
         return true;
     }
+    console.error('Supabase library não encontrada');
     return false;
 }
+
+// Tentar inicializar quando a página carregar
+window.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initSupabase, 100);
+});
