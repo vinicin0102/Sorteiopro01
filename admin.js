@@ -175,6 +175,12 @@ function initializeEventListeners() {
         saveWinnerMessageBtn.addEventListener('click', saveWinnerMessage);
     }
     
+    // Salvar vídeo
+    const saveVideoBtn = document.getElementById('save-video-btn');
+    if (saveVideoBtn) {
+        saveVideoBtn.addEventListener('click', saveVideoConfigHandler);
+    }
+    
     // Carregar mensagem de ganhador ao abrir seção de sorteio
     loadWinnerMessage();
 }
@@ -206,6 +212,9 @@ async function switchSection(section) {
     if (section === 'sorteio') {
         await loadGanhadores(); // Carrega participantes com checkboxes para selecionar ganhadores
         await loadWinnerMessage(); // Carrega mensagem de ganhador
+    }
+    if (section === 'oferta') {
+        await loadVideoConfig(); // Carrega configuração de vídeo
     }
 }
 
@@ -953,5 +962,39 @@ async function saveWinnerMessage() {
         alert('✅ Mensagem de ganhador salva com sucesso!');
     } else {
         alert('⚠️ Erro ao salvar mensagem. Tente novamente.');
+    }
+}
+
+// Configuração de Vídeo
+async function loadVideoConfig() {
+    try {
+        const config = await getVideoConfig();
+        
+        const embedCodeEl = document.getElementById('video-embed-code');
+        if (embedCodeEl) {
+            embedCodeEl.value = config.embedCode || '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+        }
+    } catch (error) {
+        console.error('Erro ao carregar configuração de vídeo:', error);
+    }
+}
+
+async function saveVideoConfigHandler() {
+    const embedCode = document.getElementById('video-embed-code').value.trim();
+    
+    if (!embedCode) {
+        alert('⚠️ Por favor, insira o código embed do vídeo!');
+        return;
+    }
+    
+    const config = {
+        embedCode: embedCode
+    };
+    
+    const success = await saveVideoConfig(config);
+    if (success) {
+        alert('✅ Configuração de vídeo salva com sucesso!');
+    } else {
+        alert('⚠️ Erro ao salvar configuração. Tente novamente.');
     }
 }

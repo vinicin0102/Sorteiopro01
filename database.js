@@ -360,6 +360,74 @@ async function getComments() {
     }
 }
 
+// Salvar configurações de vídeo
+async function saveVideoConfig(config) {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            localStorage.setItem('admin_video_config', JSON.stringify(config));
+            return true;
+        }
+
+        const { error } = await db
+            .from('configuracoes')
+            .upsert({
+                id: 4,
+                tipo: 'video',
+                dados: config,
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Erro ao salvar configuração de vídeo:', error);
+        localStorage.setItem('admin_video_config', JSON.stringify(config));
+        return false;
+    }
+}
+
+// Buscar configurações de vídeo
+async function getVideoConfig() {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            const defaultConfig = {
+                embedCode: '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+            };
+            return JSON.parse(localStorage.getItem('admin_video_config') || JSON.stringify(defaultConfig));
+        }
+
+        const { data, error } = await db
+            .from('configuracoes')
+            .select('*')
+            .eq('tipo', 'video')
+            .maybeSingle();
+
+        if (error) {
+            if (error.code !== 'PGRST116') {
+                console.warn('Aviso ao buscar configuração de vídeo:', error);
+            }
+        }
+        
+        if (data?.dados) {
+            return data.dados;
+        }
+        
+        // Retornar configuração padrão se não existir
+        const defaultConfig = {
+            embedCode: '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+        };
+        return defaultConfig;
+    } catch (error) {
+        console.error('Erro ao buscar configuração de vídeo:', error);
+        const defaultConfig = {
+            embedCode: '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+        };
+        return JSON.parse(localStorage.getItem('admin_video_config') || JSON.stringify(defaultConfig));
+    }
+}
+
 // Salvar configurações de mensagem de ganhador
 async function saveWinnerMessageConfig(config) {
     try {

@@ -208,10 +208,37 @@ async function checkWinnerStatus() {
     }
 }
 
+// Load video configuration
+async function loadVideoEmbed() {
+    try {
+        if (typeof getVideoConfig === 'function') {
+            const config = await getVideoConfig();
+            const videoContainer = document.getElementById('video-container');
+            if (videoContainer && config.embedCode) {
+                videoContainer.innerHTML = config.embedCode;
+                console.log('✅ Vídeo embed carregado:', config.embedCode.substring(0, 50) + '...');
+            }
+        } else {
+            // Fallback para localStorage
+            const stored = localStorage.getItem('admin_video_config');
+            if (stored) {
+                const config = JSON.parse(stored);
+                const videoContainer = document.getElementById('video-container');
+                if (videoContainer && config.embedCode) {
+                    videoContainer.innerHTML = config.embedCode;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar configuração de vídeo:', error);
+    }
+}
+
 // Check on page load (async)
 (async function() {
     // Aguardar um pouco para garantir que tudo carregou
     await new Promise(resolve => setTimeout(resolve, 1000));
+    await loadVideoEmbed();
     await checkWinnerStatus();
 })();
 

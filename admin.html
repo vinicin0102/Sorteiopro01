@@ -255,8 +255,22 @@
             <!-- Seção Oferta -->
             <section id="oferta-section" class="content-section">
                 <div class="section-content">
-                    <h2>Configurar Oferta</h2>
-                    <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+                    <h2>Configurar Vídeo</h2>
+                    <div class="editor-form">
+                        <div class="form-group">
+                            <label>Código Embed do Vídeo</label>
+                            <p style="color: #666; font-size: 12px; margin-bottom: 10px;">
+                                Cole aqui o código embed completo (iframe) do YouTube, Vimeo ou outra plataforma.
+                                <br>Exemplo: &lt;iframe src="https://www.youtube.com/embed/VIDEO_ID"&gt;&lt;/iframe&gt;
+                            </p>
+                            <textarea 
+                                id="video-embed-code" 
+                                rows="6" 
+                                placeholder='<iframe src="https://www.youtube.com/embed/VIDEO_ID?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 12px; resize: vertical;"></textarea>
+                        </div>
+                        <button id="save-video-btn" class="save-btn">Salvar Vídeo</button>
+                    </div>
                 </div>
             </section>
 
