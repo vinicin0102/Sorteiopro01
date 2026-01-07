@@ -757,36 +757,54 @@ async function confirmWinners() {
         return;
     }
     
-    const confirmMessage = `Confirmar ${selectedWinners.length} ganhador(es) do sorteio?\n\n${selectedWinners.map(w => `- ${w.nome} (${w.celular})`).join('\n')}`;
+    // Normalizar celulares antes de salvar
+    const normalizedWinners = selectedWinners.map(w => ({
+        ...w,
+        celular: w.celular || '', // Garantir que não seja undefined
+        celular_normalizado: (w.celular || '').replace(/\D/g, '')
+    }));
+    
+    console.log('💾 Salvando ganhadores normalizados:', normalizedWinners);
+    
+    const confirmMessage = `Confirmar ${normalizedWinners.length} ganhador(es) do sorteio?\n\n${normalizedWinners.map(w => `- ${w.nome} (${w.celular})`).join('\n')}`;
     
     if (confirm(confirmMessage)) {
-        console.log('💾 Salvando ganhadores:', selectedWinners);
-        
-        const success = await saveWinners(selectedWinners);
+        const success = await saveWinners(normalizedWinners);
         
         if (success) {
+            // Verificar se foi salvo corretamente
+            const saved = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
+            console.log('✅ Ganhadores salvos. Verificação:', saved);
+            
             // Disparar eventos para notificar em tempo real
             setTimeout(() => {
                 // Evento customizado (mesma aba)
                 if (window.dispatchEvent) {
                     const event = new CustomEvent('winners-confirmed', { 
-                        detail: { winners: selectedWinners } 
+                        detail: { winners: normalizedWinners } 
                     });
                     window.dispatchEvent(event);
                     console.log('📢 Evento winners-confirmed disparado');
                 }
                 
                 // Evento de storage (outras abas)
-                const storageEvent = new StorageEvent('storage', {
-                    key: 'webinar_winners',
-                    newValue: JSON.stringify(selectedWinners),
-                    storageArea: localStorage
-                });
-                window.dispatchEvent(storageEvent);
-                console.log('📢 Storage event disparado');
+                try {
+                    const storageEvent = new StorageEvent('storage', {
+                        key: 'webinar_winners',
+                        newValue: JSON.stringify(normalizedWinners),
+                        storageArea: localStorage
+                    });
+                    window.dispatchEvent(storageEvent);
+                    console.log('📢 Storage event disparado');
+                } catch (e) {
+                    console.warn('Não foi possível criar StorageEvent:', e);
+                }
+                
+                // Forçar verificação em todas as abas abertas (simular storage change)
+                localStorage.setItem('webinar_winners_timestamp', Date.now().toString());
             }, 200);
             
-            alert(`✅ Ganhadores confirmados com sucesso!\n\nOs ${selectedWinners.length} ganhador(es) verão a notificação em tempo real.\n\nGanhadores:\n${selectedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}`);
+            alert(`✅ Ganhadores confirmados com sucesso!\n\nOs ${normalizedWinners.length} ganhador(es) verão a notificação em tempo real.\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}\n\nDica: Se a notificação não aparecer, peça para o ganhador recarregar a página ou execute testWinner() no console.`);
         } else {
             alert('⚠️ Erro ao salvar ganhadores. Tente novamente.');
         }

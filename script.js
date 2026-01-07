@@ -7,9 +7,12 @@ if (registrationData) {
         const data = JSON.parse(registrationData);
         userName = data.nome || 'Visitante';
         userPhone = data.celular || '';
+        console.log('📝 Dados de registro carregados:', { nome: userName, celular: userPhone });
     } catch (e) {
         console.error('Error parsing registration data:', e);
     }
+} else {
+    console.warn('⚠️ Nenhum registro encontrado no localStorage');
 }
 
 // Update greeting with user name
@@ -18,30 +21,68 @@ if (greetingElement) {
     greetingElement.textContent = `Olá, ${userName}`;
 }
 
+// Função de teste para verificar ganhadores (disponível no console)
+window.testWinner = async function() {
+    console.log('🧪 Testando verificação de ganhador...');
+    console.log('📱 Celular do usuário:', userPhone);
+    console.log('📱 Celular normalizado:', (userPhone || '').replace(/\D/g, ''));
+    
+    const winners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
+    console.log('🏆 Ganhadores salvos:', winners);
+    
+    const isWinner = await checkIfWinnerWrapper();
+    console.log('✅ É ganhador?', isWinner);
+    
+    if (isWinner) {
+        showWinnerModal();
+        console.log('🎉 Modal de ganhador deve aparecer agora!');
+    } else {
+        console.log('❌ Não é ganhador ou não encontrado');
+    }
+    
+    return isWinner;
+};
+
 // Check if user is a winner (wrapper function)
 async function checkIfWinnerWrapper() {
     if (!userPhone) {
-        console.log('⚠️ userPhone não definido');
+        console.log('⚠️ userPhone não definido. Verifique se você preencheu o formulário.');
         return false;
     }
     
     const userPhoneNormalized = userPhone.replace(/\D/g, '');
-    console.log('🔍 Verificando se é ganhador. Celular:', userPhoneNormalized);
+    console.log('🔍 Verificando se é ganhador...');
+    console.log('📱 Celular formatado:', userPhone);
+    console.log('📱 Celular normalizado:', userPhoneNormalized);
     
     // Primeiro verifica localStorage (mais rápido e funciona sempre)
     try {
         const localWinners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
-        const isWinnerLocal = localWinners.some(winner => {
-            const winnerPhoneNormalized = (winner.celular || '').replace(/\D/g, '');
-            return winnerPhoneNormalized === userPhoneNormalized;
-        });
+        console.log('📦 Ganhadores no localStorage:', localWinners.length);
         
-        if (isWinnerLocal) {
-            console.log('✅ Ganhador encontrado no localStorage!');
-            return true;
+        if (localWinners.length > 0) {
+            console.log('📋 Lista de ganhadores:', localWinners.map(w => ({ nome: w.nome, celular: w.celular })));
+            
+            const isWinnerLocal = localWinners.some(winner => {
+                const winnerPhoneNormalized = (winner.celular || '').replace(/\D/g, '');
+                const matches = winnerPhoneNormalized === userPhoneNormalized;
+                if (matches) {
+                    console.log('✅ Match encontrado! Ganhador:', winner.nome, '- Celular:', winner.celular);
+                }
+                return matches;
+            });
+            
+            if (isWinnerLocal) {
+                console.log('🎉 É GANHADOR! (verificado via localStorage)');
+                return true;
+            } else {
+                console.log('❌ Não é ganhador (localStorage)');
+            }
+        } else {
+            console.log('⚠️ Nenhum ganhador no localStorage');
         }
     } catch (error) {
-        console.error('Erro ao verificar localStorage:', error);
+        console.error('❌ Erro ao verificar localStorage:', error);
     }
     
     // Depois verifica Supabase (fallback)
@@ -58,6 +99,7 @@ async function checkIfWinnerWrapper() {
         console.error('Erro ao verificar Supabase:', error);
     }
     
+    console.log('❌ Não é ganhador');
     return false;
 }
 
