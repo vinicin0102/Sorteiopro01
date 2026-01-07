@@ -245,6 +245,38 @@
 
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Aguardar biblioteca carregar e inicializar
+        (function() {
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            function tryInit() {
+                attempts++;
+                if (typeof window.initSupabase === 'function') {
+                    if (window.initSupabase()) {
+                        console.log('✅ Supabase pronto');
+                        return;
+                    }
+                }
+                
+                if (attempts < maxAttempts) {
+                    setTimeout(tryInit, 200);
+                } else {
+                    console.error('❌ Falha ao inicializar Supabase após várias tentativas');
+                }
+            }
+            
+            // Começar tentativas após DOM carregar
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(tryInit, 300);
+                });
+            } else {
+                setTimeout(tryInit, 300);
+            }
+        })();
+    </script>
     <script src="config.js"></script>
     <script src="database.js"></script>
     <script src="admin.js"></script>
