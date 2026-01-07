@@ -180,24 +180,32 @@ async function saveWinners(winners) {
             return true;
         }
 
-        // Limpar ganhadores anteriores
-        const { error: deleteError } = await db.from('ganhadores').delete().neq('id', 0);
-        if (deleteError) {
-            console.warn('Aviso ao limpar ganhadores anteriores:', deleteError);
+        // Limpar ganhadores anteriores (usar filtro que sempre retorna algo)
+        try {
+            const { data: existing } = await db.from('ganhadores').select('id');
+            if (existing && existing.length > 0) {
+                const { error: deleteError } = await db.from('ganhadores').delete().gte('id', 0);
+                if (deleteError) {
+                    console.warn('Aviso ao limpar ganhadores anteriores:', deleteError);
+                }
+            }
+        } catch (delError) {
+            console.warn('Aviso ao verificar/limpar ganhadores anteriores:', delError);
         }
 
         // Inserir novos ganhadores
         if (winners.length > 0) {
             const winnersData = winners.map(winner => ({
                 participante_id: winner.id || null,
-                nome: winner.nome,
-                celular: winner.celular,
-                created_at: new Date().toISOString()
+                nome: winner.nome || '',
+                celular: winner.celular || '',
+                celular_normalizado: (winner.celular || '').replace(/\D/g, '')
             }));
 
             const { error } = await db.from('ganhadores').insert(winnersData);
             if (error) {
                 console.error('Erro ao salvar ganhadores no Supabase:', error);
+                console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
                 // Não retorna false porque já salvou no localStorage
             } else {
                 console.log('✅ Ganhadores salvos no Supabase:', winners.length);
@@ -225,7 +233,10 @@ async function getWinners() {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.warn('Erro ao buscar ganhadores do Supabase:', error);
+            // Não lançar erro, retornar localStorage em vez disso
+        }
         return data || [];
     } catch (error) {
         console.error('Erro ao buscar ganhadores:', error);
@@ -397,9 +408,14 @@ async function getWinnerMessageConfig() {
             .from('configuracoes')
             .select('*')
             .eq('tipo', 'ganhador')
-            .single();
+            .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') throw error;
+        if (error) {
+            // Se for erro de "não encontrado", não é problema
+            if (error.code !== 'PGRST116') {
+                console.warn('Aviso ao buscar configuração de ganhador:', error);
+            }
+        }
         
         if (data?.dados) {
             return data.dados;

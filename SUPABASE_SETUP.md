@@ -118,11 +118,25 @@ FOR SELECT
 TO anon, authenticated
 USING (true);
 
--- Apenas service_role pode inserir/atualizar/deletar
-CREATE POLICY "Permitir modificação de ganhadores"
+-- Permitir inserção para anon (para o admin funcionar)
+CREATE POLICY "Permitir inserção de ganhadores"
 ON ganhadores
-FOR ALL
-TO service_role
+FOR INSERT
+TO anon, authenticated
+WITH CHECK (true);
+
+-- Permitir atualização/deleção para anon
+CREATE POLICY "Permitir atualização de ganhadores"
+ON ganhadores
+FOR UPDATE
+TO anon, authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Permitir deleção de ganhadores"
+ON ganhadores
+FOR DELETE
+TO anon, authenticated
 USING (true);
 ```
 
@@ -138,11 +152,24 @@ FOR SELECT
 TO anon, authenticated
 USING (true);
 
--- Apenas service_role pode modificar
-CREATE POLICY "Permitir modificação de configuracoes"
+-- Permitir inserção/atualização para anon (para o admin funcionar)
+CREATE POLICY "Permitir inserção de configuracoes"
 ON configuracoes
-FOR ALL
-TO service_role
+FOR INSERT
+TO anon, authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Permitir atualização de configuracoes"
+ON configuracoes
+FOR UPDATE
+TO anon, authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Permitir deleção de configuracoes"
+ON configuracoes
+FOR DELETE
+TO anon, authenticated
 USING (true);
 ```
 
