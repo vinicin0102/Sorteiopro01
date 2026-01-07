@@ -737,15 +737,6 @@ window.addEventListener('storage', async function(e) {
     }
 });
 
-// Also check when localStorage changes (for same-tab)
-const originalSetItem = localStorage.setItem;
-localStorage.setItem = function(key, value) {
-    originalSetItem.apply(this, arguments);
-    if (key === 'webinar_winners') {
-        checkWinnerStatus();
-    }
-};
-
 // Check for pending messages every second
 setInterval(processPendingMessages, 1000);
 
