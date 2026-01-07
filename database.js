@@ -198,8 +198,7 @@ async function saveWinners(winners) {
             const winnersData = winners.map(winner => ({
                 participante_id: winner.id || null,
                 nome: winner.nome || '',
-                celular: winner.celular || '',
-                celular_normalizado: (winner.celular || '').replace(/\D/g, '')
+                celular: winner.celular || ''
             }));
 
             const { error } = await db.from('ganhadores').insert(winnersData);
