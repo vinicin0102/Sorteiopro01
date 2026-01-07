@@ -281,9 +281,9 @@ async function loadOfferConfig() {
     }
 }
 
-// Show offer popup - VERSÃO SIMPLIFICADA E FORÇADA
+// Show offer popup - VERSÃO ULTRA FORÇADA
 async function showOfferPopup() {
-    console.log('🔥🔥🔥 MOSTRANDO POPUP DE OFERTA! 🔥🔥🔥');
+    console.log('🔥🔥🔥🔥🔥 MOSTRANDO POPUP DE OFERTA! 🔥🔥🔥🔥🔥');
     
     // Carregar configuração se ainda não foi carregada
     if (!offerConfig) {
@@ -291,6 +291,9 @@ async function showOfferPopup() {
         await loadOfferConfig();
         console.log('✅ Configuração carregada:', offerConfig);
     }
+    
+    // Pequeno delay para garantir que DOM está pronto
+    await new Promise(resolve => setTimeout(resolve, 50));
     
     // Aplicar configurações ao modal
     const iconEl = document.getElementById('offer-icon');
@@ -311,28 +314,48 @@ async function showOfferPopup() {
         ctaBtn.href = (offerConfig && offerConfig.ctaLink) || '#';
     }
     
-    // FORÇAR EXIBIÇÃO DO MODAL - MÚLTIPLAS FORMAS
+    // FORÇAR EXIBIÇÃO DO MODAL - TODOS OS MÉTODOS POSSÍVEIS
     const modal = document.getElementById('offer-modal');
-    if (modal) {
-        console.log('✅ Modal encontrado!');
-        
-        // Método 1: Adicionar classe
-        modal.classList.add('show');
-        
-        // Método 2: Forçar display diretamente (fallback)
-        modal.style.display = 'flex';
-        modal.style.visibility = 'visible';
-        modal.style.opacity = '1';
-        modal.style.zIndex = '9999';
-        
-        console.log('✅ Popup FORÇADO a aparecer!');
-        console.log('   Classes:', modal.className);
-        console.log('   Display:', window.getComputedStyle(modal).display);
-        console.log('   Visibility:', window.getComputedStyle(modal).visibility);
-    } else {
-        console.error('❌ ERRO CRÍTICO: Modal não encontrado!');
-        alert('ERRO: Modal de oferta não encontrado. Recarregue a página.');
+    if (!modal) {
+        console.error('❌❌❌ ERRO CRÍTICO: Modal não encontrado!');
+        console.log('🔍 Tentando encontrar elementos...');
+        console.log('   Todos os IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+        alert('ERRO: Modal de oferta não encontrado. Recarregue a página (F5 ou Cmd+R).');
+        return;
     }
+    
+    console.log('✅ Modal encontrado! Forçando exibição...');
+    
+    // Remover todos os estilos inline que possam estar bloqueando
+    modal.removeAttribute('style');
+    
+    // Método 1: Adicionar classe
+    modal.classList.add('show');
+    
+    // Método 2: Forçar display diretamente (fallback mais agressivo)
+    modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;';
+    
+        // Método 3: Verificar após um frame
+        requestAnimationFrame(() => {
+            const computedStyle = window.getComputedStyle(modal);
+            console.log('✅ Popup FORÇADO! Verificação:');
+            console.log('   Classes:', modal.className);
+            console.log('   Display:', computedStyle.display);
+            console.log('   Visibility:', computedStyle.visibility);
+            console.log('   Opacity:', computedStyle.opacity);
+            console.log('   Z-index:', computedStyle.zIndex);
+            
+            // Se ainda não estiver visível, forçar novamente
+            if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+                console.warn('⚠️ Modal ainda não visível, forçando novamente...');
+                modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important;';
+            }
+        });
+        
+        // Forçar novamente após 100ms (garantir que apareceu)
+        setTimeout(() => {
+            modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;';
+        }, 100);
 }
 
 // Hide offer popup - VERSÃO FORÇADA
@@ -415,6 +438,12 @@ window.addEventListener('storage', async function(e) {
             await checkWinnerStatus();
         }
     }
+    
+    // Verificar popup de oferta via storage
+    if (e.key === 'last_offer_popup') {
+        console.log('🔥 Storage event: Popup de oferta solicitado!');
+        await showOfferPopup();
+    }
 });
 
 // Monitorar mudanças no localStorage usando timestamp
@@ -440,6 +469,10 @@ localStorage.setItem = function(key, value) {
     }
     if (key === 'webinar_winners_timestamp') {
         checkWinnersUpdate();
+    }
+    if (key === 'last_offer_popup') {
+        console.log('🔥 localStorage.last_offer_popup atualizado! Mostrando popup...');
+        showOfferPopup();
     }
 };
 
@@ -475,6 +508,17 @@ let checkInterval = setInterval(async () => {
         await checkWinnerStatus();
     }
 }, 1000); // A cada 1 segundo (MUITO mais frequente para garantir)
+
+// Polling para verificar se há popup de oferta pendente (backup)
+let lastOfferTimestamp = localStorage.getItem('last_offer_popup') || '0';
+setInterval(() => {
+    const currentOfferTimestamp = localStorage.getItem('last_offer_popup') || '0';
+    if (currentOfferTimestamp !== lastOfferTimestamp && currentOfferTimestamp !== '0') {
+        console.log('🔄 Polling detectou popup de oferta pendente!');
+        lastOfferTimestamp = currentOfferTimestamp;
+        showOfferPopup();
+    }
+}, 500); // Verifica a cada 500ms
 
 // Close button - attach event listener
 setTimeout(() => {

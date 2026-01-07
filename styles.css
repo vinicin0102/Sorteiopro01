@@ -8,13 +8,13 @@ html, body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background-color: #000;
     color: #fff;
-    overflow: hidden;
+    overflow-x: hidden; /* Permite scroll vertical e reload */
+    overflow-y: hidden; /* Mas mantém sem scroll vertical na página */
     height: 100vh;
     height: -webkit-fill-available; /* iOS fix */
     width: 100vw;
     margin: 0;
     padding: 0;
-    position: fixed;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
 }
@@ -55,7 +55,7 @@ html, body {
     height: 100vh;
     height: -webkit-fill-available; /* iOS fix */
     overflow: hidden;
-    position: fixed;
+    position: relative; /* Mudado de fixed para relative para permitir reload */
     top: 0;
     left: 0;
     padding-top: 40px; /* Espaço para greeting bar no mobile */

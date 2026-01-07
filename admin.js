@@ -1070,22 +1070,26 @@ async function loadVideoConfig() {
     }
 }
 
-// Disparar popup de oferta para todos - VERSÃO SIMPLIFICADA E FORÇADA
+// Disparar popup de oferta para todos - VERSÃO ULTRA FORÇADA
 async function triggerOfferPopup() {
     if (!confirm('🔥 Disparar popup de oferta para TODOS os usuários no site agora?')) {
         return;
     }
     
-    console.log('🔥🔥🔥 DISPARANDO POPUP PARA TODOS! 🔥🔥🔥');
+    console.log('🔥🔥🔥🔥🔥 DISPARANDO POPUP PARA TODOS! 🔥🔥🔥🔥🔥');
     
     const timestamp = Date.now();
+    
+    // Salvar timestamp no localStorage para polling
+    localStorage.setItem('last_offer_popup', timestamp.toString());
     
     // Disparar na mesma aba - IMEDIATAMENTE
     const offerEvent = new CustomEvent('show-offer-popup', { 
         detail: { timestamp: timestamp, force: true } 
     });
     window.dispatchEvent(offerEvent);
-    console.log('✅ Evento disparado na mesma aba');
+    document.dispatchEvent(offerEvent); // Backup
+    console.log('✅ Evento disparado na mesma aba (window + document)');
     
     // BroadcastChannel para outras abas
     try {
@@ -1100,17 +1104,40 @@ async function triggerOfferPopup() {
         console.warn('BroadcastChannel erro:', e);
     }
     
+    // Storage event para outras abas (backup)
+    try {
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'last_offer_popup',
+            newValue: timestamp.toString(),
+            oldValue: localStorage.getItem('last_offer_popup'),
+            storageArea: localStorage
+        }));
+        console.log('✅ StorageEvent disparado');
+    } catch (e) {}
+    
     // FORÇAR EXIBIÇÃO IMEDIATA (backup múltiplo)
     setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('show-offer-popup', { 
+        const evt = new CustomEvent('show-offer-popup', { 
             detail: { timestamp: Date.now(), force: true } 
-        }));
+        });
+        window.dispatchEvent(evt);
+        document.dispatchEvent(evt);
     }, 100);
     
     setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('show-offer-popup', { 
+        const evt = new CustomEvent('show-offer-popup', { 
             detail: { timestamp: Date.now(), force: true } 
-        }));
+        });
+        window.dispatchEvent(evt);
+        document.dispatchEvent(evt);
+    }, 300);
+    
+    setTimeout(() => {
+        const evt = new CustomEvent('show-offer-popup', { 
+            detail: { timestamp: Date.now(), force: true } 
+        });
+        window.dispatchEvent(evt);
+        document.dispatchEvent(evt);
     }, 500);
     
     alert('✅ Popup disparado!\n\nVerifique o console (F12) na aba do webinar.\n\nSe não aparecer, execute no console: testOffer()');
