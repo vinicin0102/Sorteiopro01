@@ -18,12 +18,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // Adicionar debug
-    console.log('Admin inicializado');
+    console.log('✅ Admin inicializado');
+    
+    // Aguardar mais um pouco para garantir que Supabase carregou
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     const db = await getSupabase();
-    if (db) {
+    if (db && typeof db.from === 'function') {
         console.log('✅ Supabase conectado no admin');
     } else {
         console.warn('⚠️ Supabase não conectado no admin - usando localStorage');
+        if (db) {
+            console.error('❌ db.from não é uma função. db:', db);
+        }
     }
 });
 

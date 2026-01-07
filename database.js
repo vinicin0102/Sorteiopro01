@@ -3,22 +3,30 @@
 // Wait for Supabase to be loaded
 async function getSupabase() {
     // Se já foi inicializado, retorna
-    if (supabase) {
-        return supabase;
+    if (window.supabaseClient) {
+        return window.supabaseClient;
     }
     
     // Tenta inicializar
-    if (typeof supabaseJs !== 'undefined' && supabaseJs.createClient) {
-        supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('Supabase inicializado em getSupabase()');
-        return supabase;
-    } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('Supabase inicializado via window.supabase em getSupabase()');
-        return supabase;
+    try {
+        if (typeof window.initSupabase === 'function') {
+            window.initSupabase();
+        }
+        
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            window.supabaseClient = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            console.log('✅ Supabase inicializado em getSupabase()');
+            return window.supabaseClient;
+        } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            console.log('✅ Supabase inicializado via window.supabase em getSupabase()');
+            return window.supabaseClient;
+        }
+    } catch (error) {
+        console.error('❌ Erro ao inicializar Supabase em getSupabase():', error);
     }
     
-    console.warn('Supabase não disponível, usando fallback localStorage');
+    console.warn('⚠️ Supabase não disponível, usando fallback localStorage');
     return null;
 }
 
