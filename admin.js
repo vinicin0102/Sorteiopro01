@@ -119,6 +119,18 @@ function initializeEventListeners() {
         searchInput.addEventListener('input', filterGanhadores);
     }
     
+    // Refresh participantes button
+    const refreshBtn = document.getElementById('refresh-participantes');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '🔄 Atualizando...';
+            await loadParticipantes();
+            refreshBtn.disabled = false;
+            refreshBtn.textContent = '🔄 Atualizar';
+        });
+    }
+    
     const confirmBtn = document.getElementById('confirm-winners-btn');
     if (confirmBtn) {
         confirmBtn.addEventListener('click', confirmWinners);
@@ -151,7 +163,7 @@ async function switchSection(section) {
     // Load data when switching to specific sections
     if (section === 'sorteio') {
         await loadParticipantes();
-        await loadGanhadores();
+        // loadGanhadores será chamado quando necessário
     }
 }
 
@@ -450,85 +462,138 @@ async function saveFormData() {
 
 // Participantes
 async function loadParticipantes() {
-    const participantes = await getAllParticipants();
-    
-    const totalEl = document.getElementById('total-participantes');
-    const hojeEl = document.getElementById('hoje-participantes');
-    
-    if (totalEl) totalEl.textContent = participantes.length;
-    
-    if (hojeEl) {
-        const today = new Date().toDateString();
-        const hoje = participantes.filter(p => new Date(p.timestamp).toDateString() === today).length;
-        hojeEl.textContent = hoje;
+    try {
+        const participantes = await getAllParticipants();
+        
+        // Normalizar dados (Supabase usa created_at, localStorage usa timestamp)
+        const normalized = participantes.map(p => ({
+            ...p,
+            timestamp: p.created_at || p.timestamp || new Date().toISOString(),
+            device: p.device || 'desktop'
+        }));
+        
+        const totalEl = document.getElementById('total-participantes');
+        const hojeEl = document.getElementById('hoje-participantes');
+        
+        if (totalEl) totalEl.textContent = normalized.length;
+        
+        if (hojeEl) {
+            const today = new Date().toDateString();
+            const hoje = normalized.filter(p => {
+                const dateStr = p.created_at || p.timestamp;
+                if (!dateStr) return false;
+                return new Date(dateStr).toDateString() === today;
+            }).length;
+            hojeEl.textContent = hoje;
+        }
+        
+        const container = document.getElementById('participantes-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (normalized.length === 0) {
+            container.innerHTML = '<div class="participante-item"><p>Nenhum participante ainda.</p></div>';
+            return;
+        }
+        
+        // Ordenar por data mais recente
+        normalized.sort((a, b) => {
+            const dateA = new Date(a.created_at || a.timestamp || 0);
+            const dateB = new Date(b.created_at || b.timestamp || 0);
+            return dateB - dateA;
+        });
+        
+        normalized.forEach(participante => {
+            const item = document.createElement('div');
+            item.className = 'participante-item';
+            const dateStr = formatDate(participante.created_at || participante.timestamp);
+            const deviceIcon = participante.device === 'mobile' ? '📱' : '💻';
+            
+            item.innerHTML = `
+                <div class="participante-info">
+                    <h4>${participante.nome} ${deviceIcon}</h4>
+                    <p>${participante.celular}</p>
+                </div>
+                <div class="participante-date">${dateStr}</div>
+            `;
+            container.appendChild(item);
+        });
+        
+        console.log('Participantes carregados:', normalized.length);
+    } catch (error) {
+        console.error('Erro ao carregar participantes:', error);
+        const container = document.getElementById('participantes-list');
+        if (container) {
+            container.innerHTML = '<div class="participante-item"><p>Erro ao carregar participantes. Tente atualizar.</p></div>';
+        }
     }
-    
-    const container = document.getElementById('participantes-list');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    if (participantes.length === 0) {
-        container.innerHTML = '<div class="participante-item"><p>Nenhum participante ainda.</p></div>';
-        return;
-    }
-    
-    participantes.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    participantes.forEach(participante => {
-        const item = document.createElement('div');
-        item.className = 'participante-item';
-        item.innerHTML = `
-            <div class="participante-info">
-                <h4>${participante.nome}</h4>
-                <p>${participante.celular}</p>
-            </div>
-            <div class="participante-date">${formatDate(participante.timestamp)}</div>
-        `;
-        container.appendChild(item);
-    });
 }
 
 function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleString('pt-BR');
+    if (!dateString) return 'Data não disponível';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Data inválida';
+        return date.toLocaleString('pt-BR');
+    } catch (e) {
+        return 'Data inválida';
+    }
 }
 
 // Ganhadores
 async function loadGanhadores() {
-    const participantes = await getAllParticipants();
-    const winners = await getWinners();
-    
-    const container = document.getElementById('participantes-list');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    if (participantes.length === 0) {
-        container.innerHTML = '<p>Nenhum participante disponível.</p>';
-        return;
-    }
-    
-    participantes.forEach((participante, index) => {
-        const isWinner = winners.some(w => w.celular === participante.celular);
-        const item = document.createElement('div');
-        item.className = 'participante-item';
-        item.innerHTML = `
-            <div class="participante-info">
-                <h4>${participante.nome}</h4>
-                <p>${participante.celular}</p>
-            </div>
-            <div>
-                <input type="checkbox" id="winner-${index}" data-index="${index}" ${isWinner ? 'checked' : ''}>
-                <label for="winner-${index}">Ganhador</label>
-            </div>
-        `;
+    try {
+        const participantes = await getAllParticipants();
+        const winners = await getWinners();
         
-        item.querySelector('input').addEventListener('change', updateSelectedWinners);
-        container.appendChild(item);
-    });
-    
-    updateSelectedWinners();
+        const container = document.getElementById('participantes-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (participantes.length === 0) {
+            container.innerHTML = '<p>Nenhum participante disponível.</p>';
+            return;
+        }
+        
+        // Normalizar dados
+        const normalized = participantes.map(p => ({
+            ...p,
+            celular: p.celular || '',
+            timestamp: p.created_at || p.timestamp || new Date().toISOString()
+        }));
+        
+        normalized.forEach((participante, index) => {
+            const participantPhone = (participante.celular || '').replace(/\D/g, '');
+            const isWinner = winners.some(w => {
+                const winnerPhone = (w.celular || '').replace(/\D/g, '');
+                return winnerPhone === participantPhone;
+            });
+            
+            const item = document.createElement('div');
+            item.className = 'participante-item';
+            const deviceIcon = participante.device === 'mobile' ? '📱' : '💻';
+            
+            item.innerHTML = `
+                <div class="participante-info">
+                    <h4>${participante.nome} ${deviceIcon}</h4>
+                    <p>${participante.celular}</p>
+                </div>
+                <div>
+                    <input type="checkbox" id="winner-${index}" data-index="${index}" ${isWinner ? 'checked' : ''}>
+                    <label for="winner-${index}">Ganhador</label>
+                </div>
+            `;
+            
+            item.querySelector('input').addEventListener('change', updateSelectedWinners);
+            container.appendChild(item);
+        });
+        
+        updateSelectedWinners();
+    } catch (error) {
+        console.error('Erro ao carregar ganhadores:', error);
+    }
 }
 
 function filterGanhadores() {

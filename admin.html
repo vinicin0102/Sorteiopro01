@@ -118,8 +118,11 @@
                             </div>
                         </div>
 
-                        <div class="search-box">
-                            <input type="text" id="search-participante" placeholder="Buscar por nome ou celular...">
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+                            <div class="search-box" style="flex: 1; margin: 0;">
+                                <input type="text" id="search-participante" placeholder="Buscar por nome ou celular...">
+                            </div>
+                            <button id="refresh-participantes" class="refresh-btn">🔄 Atualizar</button>
                         </div>
 
                         <div class="participantes-list" id="participantes-list">
