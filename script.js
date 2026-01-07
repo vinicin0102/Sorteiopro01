@@ -20,19 +20,45 @@ if (greetingElement) {
 
 // Check if user is a winner (wrapper function)
 async function checkIfWinnerWrapper() {
-    if (!userPhone) return false;
+    if (!userPhone) {
+        console.log('⚠️ userPhone não definido');
+        return false;
+    }
     
+    const userPhoneNormalized = userPhone.replace(/\D/g, '');
+    console.log('🔍 Verificando se é ganhador. Celular:', userPhoneNormalized);
+    
+    // Primeiro verifica localStorage (mais rápido e funciona sempre)
     try {
-        return await checkIfWinner(userPhone);
-    } catch (error) {
-        // Fallback para localStorage
-        const winners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
-        const userPhoneNormalized = userPhone.replace(/\D/g, '');
-        return winners.some(winner => {
+        const localWinners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
+        const isWinnerLocal = localWinners.some(winner => {
             const winnerPhoneNormalized = (winner.celular || '').replace(/\D/g, '');
             return winnerPhoneNormalized === userPhoneNormalized;
         });
+        
+        if (isWinnerLocal) {
+            console.log('✅ Ganhador encontrado no localStorage!');
+            return true;
+        }
+    } catch (error) {
+        console.error('Erro ao verificar localStorage:', error);
     }
+    
+    // Depois verifica Supabase (fallback)
+    try {
+        const isWinnerDB = await checkIfWinner(userPhone);
+        if (isWinnerDB) {
+            console.log('✅ Ganhador encontrado no Supabase!');
+            // Salvar no localStorage para próxima vez
+            const winners = await getWinners();
+            localStorage.setItem('webinar_winners', JSON.stringify(winners));
+            return true;
+        }
+    } catch (error) {
+        console.error('Erro ao verificar Supabase:', error);
+    }
+    
+    return false;
 }
 
 // Show winner modal
@@ -53,33 +79,61 @@ function hideWinnerModal() {
 
 // Check for winners periodically and on load
 async function checkWinnerStatus() {
-    const isWinner = await checkIfWinnerWrapper();
-    if (isWinner) {
-        // Check if already shown
-        const alreadyShown = localStorage.getItem('winner_shown_' + userPhone);
-        if (!alreadyShown) {
-            showWinnerModal();
-            localStorage.setItem('winner_shown_' + userPhone, 'true');
+    try {
+        const isWinner = await checkIfWinnerWrapper();
+        if (isWinner) {
+            // Check if already shown
+            const phoneKey = (userPhone || '').replace(/\D/g, '');
+            const alreadyShown = localStorage.getItem('winner_shown_' + phoneKey);
+            
+            if (!alreadyShown) {
+                console.log('🎉 Mostrando modal de ganhador!');
+                showWinnerModal();
+                localStorage.setItem('winner_shown_' + phoneKey, 'true');
+            }
         }
+    } catch (error) {
+        console.error('Erro ao verificar status de ganhador:', error);
     }
 }
 
 // Check on page load (async)
 (async function() {
+    // Aguardar um pouco para garantir que tudo carregou
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await checkWinnerStatus();
 })();
 
-// Listen for admin winner confirmations
-window.addEventListener('storage', function(e) {
-    if (e.key === 'webinar_winners') {
-        checkWinnerStatus();
+// Listen for admin winner confirmations (same tab)
+window.addEventListener('winners-confirmed', async function(e) {
+    console.log('🎉 Evento winners-confirmed recebido!');
+    await checkWinnerStatus();
+});
+
+// Listen for storage changes (cross-tab)
+window.addEventListener('storage', async function(e) {
+    if (e.key === 'webinar_winners' || e.key === 'webinar_winners_timestamp') {
+        console.log('📢 Storage event recebido:', e.key);
+        await checkWinnerStatus();
     }
 });
 
-// Also check periodically (in case of same-tab updates)
+// Also check when localStorage changes (for same-tab)
+const originalSetItem = localStorage.setItem;
+localStorage.setItem = function(key, value) {
+    originalSetItem.apply(this, arguments);
+    if (key === 'webinar_winners') {
+        console.log('📢 localStorage.winners atualizado, verificando...');
+        setTimeout(async () => {
+            await checkWinnerStatus();
+        }, 100);
+    }
+};
+
+// Check periodically (backup)
 setInterval(async () => {
     await checkWinnerStatus();
-}, 2000);
+}, 3000); // A cada 3 segundos
 
 // Close button - attach event listener
 setTimeout(() => {

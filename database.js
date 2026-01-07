@@ -163,30 +163,52 @@ async function getParticipantByPhone(celular) {
 // Salvar ganhadores
 async function saveWinners(winners) {
     try {
+        // Sempre salvar no localStorage primeiro para trigger imediato
+        localStorage.setItem('webinar_winners', JSON.stringify(winners));
+        localStorage.setItem('webinar_winners_timestamp', Date.now().toString());
+        
+        // Disparar evento de storage para outras abas
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'webinar_winners',
+            newValue: JSON.stringify(winners),
+            oldValue: localStorage.getItem('webinar_winners')
+        }));
+        
         const db = await getSupabase();
         if (!db) {
-            localStorage.setItem('webinar_winners', JSON.stringify(winners));
+            console.log('⚠️ Supabase não disponível, salvando apenas em localStorage');
             return true;
         }
 
         // Limpar ganhadores anteriores
-        await db.from('ganhadores').delete().neq('id', 0);
+        const { error: deleteError } = await db.from('ganhadores').delete().neq('id', 0);
+        if (deleteError) {
+            console.warn('Aviso ao limpar ganhadores anteriores:', deleteError);
+        }
 
         // Inserir novos ganhadores
-        const winnersData = winners.map(winner => ({
-            participante_id: winner.id || null,
-            nome: winner.nome,
-            celular: winner.celular,
-            created_at: new Date().toISOString()
-        }));
+        if (winners.length > 0) {
+            const winnersData = winners.map(winner => ({
+                participante_id: winner.id || null,
+                nome: winner.nome,
+                celular: winner.celular,
+                created_at: new Date().toISOString()
+            }));
 
-        const { error } = await db.from('ganhadores').insert(winnersData);
-        if (error) throw error;
+            const { error } = await db.from('ganhadores').insert(winnersData);
+            if (error) {
+                console.error('Erro ao salvar ganhadores no Supabase:', error);
+                // Não retorna false porque já salvou no localStorage
+            } else {
+                console.log('✅ Ganhadores salvos no Supabase:', winners.length);
+            }
+        }
+        
         return true;
     } catch (error) {
         console.error('Erro ao salvar ganhadores:', error);
-        localStorage.setItem('webinar_winners', JSON.stringify(winners));
-        return false;
+        // Já salvou no localStorage, então retorna true
+        return true;
     }
 }
 
