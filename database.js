@@ -18,8 +18,15 @@ async function getSupabase() {
         }
         
         // Tentar diretamente também
-        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+        let supabaseLib = null;
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            supabaseLib = supabase;
+        } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            supabaseLib = window.supabase;
+        }
+        
+        if (supabaseLib && supabaseLib.createClient) {
+            window.supabaseClient = supabaseLib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
             console.log('✅ Supabase inicializado em getSupabase()');
             return window.supabaseClient;
         }

@@ -8,13 +8,23 @@ window.supabaseClient = null;
 // Função para inicializar Supabase quando a biblioteca carregar
 window.initSupabase = function() {
     try {
-        // A biblioteca @supabase/supabase-js via CDN expõe como window.supabase
-        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            console.log('✅ Supabase inicializado');
+        // A biblioteca @supabase/supabase-js via CDN pode expor de várias formas
+        let supabaseLib = null;
+        
+        // Tenta encontrar a biblioteca
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            supabaseLib = supabase;
+        } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            supabaseLib = window.supabase;
+        }
+        
+        if (supabaseLib && supabaseLib.createClient) {
+            window.supabaseClient = supabaseLib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            console.log('✅ Supabase inicializado com sucesso');
             return true;
         }
-        console.warn('⚠️ Supabase library ainda não carregou');
+        
+        console.warn('⚠️ Supabase library ainda não carregou. Aguarde...');
         return false;
     } catch (error) {
         console.error('❌ Erro ao inicializar Supabase:', error);
