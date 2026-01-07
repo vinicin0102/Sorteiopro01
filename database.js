@@ -2,25 +2,29 @@
 
 // Wait for Supabase to be loaded
 async function getSupabase() {
-    // Se já foi inicializado, retorna
-    if (window.supabaseClient) {
-        return window.supabaseClient;
+    // Se já foi inicializado (vem do config.js), retorna
+    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        return supabaseClient;
     }
     
     // Tenta inicializar
     try {
-        if (typeof window.initSupabase === 'function') {
-            window.initSupabase();
+        // Chama a função de inicialização se existir
+        if (typeof initSupabase === 'function') {
+            initSupabase();
+            if (supabaseClient) {
+                return supabaseClient;
+            }
         }
         
-        if (typeof supabase !== 'undefined' && supabase.createClient) {
-            window.supabaseClient = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+        // Tentar diretamente também
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            // Usa as constantes do config.js
+            const SUPABASE_URL = 'https://uxbbhesufnxgszvbwkoa.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4YmJoZXN1Zm54Z3N6dmJ3a29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDkzODYsImV4cCI6MjA4MzM4NTM4Nn0.16abM7Od8MZxROhCY_GceU77OXwS-1Sgd9yzbj2emnQ';
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log('✅ Supabase inicializado em getSupabase()');
-            return window.supabaseClient;
-        } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            console.log('✅ Supabase inicializado via window.supabase em getSupabase()');
-            return window.supabaseClient;
+            return supabaseClient;
         }
     } catch (error) {
         console.error('❌ Erro ao inicializar Supabase em getSupabase():', error);
