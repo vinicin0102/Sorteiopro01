@@ -5,8 +5,11 @@
 -- para permitir que o admin funcione corretamente
 -- ============================================
 
--- 1. REMOVER POLÍTICAS ANTIGAS DE GANHADORES
+-- 1. REMOVER TODAS AS POLÍTICAS EXISTENTES DE GANHADORES
 DROP POLICY IF EXISTS "Permitir modificação de ganhadores" ON ganhadores;
+DROP POLICY IF EXISTS "Permitir inserção de ganhadores" ON ganhadores;
+DROP POLICY IF EXISTS "Permitir atualização de ganhadores" ON ganhadores;
+DROP POLICY IF EXISTS "Permitir deleção de ganhadores" ON ganhadores;
 
 -- 2. CRIAR NOVAS POLÍTICAS PARA GANHADORES
 CREATE POLICY "Permitir inserção de ganhadores"
@@ -28,8 +31,11 @@ FOR DELETE
 TO anon, authenticated
 USING (true);
 
--- 3. REMOVER POLÍTICAS ANTIGAS DE CONFIGURAÇÕES
+-- 3. REMOVER TODAS AS POLÍTICAS EXISTENTES DE CONFIGURAÇÕES
 DROP POLICY IF EXISTS "Permitir modificação de configuracoes" ON configuracoes;
+DROP POLICY IF EXISTS "Permitir inserção de configuracoes" ON configuracoes;
+DROP POLICY IF EXISTS "Permitir atualização de configuracoes" ON configuracoes;
+DROP POLICY IF EXISTS "Permitir deleção de configuracoes" ON configuracoes;
 
 -- 4. CRIAR NOVAS POLÍTICAS PARA CONFIGURAÇÕES
 CREATE POLICY "Permitir inserção de configuracoes"
