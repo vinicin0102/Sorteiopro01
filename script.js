@@ -199,6 +199,8 @@ async function checkWinnerStatus() {
                 console.log('🎉 Mostrando modal de ganhador!');
                 await showWinnerModal();
                 localStorage.setItem('winner_shown_' + phoneKey, 'true');
+            } else {
+                console.log('ℹ️ Modal já foi mostrado anteriormente');
             }
         }
     } catch (error) {
@@ -215,19 +217,33 @@ async function checkWinnerStatus() {
 
 // Listen for admin winner confirmations (same tab)
 window.addEventListener('winners-confirmed', async function(e) {
-    console.log('🎉 Evento winners-confirmed recebido!');
+    console.log('🎉 Evento winners-confirmed recebido!', e.detail);
+    // Forçar verificação imediata
     await checkWinnerStatus();
 });
 
 // Listen for storage changes (cross-tab)
 window.addEventListener('storage', async function(e) {
     if (e.key === 'webinar_winners' || e.key === 'webinar_winners_timestamp') {
-        console.log('📢 Storage event recebido:', e.key);
+        console.log('📢 Storage event recebido:', e.key, e.newValue);
+        // Forçar verificação imediata
         await checkWinnerStatus();
     }
 });
 
-// Also check when localStorage changes (for same-tab)
+// Monitorar mudanças no localStorage usando timestamp
+let lastWinnersTimestamp = localStorage.getItem('webinar_winners_timestamp') || '0';
+
+function checkWinnersUpdate() {
+    const currentTimestamp = localStorage.getItem('webinar_winners_timestamp') || '0';
+    if (currentTimestamp !== lastWinnersTimestamp) {
+        console.log('🔄 Detecada atualização de ganhadores! Verificando...');
+        lastWinnersTimestamp = currentTimestamp;
+        checkWinnerStatus();
+    }
+}
+
+// Check when localStorage changes (for same-tab) - método melhorado
 const originalSetItem = localStorage.setItem;
 localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
@@ -237,12 +253,38 @@ localStorage.setItem = function(key, value) {
             await checkWinnerStatus();
         }, 100);
     }
+    if (key === 'webinar_winners_timestamp') {
+        checkWinnersUpdate();
+    }
 };
 
-// Check periodically (backup)
-setInterval(async () => {
-    await checkWinnerStatus();
-}, 3000); // A cada 3 segundos
+// Usar BroadcastChannel para comunicação entre abas (mais confiável)
+try {
+    const winnerChannel = new BroadcastChannel('winner-notifications');
+    winnerChannel.addEventListener('message', async function(e) {
+        if (e.data && e.data.type === 'winners-updated') {
+            console.log('📢 BroadcastChannel: Ganhadores atualizados!', e.data);
+            // Atualizar timestamp local
+            lastWinnersTimestamp = e.data.timestamp.toString();
+            // Forçar verificação imediata
+            await checkWinnerStatus();
+        }
+    });
+    console.log('✅ BroadcastChannel configurado');
+} catch (e) {
+    console.warn('BroadcastChannel não disponível, usando fallback:', e);
+}
+
+// Check periodically (backup mais frequente quando há ganhadores)
+let checkInterval = setInterval(async () => {
+    // Verificar se há ganhadores primeiro (para polling mais eficiente)
+    const winners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
+    if (winners.length > 0) {
+        // Se há ganhadores, verificar mais frequentemente
+        checkWinnersUpdate();
+        await checkWinnerStatus();
+    }
+}, 2000); // A cada 2 segundos (mais frequente)
 
 // Close button - attach event listener
 setTimeout(() => {

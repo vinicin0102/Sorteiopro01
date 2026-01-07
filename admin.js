@@ -786,35 +786,34 @@ async function confirmWinners() {
             const saved = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
             console.log('✅ Ganhadores salvos. Verificação:', saved);
             
+            // IMPORTANTE: Forçar atualização do timestamp para disparar verificação
+            const timestamp = Date.now();
+            localStorage.setItem('webinar_winners_timestamp', timestamp.toString());
+            
             // Disparar eventos para notificar em tempo real
             setTimeout(() => {
                 // Evento customizado (mesma aba)
-                if (window.dispatchEvent) {
-                    const event = new CustomEvent('winners-confirmed', { 
-                        detail: { winners: normalizedWinners } 
-                    });
-                    window.dispatchEvent(event);
-                    console.log('📢 Evento winners-confirmed disparado');
-                }
+                const event = new CustomEvent('winners-confirmed', { 
+                    detail: { winners: normalizedWinners } 
+                });
+                window.dispatchEvent(event);
+                console.log('📢 Evento winners-confirmed disparado');
                 
-                // Evento de storage (outras abas)
+                // Usar BroadcastChannel para comunicação entre abas (mais confiável)
                 try {
-                    const storageEvent = new StorageEvent('storage', {
-                        key: 'webinar_winners',
-                        newValue: JSON.stringify(normalizedWinners),
-                        storageArea: localStorage
+                    const channel = new BroadcastChannel('winner-notifications');
+                    channel.postMessage({
+                        type: 'winners-updated',
+                        winners: normalizedWinners,
+                        timestamp: timestamp
                     });
-                    window.dispatchEvent(storageEvent);
-                    console.log('📢 Storage event disparado');
+                    console.log('📢 BroadcastChannel message enviado');
                 } catch (e) {
-                    console.warn('Não foi possível criar StorageEvent:', e);
+                    console.warn('BroadcastChannel não disponível:', e);
                 }
-                
-                // Forçar verificação em todas as abas abertas (simular storage change)
-                localStorage.setItem('webinar_winners_timestamp', Date.now().toString());
-            }, 200);
+            }, 100);
             
-            alert(`✅ Ganhadores confirmados com sucesso!\n\nOs ${normalizedWinners.length} ganhador(es) verão a notificação em tempo real.\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}\n\nDica: Se a notificação não aparecer, peça para o ganhador recarregar a página ou execute testWinner() no console.`);
+            alert(`✅ Ganhadores confirmados com sucesso!\n\nOs ${normalizedWinners.length} ganhador(es) verão a notificação em tempo real.\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}\n\nA notificação aparecerá automaticamente em até 2 segundos.`);
         } else {
             alert('⚠️ Erro ao salvar ganhadores. Tente novamente.');
         }
