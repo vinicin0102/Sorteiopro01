@@ -419,7 +419,7 @@ async function getVideoConfig() {
         const db = await getSupabase();
         if (!db) {
             const defaultConfig = {
-                embedCode: '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                embedCode: '' // Sem vídeo padrão
             };
             return JSON.parse(localStorage.getItem('admin_video_config') || JSON.stringify(defaultConfig));
         }
@@ -440,15 +440,15 @@ async function getVideoConfig() {
             return data.dados;
         }
         
-        // Retornar configuração padrão se não existir
+        // Retornar configuração vazia se não existir (sem vídeo padrão)
         const defaultConfig = {
-            embedCode: '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+            embedCode: '' // Sem vídeo padrão - admin deve configurar
         };
         return defaultConfig;
     } catch (error) {
         console.error('Erro ao buscar configuração de vídeo:', error);
         const defaultConfig = {
-            embedCode: '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+            embedCode: '' // Sem vídeo padrão
         };
         return JSON.parse(localStorage.getItem('admin_video_config') || JSON.stringify(defaultConfig));
     }

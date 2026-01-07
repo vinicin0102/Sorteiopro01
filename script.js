@@ -399,9 +399,16 @@ async function loadVideoEmbed() {
         if (typeof getVideoConfig === 'function') {
             const config = await getVideoConfig();
             const videoContainer = document.getElementById('video-container');
-            if (videoContainer && config.embedCode) {
-                videoContainer.innerHTML = config.embedCode;
-                console.log('✅ Vídeo embed carregado:', config.embedCode.substring(0, 50) + '...');
+            if (videoContainer) {
+                // Se houver código embed, usar. Senão, deixar vazio
+                if (config.embedCode && config.embedCode.trim()) {
+                    videoContainer.innerHTML = config.embedCode;
+                    console.log('✅ Vídeo embed carregado:', config.embedCode.substring(0, 50) + '...');
+                } else {
+                    // Sem vídeo configurado - deixar container vazio
+                    videoContainer.innerHTML = '';
+                    console.log('ℹ️ Nenhum vídeo configurado no admin');
+                }
             }
         } else {
             // Fallback para localStorage
@@ -409,8 +416,12 @@ async function loadVideoEmbed() {
             if (stored) {
                 const config = JSON.parse(stored);
                 const videoContainer = document.getElementById('video-container');
-                if (videoContainer && config.embedCode) {
-                    videoContainer.innerHTML = config.embedCode;
+                if (videoContainer) {
+                    if (config.embedCode && config.embedCode.trim()) {
+                        videoContainer.innerHTML = config.embedCode;
+                    } else {
+                        videoContainer.innerHTML = '';
+                    }
                 }
             }
         }
