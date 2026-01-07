@@ -350,6 +350,85 @@ async function getComments() {
     }
 }
 
+// Salvar configurações de mensagem de ganhador
+async function saveWinnerMessageConfig(config) {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            localStorage.setItem('admin_winner_message', JSON.stringify(config));
+            return true;
+        }
+
+        const { error } = await db
+            .from('configuracoes')
+            .upsert({
+                id: 3,
+                tipo: 'ganhador',
+                dados: config,
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Erro ao salvar configuração de ganhador:', error);
+        localStorage.setItem('admin_winner_message', JSON.stringify(config));
+        return false;
+    }
+}
+
+// Buscar configurações de mensagem de ganhador
+async function getWinnerMessageConfig() {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            const defaultConfig = {
+                titulo: 'PARABÉNS!',
+                subtitulo: 'Você Ganhou o iPhone!',
+                mensagem: 'Você foi selecionado(a) como um dos ganhadores do sorteio!',
+                detalhes: 'Entre em contato conosco para receber seu prêmio!',
+                botaoTexto: 'Resgatar Prêmio',
+                botaoLink: '#'
+            };
+            return JSON.parse(localStorage.getItem('admin_winner_message') || JSON.stringify(defaultConfig));
+        }
+
+        const { data, error } = await db
+            .from('configuracoes')
+            .select('*')
+            .eq('tipo', 'ganhador')
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+        
+        if (data?.dados) {
+            return data.dados;
+        }
+        
+        // Retornar configuração padrão se não existir
+        const defaultConfig = {
+            titulo: 'PARABÉNS!',
+            subtitulo: 'Você Ganhou o iPhone!',
+            mensagem: 'Você foi selecionado(a) como um dos ganhadores do sorteio!',
+            detalhes: 'Entre em contato conosco para receber seu prêmio!',
+            botaoTexto: 'Resgatar Prêmio',
+            botaoLink: '#'
+        };
+        return defaultConfig;
+    } catch (error) {
+        console.error('Erro ao buscar configuração de ganhador:', error);
+        const defaultConfig = {
+            titulo: 'PARABÉNS!',
+            subtitulo: 'Você Ganhou o iPhone!',
+            mensagem: 'Você foi selecionado(a) como um dos ganhadores do sorteio!',
+            detalhes: 'Entre em contato conosco para receber seu prêmio!',
+            botaoTexto: 'Resgatar Prêmio',
+            botaoLink: '#'
+        };
+        return JSON.parse(localStorage.getItem('admin_winner_message') || JSON.stringify(defaultConfig));
+    }
+}
+
 // ============ FALLBACK LOCALSTORAGE ============
 
 function saveParticipantLocalStorage(nome, celular) {

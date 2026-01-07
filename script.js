@@ -34,7 +34,7 @@ window.testWinner = async function() {
     console.log('✅ É ganhador?', isWinner);
     
     if (isWinner) {
-        showWinnerModal();
+        await showWinnerModal();
         console.log('🎉 Modal de ganhador deve aparecer agora!');
     } else {
         console.log('❌ Não é ganhador ou não encontrado');
@@ -103,8 +103,75 @@ async function checkIfWinnerWrapper() {
     return false;
 }
 
+// Load winner message configuration
+let winnerMessageConfig = null;
+
+async function loadWinnerMessageConfig() {
+    try {
+        if (typeof getWinnerMessageConfig === 'function') {
+            winnerMessageConfig = await getWinnerMessageConfig();
+        } else {
+            // Fallback para localStorage
+            const stored = localStorage.getItem('admin_winner_message');
+            if (stored) {
+                winnerMessageConfig = JSON.parse(stored);
+            } else {
+                // Configuração padrão
+                winnerMessageConfig = {
+                    titulo: 'PARABÉNS!',
+                    subtitulo: 'Você Ganhou o iPhone!',
+                    mensagem: 'Você foi selecionado(a) como um dos ganhadores do sorteio!',
+                    detalhes: 'Entre em contato conosco para receber seu prêmio!',
+                    botaoTexto: 'Resgatar Prêmio',
+                    botaoLink: '#'
+                };
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar configuração de mensagem:', error);
+        // Usar padrão em caso de erro
+        winnerMessageConfig = {
+            titulo: 'PARABÉNS!',
+            subtitulo: 'Você Ganhou o iPhone!',
+            mensagem: 'Você foi selecionado(a) como um dos ganhadores do sorteio!',
+            detalhes: 'Entre em contato conosco para receber seu prêmio!',
+            botaoTexto: 'Resgatar Prêmio',
+            botaoLink: '#'
+        };
+    }
+}
+
 // Show winner modal
-function showWinnerModal() {
+async function showWinnerModal() {
+    // Carregar configuração se ainda não foi carregada
+    if (!winnerMessageConfig) {
+        await loadWinnerMessageConfig();
+    }
+    
+    // Aplicar configurações ao modal
+    const tituloEl = document.getElementById('winner-title');
+    const subtituloEl = document.getElementById('winner-subtitle');
+    const mensagemEl = document.getElementById('winner-message');
+    const detalhesEl = document.getElementById('winner-details-text');
+    const resgateBtn = document.getElementById('winner-resgate-btn');
+    
+    if (tituloEl && winnerMessageConfig) {
+        tituloEl.textContent = winnerMessageConfig.titulo || 'PARABÉNS!';
+    }
+    if (subtituloEl && winnerMessageConfig) {
+        subtituloEl.textContent = winnerMessageConfig.subtitulo || 'Você Ganhou o iPhone!';
+    }
+    if (mensagemEl && winnerMessageConfig) {
+        mensagemEl.textContent = winnerMessageConfig.mensagem || 'Você foi selecionado(a) como um dos ganhadores do sorteio!';
+    }
+    if (detalhesEl && winnerMessageConfig) {
+        detalhesEl.textContent = winnerMessageConfig.detalhes || 'Entre em contato conosco para receber seu prêmio!';
+    }
+    if (resgateBtn && winnerMessageConfig) {
+        resgateBtn.textContent = winnerMessageConfig.botaoTexto || 'Resgatar Prêmio';
+        resgateBtn.href = winnerMessageConfig.botaoLink || '#';
+    }
+    
     const modal = document.getElementById('winner-modal');
     if (modal) {
         modal.classList.add('show');
@@ -130,7 +197,7 @@ async function checkWinnerStatus() {
             
             if (!alreadyShown) {
                 console.log('🎉 Mostrando modal de ganhador!');
-                showWinnerModal();
+                await showWinnerModal();
                 localStorage.setItem('winner_shown_' + phoneKey, 'true');
             }
         }

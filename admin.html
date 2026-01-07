@@ -134,6 +134,41 @@
                             <div id="winners-list"></div>
                             <button id="confirm-winners-btn" class="confirm-btn">Confirmar Ganhadores</button>
                         </div>
+
+                        <!-- Editor de Mensagem de Ganhador -->
+                        <div class="action-card" style="margin-top: 30px;">
+                            <div class="action-header">
+                                <h3>Mensagem de Ganhador</h3>
+                                <p class="action-description">Personalize a mensagem que aparecerá para os ganhadores</p>
+                            </div>
+                            <div class="editor-form" style="margin-top: 20px;">
+                                <div class="form-group">
+                                    <label>Título Principal</label>
+                                    <input type="text" id="winner-titulo" placeholder="Ex: PARABÉNS!">
+                                </div>
+                                <div class="form-group">
+                                    <label>Subtítulo</label>
+                                    <input type="text" id="winner-subtitulo" placeholder="Ex: Você Ganhou o iPhone!">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mensagem Principal</label>
+                                    <textarea id="winner-mensagem" rows="3" placeholder="Ex: Você foi selecionado(a) como um dos ganhadores do sorteio!"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Detalhes/Instruções</label>
+                                    <textarea id="winner-detalhes" rows="2" placeholder="Ex: Entre em contato conosco para receber seu prêmio!"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Texto do Botão</label>
+                                    <input type="text" id="winner-botao-texto" placeholder="Ex: Resgatar Prêmio">
+                                </div>
+                                <div class="form-group">
+                                    <label>Link do Botão</label>
+                                    <input type="url" id="winner-botao-link" placeholder="https://exemplo.com/resgate">
+                                </div>
+                                <button id="save-winner-message-btn" class="save-btn">Salvar Mensagem</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

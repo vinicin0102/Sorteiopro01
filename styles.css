@@ -404,6 +404,32 @@ body {
     font-size: 16px;
 }
 
+.winner-resgate-btn {
+    display: inline-block;
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #00b4a6 0%, #008a7f 100%);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(0, 180, 166, 0.4);
+    margin-bottom: 15px;
+    border: none;
+}
+
+.winner-resgate-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 180, 166, 0.6);
+    background: linear-gradient(135deg, #008a7f 0%, #006b63 100%);
+}
+
+.winner-resgate-btn:active {
+    transform: scale(0.95);
+}
+
 .winner-close-btn {
     padding: 15px 40px;
     background: #000;

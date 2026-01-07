@@ -168,6 +168,15 @@ function initializeEventListeners() {
     if (confirmBtn) {
         confirmBtn.addEventListener('click', confirmWinners);
     }
+    
+    // Salvar mensagem de ganhador
+    const saveWinnerMessageBtn = document.getElementById('save-winner-message-btn');
+    if (saveWinnerMessageBtn) {
+        saveWinnerMessageBtn.addEventListener('click', saveWinnerMessage);
+    }
+    
+    // Carregar mensagem de ganhador ao abrir seção de sorteio
+    loadWinnerMessage();
 }
 
 function handleLogin() {
@@ -196,6 +205,7 @@ async function switchSection(section) {
     // Load data when switching to specific sections
     if (section === 'sorteio') {
         await loadGanhadores(); // Carrega participantes com checkboxes para selecionar ganhadores
+        await loadWinnerMessage(); // Carrega mensagem de ganhador
     }
 }
 
@@ -904,4 +914,45 @@ async function saveComentariosEditor() {
     
     await saveComments(comentarios);
     alert('Comentários salvos com sucesso!');
+}
+
+// Mensagem de Ganhador
+async function loadWinnerMessage() {
+    try {
+        const config = await getWinnerMessageConfig();
+        
+        const tituloEl = document.getElementById('winner-titulo');
+        const subtituloEl = document.getElementById('winner-subtitulo');
+        const mensagemEl = document.getElementById('winner-mensagem');
+        const detalhesEl = document.getElementById('winner-detalhes');
+        const botaoTextoEl = document.getElementById('winner-botao-texto');
+        const botaoLinkEl = document.getElementById('winner-botao-link');
+        
+        if (tituloEl) tituloEl.value = config.titulo || 'PARABÉNS!';
+        if (subtituloEl) subtituloEl.value = config.subtitulo || 'Você Ganhou o iPhone!';
+        if (mensagemEl) mensagemEl.value = config.mensagem || 'Você foi selecionado(a) como um dos ganhadores do sorteio!';
+        if (detalhesEl) detalhesEl.value = config.detalhes || 'Entre em contato conosco para receber seu prêmio!';
+        if (botaoTextoEl) botaoTextoEl.value = config.botaoTexto || 'Resgatar Prêmio';
+        if (botaoLinkEl) botaoLinkEl.value = config.botaoLink || '#';
+    } catch (error) {
+        console.error('Erro ao carregar mensagem de ganhador:', error);
+    }
+}
+
+async function saveWinnerMessage() {
+    const config = {
+        titulo: document.getElementById('winner-titulo').value.trim() || 'PARABÉNS!',
+        subtitulo: document.getElementById('winner-subtitulo').value.trim() || 'Você Ganhou o iPhone!',
+        mensagem: document.getElementById('winner-mensagem').value.trim() || 'Você foi selecionado(a) como um dos ganhadores do sorteio!',
+        detalhes: document.getElementById('winner-detalhes').value.trim() || 'Entre em contato conosco para receber seu prêmio!',
+        botaoTexto: document.getElementById('winner-botao-texto').value.trim() || 'Resgatar Prêmio',
+        botaoLink: document.getElementById('winner-botao-link').value.trim() || '#'
+    };
+    
+    const success = await saveWinnerMessageConfig(config);
+    if (success) {
+        alert('✅ Mensagem de ganhador salva com sucesso!');
+    } else {
+        alert('⚠️ Erro ao salvar mensagem. Tente novamente.');
+    }
 }
