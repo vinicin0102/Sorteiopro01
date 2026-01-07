@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - SorteioPro</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-container">
+            <h2>Painel Administrativo</h2>
+            <input type="password" id="admin-password" placeholder="Digite a senha" class="login-input">
+            <button id="login-btn" class="login-btn">Entrar</button>
+            <p id="login-error" class="error-message"></p>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="admin-panel" style="display: none;">
+        <header class="admin-header">
+            <h1>Painel Admin</h1>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-section="comentarios">Comentários</button>
+            <button class="nav-tab" data-section="agendados">Agendados</button>
+            <button class="nav-tab" data-section="sorteio">Sorteio</button>
+            <button class="nav-tab" data-section="formulario">Formulário</button>
+            <button class="nav-tab" data-section="oferta">Oferta</button>
+            <button class="nav-tab" data-section="donate">Donate</button>
+            <button class="nav-tab" data-section="m">M</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Seção Comentários -->
+            <section id="comentarios-section" class="content-section active">
+                <div class="section-content">
+                    <div class="action-card">
+                        <div class="action-header">
+                            <h3>Comentários de Animação</h3>
+                            <p class="action-description">Dispara comentários animados sobre o sorteio (varias pessoas diferentes)</p>
+                        </div>
+                        <div class="action-controls">
+                            <input type="number" id="qtd-animacao" class="quantity-input" value="14" min="1">
+                            <button class="disparar-btn" data-type="animacao">Disparar</button>
+                        </div>
+                    </div>
+
+                    <div class="action-card">
+                        <div class="action-header">
+                            <h3>Comentários Tristes</h3>
+                            <p class="action-description">Dispara comentários tristes de pessoas que perderam o sorteio (varias pessoas diferentes)</p>
+                        </div>
+                        <div class="action-controls">
+                            <input type="number" id="qtd-tristes" class="quantity-input" value="12" min="1">
+                            <button class="disparar-btn" data-type="tristes">Disparar</button>
+                        </div>
+                    </div>
+
+                    <div class="action-card danger">
+                        <button id="limpar-chat-btn" class="limpar-chat-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Limpar Chat
+                        </button>
+                    </div>
+
+                    <!-- Editor de Comentários -->
+                    <div class="action-card" style="margin-top: 30px;">
+                        <div class="action-header">
+                            <h3>Editar Comentários</h3>
+                            <p class="action-description">Personalize os comentários que serão disparados</p>
+                        </div>
+                        <div class="comentarios-editor-tabs">
+                            <button class="editor-tab active" data-tab="animacao">Comentários de Animação</button>
+                            <button class="editor-tab" data-tab="tristes">Comentários Tristes</button>
+                        </div>
+                        <div id="editor-animacao" class="comentarios-editor-panel active">
+                            <div id="animacao-comentarios-list" class="comentarios-edit-list"></div>
+                            <button class="add-comentario-editor-btn" data-type="animacao">+ Adicionar Comentário</button>
+                        </div>
+                        <div id="editor-tristes" class="comentarios-editor-panel">
+                            <div id="tristes-comentarios-list" class="comentarios-edit-list"></div>
+                            <button class="add-comentario-editor-btn" data-type="tristes">+ Adicionar Comentário</button>
+                        </div>
+                        <button id="save-comentarios-btn" class="save-btn" style="margin-top: 20px;">Salvar Comentários</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção Agendados -->
+            <section id="agendados-section" class="content-section">
+                <div class="section-content">
+                    <h2>Comentários Agendados</h2>
+                    <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+                </div>
+            </section>
+
+            <!-- Seção Sorteio -->
+            <section id="sorteio-section" class="content-section">
+                <div class="section-content">
+                    <h2>Gerenciar Sorteio</h2>
+                    <div class="sorteio-container">
+                        <div class="stats-row">
+                            <div class="stat-box">
+                                <span class="stat-label">Total de Participantes</span>
+                                <span id="total-participantes" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Hoje</span>
+                                <span id="hoje-participantes" class="stat-value">0</span>
+                            </div>
+                        </div>
+
+                        <div class="search-box">
+                            <input type="text" id="search-participante" placeholder="Buscar por nome ou celular...">
+                        </div>
+
+                        <div class="participantes-list" id="participantes-list">
+                            <!-- Lista será preenchida dinamicamente -->
+                        </div>
+
+                        <div class="selected-winners">
+                            <h3>Ganhadores Selecionados:</h3>
+                            <div id="winners-list"></div>
+                            <button id="confirm-winners-btn" class="confirm-btn">Confirmar Ganhadores</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção Formulário -->
+            <section id="formulario-section" class="content-section">
+                <div class="section-content">
+                    <h2>Editor de Formulário</h2>
+                    <div class="editor-form">
+                        <div class="form-group">
+                            <label>Título Principal</label>
+                            <input type="text" id="form-title" placeholder="Título">
+                        </div>
+                        <div class="form-group">
+                            <label>Subtítulo</label>
+                            <input type="text" id="form-subtitle" placeholder="Subtítulo">
+                        </div>
+                        <div class="form-group">
+                            <label>Título do Destaque</label>
+                            <input type="text" id="form-highlight-title" placeholder="Título do destaque">
+                        </div>
+                        <div class="form-group">
+                            <label>Subtítulo do Destaque</label>
+                            <input type="text" id="form-highlight-subtitle" placeholder="Subtítulo do destaque">
+                        </div>
+                        <div class="form-group">
+                            <label>Horário da Aula</label>
+                            <input type="text" id="form-time" placeholder="Ex: Aula às 20h00">
+                        </div>
+                        
+                        <!-- Upload de Imagens -->
+                        <div class="form-group">
+                            <label>Imagem Principal/Banner</label>
+                            <div class="image-upload-container">
+                                <input type="file" id="form-image-main" accept="image/*" class="file-input">
+                                <label for="form-image-main" class="file-input-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    Escolher Imagem
+                                </label>
+                                <div id="preview-main" class="image-preview"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Imagem do Destaque</label>
+                            <div class="image-upload-container">
+                                <input type="file" id="form-image-highlight" accept="image/*" class="file-input">
+                                <label for="form-image-highlight" class="file-input-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    Escolher Imagem
+                                </label>
+                                <div id="preview-highlight" class="image-preview"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Arquivo/PDF (Opcional)</label>
+                            <div class="image-upload-container">
+                                <input type="file" id="form-file" accept=".pdf,.doc,.docx" class="file-input">
+                                <label for="form-file" class="file-input-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                        <polyline points="13 2 13 9 20 9"></polyline>
+                                    </svg>
+                                    Escolher Arquivo
+                                </label>
+                                <div id="preview-file" class="file-preview"></div>
+                            </div>
+                        </div>
+
+                        <button id="save-form-btn" class="save-btn">Salvar Alterações</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção Oferta -->
+            <section id="oferta-section" class="content-section">
+                <div class="section-content">
+                    <h2>Configurar Oferta</h2>
+                    <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+                </div>
+            </section>
+
+            <!-- Seção Donate -->
+            <section id="donate-section" class="content-section">
+                <div class="section-content">
+                    <h2>Doações</h2>
+                    <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+                </div>
+            </section>
+
+            <!-- Seção M -->
+            <section id="m-section" class="content-section">
+                <div class="section-content">
+                    <h2>Configurações M</h2>
+                    <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

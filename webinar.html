@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webinar - Live</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Greeting Bar -->
+    <div class="greeting-bar">
+        <span>Olá, Visitante</span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Video Section -->
+        <div class="video-section">
+            <div class="video-wrapper">
+                <div class="video-container">
+                    <!-- YouTube embed ou video element -->
+                    <iframe 
+                        id="youtube-player"
+                        src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&controls=1"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+                
+                <!-- Live Status Bar -->
+                <div class="live-status-bar">
+                    <div class="live-indicator">
+                        <span class="live-dot"></span>
+                        <span class="live-text">AO VIVO</span>
+                    </div>
+                    <div class="viewers-count">
+                        <span id="viewers-count">1.000</span> assistindo
+                    </div>
+                    <div class="timer">
+                        <span id="stream-timer">00:00:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <div class="chat-header">
+                <span>Chat</span>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be added dynamically -->
+                <div class="chat-message">
+                    <span class="username">bruno mota:</span>
+                    <span class="message-text">LUCAS DIAS MARQUES - ja joga conteudo no tiktok que sobe rapido tambem</span>
+                </div>
+                <div class="chat-message">
+                    <span class="username">gustavo h:</span>
+                    <span class="message-text">planejo criar algo d matematica</span>
+                </div>
+                <div class="chat-message">
+                    <span class="username">Kely Marçal:</span>
+                    <span class="message-text">👌</span>
+                </div>
+                <div class="chat-message">
+                    <span class="username">LUCAS DIAS MARQUES:</span>
+                    <span class="message-text">Muito bom</span>
+                </div>
+                <div class="chat-message">
+                    <span class="username">Cláudio Fernandes Tavares Modesto:</span>
+                    <span class="message-text">Sim</span>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    id="chat-input" 
+                    placeholder="Digite sua pergunta..."
+                    class="chat-input"
+                >
+                <button id="send-button" class="send-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner Announcement Modal -->
+    <div id="winner-modal" class="winner-modal">
+        <div class="winner-modal-content">
+            <div class="winner-celebration">
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+            </div>
+            <div class="winner-icon">🏆</div>
+            <h1 class="winner-title">PARABÉNS!</h1>
+            <h2 class="winner-subtitle">Você Ganhou o iPhone!</h2>
+            <p class="winner-message">
+                Você foi selecionado(a) como um dos ganhadores do sorteio!
+            </p>
+            <div class="winner-details">
+                <p><strong>Próximos passos:</strong></p>
+                <p>Entre em contato conosco para receber seu prêmio!</p>
+            </div>
+            <button id="winner-close-btn" class="winner-close-btn">Fechar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
