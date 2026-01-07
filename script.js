@@ -205,14 +205,14 @@ window.addEventListener('admin-clear-chat', function() {
 });
 
 // Listen for winners confirmation (same tab)
-window.addEventListener('winners-confirmed', function(e) {
-    checkWinnerStatus();
+window.addEventListener('winners-confirmed', async function(e) {
+    await checkWinnerStatus();
 });
 
 // Listen for storage changes (cross-tab and same-tab trigger)
-window.addEventListener('storage', function(e) {
+window.addEventListener('storage', async function(e) {
     if (e.key === 'webinar_winners' || e.key === 'webinar_winners_timestamp') {
-        checkWinnerStatus();
+        await checkWinnerStatus();
     }
 });
 
