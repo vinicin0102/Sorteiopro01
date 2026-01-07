@@ -187,16 +187,18 @@ function hideWinnerModal() {
 }
 
 // Check for winners periodically and on load
-async function checkWinnerStatus() {
+let forceCheck = false; // Flag para forçar verificação mesmo se já foi mostrado
+
+async function checkWinnerStatus(force = false) {
     try {
         const isWinner = await checkIfWinnerWrapper();
         if (isWinner) {
-            // Check if already shown
             const phoneKey = (userPhone || '').replace(/\D/g, '');
             const alreadyShown = localStorage.getItem('winner_shown_' + phoneKey);
             
-            if (!alreadyShown) {
-                console.log('🎉 Mostrando modal de ganhador!');
+            // Se for forçado ou se ainda não foi mostrado, mostrar
+            if (force || !alreadyShown) {
+                console.log('🎉 Mostrando modal de ganhador!', force ? '(FORÇADO)' : '');
                 await showWinnerModal();
                 localStorage.setItem('winner_shown_' + phoneKey, 'true');
             } else {
@@ -244,17 +246,25 @@ async function loadVideoEmbed() {
 
 // Listen for admin winner confirmations (same tab)
 window.addEventListener('winners-confirmed', async function(e) {
-    console.log('🎉 Evento winners-confirmed recebido!', e.detail);
-    // Forçar verificação imediata
-    await checkWinnerStatus();
+    console.log('🎉 Evento winners-confirmed recebido! FORÇANDO VERIFICAÇÃO!', e.detail);
+    // Verificação IMEDIATA - FORÇADA (ignora se já foi mostrado)
+    lastWinnersTimestamp = e.detail.timestamp ? e.detail.timestamp.toString() : Date.now().toString();
+    await checkWinnerStatus(true); // TRUE = força mostrar mesmo se já foi exibido
 });
 
 // Listen for storage changes (cross-tab)
 window.addEventListener('storage', async function(e) {
     if (e.key === 'webinar_winners' || e.key === 'webinar_winners_timestamp') {
         console.log('📢 Storage event recebido:', e.key, e.newValue);
-        // Forçar verificação imediata
-        await checkWinnerStatus();
+        // Atualizar timestamp local
+        if (e.key === 'webinar_winners_timestamp') {
+            lastWinnersTimestamp = e.newValue || '0';
+            // Se timestamp mudou, é uma nova confirmação - FORÇAR mostrar
+            await checkWinnerStatus(true);
+        } else if (e.key === 'webinar_winners') {
+            // Se ganhadores mudaram, verificar (mas não forçar - pode ser revalidação)
+            await checkWinnerStatus();
+        }
     }
 });
 
@@ -275,10 +285,9 @@ const originalSetItem = localStorage.setItem;
 localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
     if (key === 'webinar_winners') {
-        console.log('📢 localStorage.winners atualizado, verificando...');
-        setTimeout(async () => {
-            await checkWinnerStatus();
-        }, 100);
+        console.log('📢 localStorage.winners atualizado, verificando IMEDIATAMENTE...');
+        // Verificação IMEDIATA - sem setTimeout
+        checkWinnerStatus();
     }
     if (key === 'webinar_winners_timestamp') {
         checkWinnersUpdate();
@@ -290,14 +299,16 @@ try {
     const winnerChannel = new BroadcastChannel('winner-notifications');
     winnerChannel.addEventListener('message', async function(e) {
         if (e.data && e.data.type === 'winners-updated') {
-            console.log('📢 BroadcastChannel: Ganhadores atualizados!', e.data);
-            // Atualizar timestamp local
-            lastWinnersTimestamp = e.data.timestamp.toString();
-            // Forçar verificação imediata
-            await checkWinnerStatus();
+            console.log('📢 BroadcastChannel: Ganhadores atualizados! VERIFICANDO AGORA!', e.data);
+            // Atualizar timestamp local IMEDIATAMENTE
+            if (e.data.timestamp) {
+                lastWinnersTimestamp = e.data.timestamp.toString();
+            }
+            // Forçar verificação IMEDIATA - FORÇADA (mostra mesmo se já foi exibido antes)
+            await checkWinnerStatus(true);
         }
     });
-    console.log('✅ BroadcastChannel configurado');
+    console.log('✅ BroadcastChannel configurado e pronto');
 } catch (e) {
     console.warn('BroadcastChannel não disponível, usando fallback:', e);
 }
@@ -311,7 +322,7 @@ let checkInterval = setInterval(async () => {
         checkWinnersUpdate();
         await checkWinnerStatus();
     }
-}, 2000); // A cada 2 segundos (mais frequente)
+}, 1000); // A cada 1 segundo (MUITO mais frequente para garantir)
 
 // Close button - attach event listener
 setTimeout(() => {

@@ -799,30 +799,51 @@ async function confirmWinners() {
             const timestamp = Date.now();
             localStorage.setItem('webinar_winners_timestamp', timestamp.toString());
             
-            // Disparar eventos para notificar em tempo real
-            setTimeout(() => {
-                // Evento customizado (mesma aba)
-                const event = new CustomEvent('winners-confirmed', { 
-                    detail: { winners: normalizedWinners } 
-                });
-                window.dispatchEvent(event);
-                console.log('📢 Evento winners-confirmed disparado');
-                
-                // Usar BroadcastChannel para comunicação entre abas (mais confiável)
-                try {
-                    const channel = new BroadcastChannel('winner-notifications');
-                    channel.postMessage({
-                        type: 'winners-updated',
-                        winners: normalizedWinners,
-                        timestamp: timestamp
-                    });
-                    console.log('📢 BroadcastChannel message enviado');
-                } catch (e) {
-                    console.warn('BroadcastChannel não disponível:', e);
-                }
-            }, 100);
+            // DISPARAR TODOS OS EVENTOS IMEDIATAMENTE - SEM DELAY
+            // 1. CustomEvent (mesma aba)
+            const event = new CustomEvent('winners-confirmed', { 
+                detail: { winners: normalizedWinners, timestamp: timestamp } 
+            });
+            window.dispatchEvent(event);
+            console.log('📢 Evento winners-confirmed disparado IMEDIATAMENTE');
             
-            alert(`✅ Ganhadores confirmados com sucesso!\n\nOs ${normalizedWinners.length} ganhador(es) verão a notificação em tempo real.\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}\n\nA notificação aparecerá automaticamente em até 2 segundos.`);
+            // 2. BroadcastChannel (outras abas)
+            try {
+                const channel = new BroadcastChannel('winner-notifications');
+                channel.postMessage({
+                    type: 'winners-updated',
+                    winners: normalizedWinners,
+                    timestamp: timestamp,
+                    action: 'check-now'
+                });
+                console.log('📢 BroadcastChannel message enviado IMEDIATAMENTE');
+            } catch (e) {
+                console.warn('BroadcastChannel não disponível:', e);
+            }
+            
+            // 3. Forçar storage event (funciona entre abas)
+            try {
+                // Simular storage event disparando manualmente
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'webinar_winners',
+                    newValue: JSON.stringify(normalizedWinners),
+                    oldValue: saved.length > 0 ? JSON.stringify(saved) : null,
+                    storageArea: localStorage
+                }));
+                console.log('📢 StorageEvent disparado IMEDIATAMENTE');
+            } catch (e) {
+                console.warn('Erro ao criar StorageEvent:', e);
+            }
+            
+            // 4. Disparar evento de timestamp também
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'webinar_winners_timestamp',
+                newValue: timestamp.toString(),
+                oldValue: localStorage.getItem('webinar_winners_timestamp'),
+                storageArea: localStorage
+            }));
+            
+            alert(`✅ Ganhadores confirmados!\n\n${normalizedWinners.length} ganhador(es) verão a notificação AGORA!\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}`);
         } else {
             alert('⚠️ Erro ao salvar ganhadores. Tente novamente.');
         }
