@@ -242,6 +242,110 @@ window.debugWinner = async function() {
     await checkWinnerStatus(true);
 };
 
+// Load offer configuration
+let offerConfig = null;
+
+async function loadOfferConfig() {
+    try {
+        if (typeof getOfferConfig === 'function') {
+            offerConfig = await getOfferConfig();
+        } else {
+            // Fallback para localStorage
+            const stored = localStorage.getItem('admin_offer_config');
+            if (stored) {
+                offerConfig = JSON.parse(stored);
+            } else {
+                // Configuração padrão
+                offerConfig = {
+                    icon: '🔥',
+                    titulo: 'Oferta Especial',
+                    subtitulo: 'Aproveite Agora!',
+                    mensagem: 'Não perca esta oportunidade única!',
+                    detalhes: 'Confira nossa oferta especial!',
+                    ctaTexto: 'Quero Aproveitar',
+                    ctaLink: '#'
+                };
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar configuração de oferta:', error);
+        offerConfig = {
+            icon: '🔥',
+            titulo: 'Oferta Especial',
+            subtitulo: 'Aproveite Agora!',
+            mensagem: 'Não perca esta oportunidade única!',
+            detalhes: 'Confira nossa oferta especial!',
+            ctaTexto: 'Quero Aproveitar',
+            ctaLink: '#'
+        };
+    }
+}
+
+// Show offer popup - VERSÃO SIMPLIFICADA E FORÇADA
+async function showOfferPopup() {
+    console.log('🔥🔥🔥 MOSTRANDO POPUP DE OFERTA! 🔥🔥🔥');
+    
+    // Carregar configuração se ainda não foi carregada
+    if (!offerConfig) {
+        console.log('📦 Carregando configuração de oferta...');
+        await loadOfferConfig();
+        console.log('✅ Configuração carregada:', offerConfig);
+    }
+    
+    // Aplicar configurações ao modal
+    const iconEl = document.getElementById('offer-icon');
+    const titleEl = document.getElementById('offer-title');
+    const subtitleEl = document.getElementById('offer-subtitle');
+    const messageEl = document.getElementById('offer-message');
+    const detailsEl = document.getElementById('offer-details-text');
+    const ctaBtn = document.getElementById('offer-cta-btn');
+    
+    // Aplicar textos mesmo sem config (valores padrão)
+    if (iconEl) iconEl.textContent = (offerConfig && offerConfig.icon) || '🔥';
+    if (titleEl) titleEl.textContent = (offerConfig && offerConfig.titulo) || 'Oferta Especial';
+    if (subtitleEl) subtitleEl.textContent = (offerConfig && offerConfig.subtitulo) || 'Aproveite Agora!';
+    if (messageEl) messageEl.textContent = (offerConfig && offerConfig.mensagem) || 'Não perca esta oportunidade única!';
+    if (detailsEl) detailsEl.textContent = (offerConfig && offerConfig.detalhes) || 'Confira nossa oferta especial!';
+    if (ctaBtn) {
+        ctaBtn.textContent = (offerConfig && offerConfig.ctaTexto) || 'Quero Aproveitar';
+        ctaBtn.href = (offerConfig && offerConfig.ctaLink) || '#';
+    }
+    
+    // FORÇAR EXIBIÇÃO DO MODAL - MÚLTIPLAS FORMAS
+    const modal = document.getElementById('offer-modal');
+    if (modal) {
+        console.log('✅ Modal encontrado!');
+        
+        // Método 1: Adicionar classe
+        modal.classList.add('show');
+        
+        // Método 2: Forçar display diretamente (fallback)
+        modal.style.display = 'flex';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        modal.style.zIndex = '9999';
+        
+        console.log('✅ Popup FORÇADO a aparecer!');
+        console.log('   Classes:', modal.className);
+        console.log('   Display:', window.getComputedStyle(modal).display);
+        console.log('   Visibility:', window.getComputedStyle(modal).visibility);
+    } else {
+        console.error('❌ ERRO CRÍTICO: Modal não encontrado!');
+        alert('ERRO: Modal de oferta não encontrado. Recarregue a página.');
+    }
+}
+
+// Hide offer popup - VERSÃO FORÇADA
+function hideOfferPopup() {
+    const modal = document.getElementById('offer-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        console.log('✅ Popup de oferta fechado');
+    }
+}
+
 // Load video configuration
 async function loadVideoEmbed() {
     try {
@@ -272,8 +376,12 @@ async function loadVideoEmbed() {
 (async function() {
     // Aguardar um pouco para garantir que tudo carregou
     await new Promise(resolve => setTimeout(resolve, 1000));
+    await loadOfferConfig(); // Carregar configuração de oferta
     await loadVideoEmbed();
     await checkWinnerStatus();
+    
+    console.log('✅ Sistema carregado completamente');
+    console.log('💡 Funções disponíveis: testOffer(), debugWinner()');
 })();
 
 // Listen for admin winner confirmations (same tab)
@@ -374,7 +482,58 @@ setTimeout(() => {
     if (closeBtn) {
         closeBtn.addEventListener('click', hideWinnerModal);
     }
+    
+    // Offer popup close buttons
+    const offerCloseX = document.getElementById('offer-close-btn');
+    const offerCloseBottom = document.getElementById('offer-close-bottom-btn');
+    if (offerCloseX) {
+        offerCloseX.addEventListener('click', hideOfferPopup);
+        console.log('✅ Botão X de fechar oferta configurado');
+    }
+    if (offerCloseBottom) {
+        offerCloseBottom.addEventListener('click', hideOfferPopup);
+        console.log('✅ Botão inferior de fechar oferta configurado');
+    }
 }, 100);
+
+// Configurar listeners ANTES de tudo (garantir que estão prontos)
+(function() {
+    // Listen for offer popup events (mesma aba) - MÚLTIPLOS LISTENERS
+    const handler1 = async function(e) {
+        console.log('========================================');
+        console.log('🔥🔥🔥 EVENTO SHOW-OFFER-POPUP RECEBIDO! 🔥🔥🔥');
+        console.log('Detalhes:', e.detail);
+        console.log('========================================');
+        await showOfferPopup();
+    };
+    window.addEventListener('show-offer-popup', handler1);
+    document.addEventListener('show-offer-popup', handler1); // Backup
+
+    // Listen for BroadcastChannel offer popup (outras abas)
+    try {
+        const offerChannel = new BroadcastChannel('offer-popup');
+        offerChannel.addEventListener('message', async function(e) {
+            if (e.data && e.data.type === 'show-offer') {
+                console.log('========================================');
+                console.log('🔥🔥🔥 BROADCASTCHANNEL: MOSTRAR OFERTA! 🔥🔥🔥');
+                console.log('Dados:', e.data);
+                console.log('========================================');
+                await showOfferPopup();
+            }
+        });
+        console.log('✅ BroadcastChannel de oferta configurado e pronto');
+    } catch (e) {
+        console.warn('❌ BroadcastChannel de oferta não disponível:', e);
+    }
+    
+    console.log('✅ Listeners de oferta configurados');
+})();
+
+// Função global para testar manualmente
+window.testOffer = async function() {
+    console.log('🧪 Testando popup de oferta manualmente...');
+    await showOfferPopup();
+};
 
 // Timer functionality
 let streamStartTime = Date.now();

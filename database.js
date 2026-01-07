@@ -454,6 +454,92 @@ async function getVideoConfig() {
     }
 }
 
+// Salvar configurações de popup de oferta
+async function saveOfferConfig(config) {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            localStorage.setItem('admin_offer_config', JSON.stringify(config));
+            return true;
+        }
+
+        const { error } = await db
+            .from('configuracoes')
+            .upsert({
+                id: 5,
+                tipo: 'oferta',
+                dados: config,
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Erro ao salvar configuração de oferta:', error);
+        localStorage.setItem('admin_offer_config', JSON.stringify(config));
+        return false;
+    }
+}
+
+// Buscar configurações de popup de oferta
+async function getOfferConfig() {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            const defaultConfig = {
+                icon: '🔥',
+                titulo: 'Oferta Especial',
+                subtitulo: 'Aproveite Agora!',
+                mensagem: 'Não perca esta oportunidade única!',
+                detalhes: 'Confira nossa oferta especial!',
+                ctaTexto: 'Quero Aproveitar',
+                ctaLink: '#'
+            };
+            return JSON.parse(localStorage.getItem('admin_offer_config') || JSON.stringify(defaultConfig));
+        }
+
+        const { data, error } = await db
+            .from('configuracoes')
+            .select('*')
+            .eq('tipo', 'oferta')
+            .maybeSingle();
+
+        if (error) {
+            if (error.code !== 'PGRST116') {
+                console.warn('Aviso ao buscar configuração de oferta:', error);
+            }
+        }
+        
+        if (data?.dados) {
+            return data.dados;
+        }
+        
+        // Retornar configuração padrão se não existir
+        const defaultConfig = {
+            icon: '🔥',
+            titulo: 'Oferta Especial',
+            subtitulo: 'Aproveite Agora!',
+            mensagem: 'Não perca esta oportunidade única!',
+            detalhes: 'Confira nossa oferta especial!',
+            ctaTexto: 'Quero Aproveitar',
+            ctaLink: '#'
+        };
+        return defaultConfig;
+    } catch (error) {
+        console.error('Erro ao buscar configuração de oferta:', error);
+        const defaultConfig = {
+            icon: '🔥',
+            titulo: 'Oferta Especial',
+            subtitulo: 'Aproveite Agora!',
+            mensagem: 'Não perca esta oportunidade única!',
+            detalhes: 'Confira nossa oferta especial!',
+            ctaTexto: 'Quero Aproveitar',
+            ctaLink: '#'
+        };
+        return JSON.parse(localStorage.getItem('admin_offer_config') || JSON.stringify(defaultConfig));
+    }
+}
+
 // Salvar configurações de mensagem de ganhador
 async function saveWinnerMessageConfig(config) {
     try {

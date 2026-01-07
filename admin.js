@@ -138,10 +138,10 @@ function initializeEventListeners() {
         });
     }
     
-    // Participantes e Ganhadores
+    // Participantes - busca
     const searchInput = document.getElementById('search-participante');
     if (searchInput) {
-        searchInput.addEventListener('input', filterGanhadores);
+        searchInput.addEventListener('input', filterParticipantes);
     }
     
     // Refresh participantes button
@@ -151,28 +151,30 @@ function initializeEventListeners() {
             refreshBtn.disabled = true;
             refreshBtn.textContent = '🔄 Atualizando...';
             
-            // Verificar qual seção está ativa
-            const activeSection = document.querySelector('.content-section.active');
-            if (activeSection && activeSection.id === 'sorteio-section') {
-                await loadGanhadores(); // Se estiver na aba de sorteio, carrega com checkboxes
-            } else {
-                await loadParticipantes(); // Caso contrário, carrega visualização simples
-            }
+            // Sempre carregar visualização simples (sem checkboxes)
+            await loadParticipantes();
             
             refreshBtn.disabled = false;
             refreshBtn.textContent = '🔄 Atualizar';
         });
     }
     
-    const confirmBtn = document.getElementById('confirm-winners-btn');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', confirmWinners);
-    }
-    
     // Salvar mensagem de ganhador
     const saveWinnerMessageBtn = document.getElementById('save-winner-message-btn');
     if (saveWinnerMessageBtn) {
         saveWinnerMessageBtn.addEventListener('click', saveWinnerMessage);
+    }
+    
+    // Disparar popup de oferta
+    const triggerOfferBtn = document.getElementById('trigger-offer-btn');
+    if (triggerOfferBtn) {
+        triggerOfferBtn.addEventListener('click', triggerOfferPopup);
+    }
+    
+    // Salvar oferta
+    const saveOfferBtn = document.getElementById('save-offer-btn');
+    if (saveOfferBtn) {
+        saveOfferBtn.addEventListener('click', saveOfferConfigHandler);
     }
     
     // Salvar vídeo
@@ -210,10 +212,11 @@ async function switchSection(section) {
     
     // Load data when switching to specific sections
     if (section === 'sorteio') {
-        await loadGanhadores(); // Carrega participantes com checkboxes para selecionar ganhadores
+        await loadParticipantes(); // Carrega participantes apenas para visualização
         await loadWinnerMessage(); // Carrega mensagem de ganhador
     }
     if (section === 'oferta') {
+        await loadOfferConfig(); // Carrega configuração de oferta
         await loadVideoConfig(); // Carrega configuração de vídeo
     }
 }
@@ -686,7 +689,7 @@ async function loadGanhadores() {
     }
 }
 
-function filterGanhadores() {
+function filterParticipantes() {
     const search = document.getElementById('search-participante').value.toLowerCase();
     const items = document.querySelectorAll('.participante-item');
     
@@ -848,7 +851,50 @@ async function confirmWinners() {
                 console.warn('Erro ao criar StorageEvent timestamp:', e);
             }
             
-            // 5. Log final para debug
+            // 5. DISPARAR POPUP DE OFERTA PARA TODOS OS USUÁRIOS
+            console.log('========================================');
+            console.log('🔥 DISPARANDO POPUP DE OFERTA PARA TODOS! 🔥');
+            console.log('========================================');
+            
+            // Disparar evento customizado para popup de oferta (mesma aba) - IMEDIATAMENTE
+            const offerEvent = new CustomEvent('show-offer-popup', { 
+                detail: { timestamp: timestamp, force: true } 
+            });
+            window.dispatchEvent(offerEvent);
+            console.log('📢 Evento show-offer-popup disparado (mesma aba)');
+            
+            // BroadcastChannel (outras abas)
+            try {
+                const offerChannel = new BroadcastChannel('offer-popup');
+                offerChannel.postMessage({
+                    type: 'show-offer',
+                    timestamp: timestamp,
+                    action: 'show-now',
+                    force: true
+                });
+                console.log('📢 Popup de oferta disparado via BroadcastChannel (outras abas)!');
+            } catch (e) {
+                console.warn('❌ Erro ao disparar popup de oferta via BroadcastChannel:', e);
+            }
+            
+            // Backup: disparar novamente após 300ms
+            setTimeout(() => {
+                console.log('🔄 Backup: Disparando popup de oferta novamente...');
+                window.dispatchEvent(new CustomEvent('show-offer-popup', { 
+                    detail: { timestamp: timestamp, force: true } 
+                }));
+                try {
+                    const offerChannel = new BroadcastChannel('offer-popup');
+                    offerChannel.postMessage({
+                        type: 'show-offer',
+                        timestamp: timestamp,
+                        action: 'show-now',
+                        force: true
+                    });
+                } catch (e) {}
+            }, 300);
+            
+            // 6. Log final para debug
             console.log('========================================');
             console.log('✅ GANHADORES CONFIRMADOS:');
             normalizedWinners.forEach((w, idx) => {
@@ -867,7 +913,7 @@ async function confirmWinners() {
                 window.dispatchEvent(backupEvent);
             }, 500);
             
-            alert(`✅ Ganhadores confirmados!\n\n${normalizedWinners.length} ganhador(es) verão a notificação AGORA!\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}\n\n💡 Dica: Se não aparecer, abra o console (F12) na aba do webinar e execute: debugWinner()`);
+            alert(`✅ Ganhadores confirmados!\n\n${normalizedWinners.length} ganhador(es) verão a notificação AGORA!\n\nO popup de oferta aparecerá para TODOS os usuários no site!\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}\n\n💡 Dica: Se não aparecer, abra o console (F12) na aba do webinar e execute: debugWinner()`);
         } else {
             alert('⚠️ Erro ao salvar ganhadores. Tente novamente.');
         }
@@ -1021,6 +1067,96 @@ async function loadVideoConfig() {
         }
     } catch (error) {
         console.error('Erro ao carregar configuração de vídeo:', error);
+    }
+}
+
+// Disparar popup de oferta para todos - VERSÃO SIMPLIFICADA E FORÇADA
+async function triggerOfferPopup() {
+    if (!confirm('🔥 Disparar popup de oferta para TODOS os usuários no site agora?')) {
+        return;
+    }
+    
+    console.log('🔥🔥🔥 DISPARANDO POPUP PARA TODOS! 🔥🔥🔥');
+    
+    const timestamp = Date.now();
+    
+    // Disparar na mesma aba - IMEDIATAMENTE
+    const offerEvent = new CustomEvent('show-offer-popup', { 
+        detail: { timestamp: timestamp, force: true } 
+    });
+    window.dispatchEvent(offerEvent);
+    console.log('✅ Evento disparado na mesma aba');
+    
+    // BroadcastChannel para outras abas
+    try {
+        const channel = new BroadcastChannel('offer-popup');
+        channel.postMessage({
+            type: 'show-offer',
+            timestamp: timestamp,
+            force: true
+        });
+        console.log('✅ Evento disparado via BroadcastChannel');
+    } catch (e) {
+        console.warn('BroadcastChannel erro:', e);
+    }
+    
+    // FORÇAR EXIBIÇÃO IMEDIATA (backup múltiplo)
+    setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('show-offer-popup', { 
+            detail: { timestamp: Date.now(), force: true } 
+        }));
+    }, 100);
+    
+    setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('show-offer-popup', { 
+            detail: { timestamp: Date.now(), force: true } 
+        }));
+    }, 500);
+    
+    alert('✅ Popup disparado!\n\nVerifique o console (F12) na aba do webinar.\n\nSe não aparecer, execute no console: testOffer()');
+}
+
+// Configuração de Oferta
+async function loadOfferConfig() {
+    try {
+        const config = await getOfferConfig();
+        
+        const iconEl = document.getElementById('offer-icon-input');
+        const titleEl = document.getElementById('offer-title-input');
+        const subtitleEl = document.getElementById('offer-subtitle-input');
+        const messageEl = document.getElementById('offer-message-input');
+        const detailsEl = document.getElementById('offer-details-input');
+        const ctaTextEl = document.getElementById('offer-cta-text-input');
+        const ctaLinkEl = document.getElementById('offer-cta-link-input');
+        
+        if (iconEl) iconEl.value = config.icon || '🔥';
+        if (titleEl) titleEl.value = config.titulo || 'Oferta Especial';
+        if (subtitleEl) subtitleEl.value = config.subtitulo || 'Aproveite Agora!';
+        if (messageEl) messageEl.value = config.mensagem || 'Não perca esta oportunidade única!';
+        if (detailsEl) detailsEl.value = config.detalhes || 'Confira nossa oferta especial!';
+        if (ctaTextEl) ctaTextEl.value = config.ctaTexto || 'Quero Aproveitar';
+        if (ctaLinkEl) ctaLinkEl.value = config.ctaLink || '#';
+    } catch (error) {
+        console.error('Erro ao carregar configuração de oferta:', error);
+    }
+}
+
+async function saveOfferConfigHandler() {
+    const config = {
+        icon: document.getElementById('offer-icon-input').value.trim() || '🔥',
+        titulo: document.getElementById('offer-title-input').value.trim() || 'Oferta Especial',
+        subtitulo: document.getElementById('offer-subtitle-input').value.trim() || 'Aproveite Agora!',
+        mensagem: document.getElementById('offer-message-input').value.trim() || 'Não perca esta oportunidade única!',
+        detalhes: document.getElementById('offer-details-input').value.trim() || 'Confira nossa oferta especial!',
+        ctaTexto: document.getElementById('offer-cta-text-input').value.trim() || 'Quero Aproveitar',
+        ctaLink: document.getElementById('offer-cta-link-input').value.trim() || '#'
+    };
+    
+    const success = await saveOfferConfig(config);
+    if (success) {
+        alert('✅ Configuração de oferta salva com sucesso!');
+    } else {
+        alert('⚠️ Erro ao salvar configuração. Tente novamente.');
     }
 }
 

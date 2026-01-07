@@ -129,12 +129,6 @@
                             <!-- Lista será preenchida dinamicamente -->
                         </div>
 
-                        <div class="selected-winners">
-                            <h3>Ganhadores Selecionados:</h3>
-                            <div id="winners-list"></div>
-                            <button id="confirm-winners-btn" class="confirm-btn">Confirmar Ganhadores</button>
-                        </div>
-
                         <!-- Editor de Mensagem de Ganhador -->
                         <div class="action-card" style="margin-top: 30px;">
                             <div class="action-header">
@@ -255,21 +249,74 @@
             <!-- Seção Oferta -->
             <section id="oferta-section" class="content-section">
                 <div class="section-content">
-                    <h2>Configurar Vídeo</h2>
+                    <h2>Popup de Oferta</h2>
+                    
+                    <!-- Botão para Disparar Oferta -->
+                    <div class="action-card" style="margin-bottom: 30px;">
+                        <div class="action-header">
+                            <h3>Disparar Popup de Oferta</h3>
+                            <p class="action-description">Dispara o popup de oferta para TODOS os usuários que estão no site agora</p>
+                        </div>
+                        <div class="action-controls" style="justify-content: center; margin-top: 20px;">
+                            <button id="trigger-offer-btn" class="disparar-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 40px; font-size: 18px;">
+                                🔥 Disparar Oferta Agora
+                            </button>
+                        </div>
+                    </div>
+
+                    <h2>Configurar Popup de Oferta</h2>
+                    <p class="action-description" style="margin-bottom: 20px; color: #666;">
+                        Personalize o popup de oferta que será exibido para todos os usuários
+                    </p>
                     <div class="editor-form">
                         <div class="form-group">
-                            <label>Código Embed do Vídeo</label>
-                            <p style="color: #666; font-size: 12px; margin-bottom: 10px;">
-                                Cole aqui o código embed completo (iframe) do YouTube, Vimeo ou outra plataforma.
-                                <br>Exemplo: &lt;iframe src="https://www.youtube.com/embed/VIDEO_ID"&gt;&lt;/iframe&gt;
-                            </p>
-                            <textarea 
-                                id="video-embed-code" 
-                                rows="6" 
-                                placeholder='<iframe src="https://www.youtube.com/embed/VIDEO_ID?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
-                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 12px; resize: vertical;"></textarea>
+                            <label>Ícone (emoji)</label>
+                            <input type="text" id="offer-icon-input" placeholder="🔥" maxlength="2">
                         </div>
-                        <button id="save-video-btn" class="save-btn">Salvar Vídeo</button>
+                        <div class="form-group">
+                            <label>Título Principal</label>
+                            <input type="text" id="offer-title-input" placeholder="Ex: Oferta Especial">
+                        </div>
+                        <div class="form-group">
+                            <label>Subtítulo</label>
+                            <input type="text" id="offer-subtitle-input" placeholder="Ex: Aproveite Agora!">
+                        </div>
+                        <div class="form-group">
+                            <label>Mensagem Principal</label>
+                            <textarea id="offer-message-input" rows="3" placeholder="Ex: Não perca esta oportunidade única!"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Detalhes/Descrição</label>
+                            <textarea id="offer-details-input" rows="2" placeholder="Ex: Confira nossa oferta especial!"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Texto do Botão CTA</label>
+                            <input type="text" id="offer-cta-text-input" placeholder="Ex: Quero Aproveitar">
+                        </div>
+                        <div class="form-group">
+                            <label>Link do Botão CTA</label>
+                            <input type="url" id="offer-cta-link-input" placeholder="https://exemplo.com/oferta">
+                        </div>
+                        <button id="save-offer-btn" class="save-btn">Salvar Oferta</button>
+                    </div>
+
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <h2>Configurar Vídeo</h2>
+                        <div class="editor-form">
+                            <div class="form-group">
+                                <label>Código Embed do Vídeo</label>
+                                <p style="color: #666; font-size: 12px; margin-bottom: 10px;">
+                                    Cole aqui o código embed completo (iframe) do YouTube, Vimeo ou outra plataforma.
+                                    <br>Exemplo: &lt;iframe src="https://www.youtube.com/embed/VIDEO_ID"&gt;&lt;/iframe&gt;
+                                </p>
+                                <textarea 
+                                    id="video-embed-code" 
+                                    rows="6" 
+                                    placeholder='<iframe src="https://www.youtube.com/embed/VIDEO_ID?autoplay=1&mute=0&controls=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 12px; resize: vertical;"></textarea>
+                            </div>
+                            <button id="save-video-btn" class="save-btn">Salvar Vídeo</button>
+                        </div>
                     </div>
                 </div>
             </section>
