@@ -18,17 +18,21 @@ if (greetingElement) {
     greetingElement.textContent = `Olá, ${userName}`;
 }
 
-// Check if user is a winner
-function checkIfWinner() {
-    const winners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
+// Check if user is a winner (wrapper function)
+async function checkIfWinnerWrapper() {
     if (!userPhone) return false;
     
-    // Normalize phone numbers for comparison
-    const userPhoneNormalized = userPhone.replace(/\D/g, '');
-    return winners.some(winner => {
-        const winnerPhoneNormalized = winner.celular.replace(/\D/g, '');
-        return winnerPhoneNormalized === userPhoneNormalized;
-    });
+    try {
+        return await checkIfWinner(userPhone);
+    } catch (error) {
+        // Fallback para localStorage
+        const winners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
+        const userPhoneNormalized = userPhone.replace(/\D/g, '');
+        return winners.some(winner => {
+            const winnerPhoneNormalized = (winner.celular || '').replace(/\D/g, '');
+            return winnerPhoneNormalized === userPhoneNormalized;
+        });
+    }
 }
 
 // Show winner modal
@@ -48,8 +52,9 @@ function hideWinnerModal() {
 }
 
 // Check for winners periodically and on load
-function checkWinnerStatus() {
-    if (checkIfWinner()) {
+async function checkWinnerStatus() {
+    const isWinner = await checkIfWinnerWrapper();
+    if (isWinner) {
         // Check if already shown
         const alreadyShown = localStorage.getItem('winner_shown_' + userPhone);
         if (!alreadyShown) {
@@ -59,8 +64,10 @@ function checkWinnerStatus() {
     }
 }
 
-// Check on page load
-checkWinnerStatus();
+// Check on page load (async)
+(async function() {
+    await checkWinnerStatus();
+})();
 
 // Listen for admin winner confirmations
 window.addEventListener('storage', function(e) {
@@ -70,7 +77,9 @@ window.addEventListener('storage', function(e) {
 });
 
 // Also check periodically (in case of same-tab updates)
-setInterval(checkWinnerStatus, 2000);
+setInterval(async () => {
+    await checkWinnerStatus();
+}, 2000);
 
 // Close button - attach event listener
 setTimeout(() => {

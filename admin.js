@@ -38,9 +38,9 @@ function initializeEventListeners() {
     
     // Navigation Tabs
     document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
+        tab.addEventListener('click', async function() {
             const section = this.getAttribute('data-section');
-            switchSection(section);
+            await switchSection(section);
             
             // Update active nav
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -82,7 +82,7 @@ function initializeEventListeners() {
     }
     
     // Carregar comentários no editor
-    loadComentariosEditor();
+    (async () => await loadComentariosEditor())();
     
     // Save Form
     const saveFormBtn = document.getElementById('save-form-btn');
@@ -139,7 +139,7 @@ function handleLogin() {
     }
 }
 
-function switchSection(section) {
+async function switchSection(section) {
     document.querySelectorAll('.content-section').forEach(sec => {
         sec.classList.remove('active');
     });
@@ -150,8 +150,8 @@ function switchSection(section) {
     
     // Load data when switching to specific sections
     if (section === 'sorteio') {
-        loadParticipantes();
-        loadGanhadores();
+        await loadParticipantes();
+        await loadGanhadores();
     }
 }
 
@@ -197,12 +197,12 @@ function getUniqueRandomName(participantes) {
 }
 
 // Disparar Comentários
-function dispararComentarios(type) {
+async function dispararComentarios(type) {
     const inputId = type === 'tristes' ? 'qtd-tristes' : 'qtd-animacao';
     const quantity = parseInt(document.getElementById(inputId).value) || 1;
     
-    // Get comments from localStorage
-    const comentarios = JSON.parse(localStorage.getItem('admin_comentarios') || '{}');
+    // Get comments from database
+    const comentarios = await getComments();
     
     let messagesToSend = [];
     
@@ -247,7 +247,7 @@ function dispararComentarios(type) {
     
     // Trigger messages in webinar (store in localStorage for webinar to read)
     const messages = [];
-    const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+    const participantes = await getAllParticipants();
     
     // Shuffle messages to send
     const shuffledMessages = [...messagesToSend].sort(() => Math.random() - 0.5);
@@ -288,8 +288,8 @@ function limparChat() {
 }
 
 // Form Editor
-function loadFormData() {
-    const formData = JSON.parse(localStorage.getItem('admin_form_data') || '{}');
+async function loadFormData() {
+    const formData = await getFormConfig();
     const titleEl = document.getElementById('form-title');
     const subtitleEl = document.getElementById('form-subtitle');
     const highlightTitleEl = document.getElementById('form-highlight-title');
@@ -428,9 +428,9 @@ window.removeFile = function() {
     localStorage.setItem('admin_form_data', JSON.stringify(formData));
 };
 
-function saveFormData() {
+async function saveFormData() {
     // Get existing formData to preserve images and files
-    const existingData = JSON.parse(localStorage.getItem('admin_form_data') || '{}');
+    const existingData = await getFormConfig();
     
     const formData = {
         title: document.getElementById('form-title').value,
@@ -444,13 +444,13 @@ function saveFormData() {
         file: existingData.file || null
     };
     
-    localStorage.setItem('admin_form_data', JSON.stringify(formData));
+    await saveFormConfig(formData);
     alert('Formulário salvo com sucesso! As alterações serão aplicadas na homepage.');
 }
 
 // Participantes
-function loadParticipantes() {
-    const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+async function loadParticipantes() {
+    const participantes = await getAllParticipants();
     
     const totalEl = document.getElementById('total-participantes');
     const hojeEl = document.getElementById('hoje-participantes');
@@ -495,9 +495,9 @@ function formatDate(dateString) {
 }
 
 // Ganhadores
-function loadGanhadores() {
-    const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
-    const winners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
+async function loadGanhadores() {
+    const participantes = await getAllParticipants();
+    const winners = await getWinners();
     
     const container = document.getElementById('participantes-list');
     if (!container) return;
@@ -593,17 +593,16 @@ window.removeWinner = function(index) {
     updateSelectedWinners();
 };
 
-function confirmWinners() {
+async function confirmWinners() {
     if (selectedWinners.length === 0) {
         alert('Selecione pelo menos um ganhador!');
         return;
     }
     
     if (confirm(`Confirmar ${selectedWinners.length} ganhador(es) do sorteio?`)) {
-        localStorage.setItem('webinar_winners', JSON.stringify(selectedWinners));
+        await saveWinners(selectedWinners);
         
         // Force a storage event to trigger in all tabs
-        // We'll use a timestamp to force the event
         localStorage.setItem('webinar_winners_timestamp', Date.now().toString());
         
         // Small delay to ensure storage is set
@@ -631,8 +630,8 @@ function switchComentariosTab(tabType) {
     if (panel) panel.classList.add('active');
 }
 
-function loadComentariosEditor() {
-    const comentarios = JSON.parse(localStorage.getItem('admin_comentarios') || '{}');
+async function loadComentariosEditor() {
+    const comentarios = await getComments();
     
     const animacao = comentarios.animacao || [
         'Que sorteio incrível! Quero muito ganhar esse iPhone!',
@@ -705,12 +704,12 @@ function saveComentariosToStorage(type, comentarios) {
     localStorage.setItem('admin_comentarios', JSON.stringify(allComentarios));
 }
 
-function saveComentariosEditor() {
+async function saveComentariosEditor() {
     const comentarios = {
         animacao: getComentariosByTypeEditor('animacao'),
         tristes: getComentariosByTypeEditor('tristes')
     };
     
-    localStorage.setItem('admin_comentarios', JSON.stringify(comentarios));
+    await saveComments(comentarios);
     alert('Comentários salvos com sucesso!');
 }

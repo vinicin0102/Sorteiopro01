@@ -1,4 +1,4 @@
-# Sistema de Webinar e Sorteio - iPhone
+# Sistema de Webinar e Sorteio - iPhone 🎉
 
 Sistema completo de webinar com página de inscrição, transmissão ao vivo com chat, e painel administrativo para gerenciar sorteio de iPhone.
 
