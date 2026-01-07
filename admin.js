@@ -2,11 +2,29 @@
 const ADMIN_PASSWORD = 'admin123'; // Mude esta senha!
 
 // Initialize
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     checkLogin();
+    
+    // Aguardar Supabase carregar
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     initializeEventListeners();
-    loadFormData();
-    loadParticipantes();
+    await loadFormData();
+    await loadParticipantes();
+    
+    // Carregar comentários (não precisa async)
+    if (typeof loadComentariosEditor === 'function') {
+        loadComentariosEditor();
+    }
+    
+    // Adicionar debug
+    console.log('Admin inicializado');
+    const db = await getSupabase();
+    if (db) {
+        console.log('✅ Supabase conectado no admin');
+    } else {
+        console.warn('⚠️ Supabase não conectado no admin - usando localStorage');
+    }
 });
 
 // Login Functions
