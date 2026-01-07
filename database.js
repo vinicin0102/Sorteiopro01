@@ -60,11 +60,21 @@ async function saveParticipant(nome, celular) {
             .single();
 
         if (error) throw error;
-        return data;
+        
+        // Retornar objeto formatado
+        return {
+            nome: data.nome,
+            celular: data.celular,
+            created_at: data.created_at,
+            timestamp: data.created_at,
+            device: data.device,
+            id: data.id
+        };
     } catch (error) {
         console.error('Erro ao salvar participante:', error);
-        // Fallback para localStorage
-        return saveParticipantLocalStorage(nome, celular);
+        // Fallback para localStorage - sempre retorna algo
+        const fallback = saveParticipantLocalStorage(nome, celular);
+        return fallback;
     }
 }
 

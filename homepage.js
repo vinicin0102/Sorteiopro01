@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Form submission
     const form = document.getElementById('registration-form');
     
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const nome = document.getElementById('nome').value.trim();
@@ -87,8 +87,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // Save to localStorage for current session
             localStorage.setItem('webinar_registration', JSON.stringify({
-                nome: participant.nome,
-                celular: participant.celular,
+                nome: participant.nome || nome,
+                celular: participant.celular || celular,
                 timestamp: participant.created_at || participant.timestamp || new Date().toISOString(),
                 device: participant.device || (/Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop')
             }));
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }, 1000);
         } catch (error) {
             console.error('Erro ao salvar:', error);
-            alert('Erro ao salvar. Tente novamente.');
+            alert('Erro ao salvar. Tente novamente ou verifique sua conexão.');
             submitButton.disabled = false;
             submitButton.textContent = 'Garantir Minha Vaga';
         }
