@@ -573,11 +573,33 @@ setTimeout(() => {
     console.log('✅ Listeners de oferta configurados');
 })();
 
-// Função global para testar manualmente
+// Função global para testar manualmente - MÚLTIPLAS VERSÕES
 window.testOffer = async function() {
-    console.log('🧪 Testando popup de oferta manualmente...');
+    console.log('🧪🧪🧪 TESTANDO POPUP DE OFERTA MANUALMENTE... 🧪🧪🧪');
     await showOfferPopup();
 };
+
+// Versão alternativa (caso a primeira não funcione)
+window.showOffer = async function() {
+    console.log('🔥 FORÇANDO POPUP DE OFERTA...');
+    await showOfferPopup();
+};
+
+// Versão ainda mais simples
+window.popup = async function() {
+    const modal = document.getElementById('offer-modal');
+    if (modal) {
+        modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0, 0, 0, 0.85) !important;';
+        console.log('✅ Popup forçado via popup()');
+    } else {
+        console.error('❌ Modal não encontrado!');
+    }
+};
+
+console.log('%c🔧 FUNÇÕES DE TESTE DISPONÍVEIS:', 'color: #667eea; font-weight: bold; font-size: 14px;');
+console.log('• testOffer() - Testa popup de oferta');
+console.log('• showOffer() - Força popup de oferta');
+console.log('• popup() - Versão ultra simples');
 
 // Timer functionality
 let streamStartTime = Date.now();
