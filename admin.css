@@ -380,6 +380,14 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 15px;
+}
+
+.winner-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
 }
 
 .participante-item:last-child {

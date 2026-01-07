@@ -150,7 +150,15 @@ function initializeEventListeners() {
         refreshBtn.addEventListener('click', async () => {
             refreshBtn.disabled = true;
             refreshBtn.textContent = '🔄 Atualizando...';
-            await loadParticipantes();
+            
+            // Verificar qual seção está ativa
+            const activeSection = document.querySelector('.content-section.active');
+            if (activeSection && activeSection.id === 'sorteio-section') {
+                await loadGanhadores(); // Se estiver na aba de sorteio, carrega com checkboxes
+            } else {
+                await loadParticipantes(); // Caso contrário, carrega visualização simples
+            }
+            
             refreshBtn.disabled = false;
             refreshBtn.textContent = '🔄 Atualizar';
         });
@@ -187,8 +195,7 @@ async function switchSection(section) {
     
     // Load data when switching to specific sections
     if (section === 'sorteio') {
-        await loadParticipantes();
-        // loadGanhadores será chamado quando necessário
+        await loadGanhadores(); // Carrega participantes com checkboxes para selecionar ganhadores
     }
 }
 
@@ -485,10 +492,14 @@ async function saveFormData() {
     alert('Formulário salvo com sucesso! As alterações serão aplicadas na homepage.');
 }
 
-// Participantes
+// Armazenar participantes globalmente para uso em outras funções
+let globalParticipants = [];
+
+// Participantes (para visualização simples - sem checkboxes)
 async function loadParticipantes() {
     try {
         const participantes = await getAllParticipants();
+        globalParticipants = participantes; // Salvar globalmente
         
         // Normalizar dados (Supabase usa created_at, localStorage usa timestamp)
         const normalized = participantes.map(p => ({
@@ -566,19 +577,36 @@ function formatDate(dateString) {
     }
 }
 
-// Ganhadores
+// Ganhadores - Lista com checkboxes para selecionar
 async function loadGanhadores() {
     try {
         const participantes = await getAllParticipants();
-        const winners = await getWinners();
+        globalParticipants = participantes; // Salvar globalmente
         
+        // Atualizar estatísticas
+        const totalEl = document.getElementById('total-participantes');
+        const hojeEl = document.getElementById('hoje-participantes');
+        
+        if (totalEl) totalEl.textContent = participantes.length;
+        
+        if (hojeEl) {
+            const today = new Date().toDateString();
+            const hoje = participantes.filter(p => {
+                const dateStr = p.created_at || p.timestamp;
+                if (!dateStr) return false;
+                return new Date(dateStr).toDateString() === today;
+            }).length;
+            hojeEl.textContent = hoje;
+        }
+        
+        const winners = await getWinners();
         const container = document.getElementById('participantes-list');
         if (!container) return;
         
         container.innerHTML = '';
         
         if (participantes.length === 0) {
-            container.innerHTML = '<p>Nenhum participante disponível.</p>';
+            container.innerHTML = '<div class="participante-item"><p>Nenhum participante disponível.</p></div>';
             return;
         }
         
@@ -586,8 +614,16 @@ async function loadGanhadores() {
         const normalized = participantes.map(p => ({
             ...p,
             celular: p.celular || '',
-            timestamp: p.created_at || p.timestamp || new Date().toISOString()
+            timestamp: p.created_at || p.timestamp || new Date().toISOString(),
+            device: p.device || 'desktop'
         }));
+        
+        // Ordenar por data mais recente
+        normalized.sort((a, b) => {
+            const dateA = new Date(a.created_at || a.timestamp || 0);
+            const dateB = new Date(b.created_at || b.timestamp || 0);
+            return dateB - dateA;
+        });
         
         normalized.forEach((participante, index) => {
             const participantPhone = (participante.celular || '').replace(/\D/g, '');
@@ -599,25 +635,35 @@ async function loadGanhadores() {
             const item = document.createElement('div');
             item.className = 'participante-item';
             const deviceIcon = participante.device === 'mobile' ? '📱' : '💻';
+            const dateStr = formatDate(participante.created_at || participante.timestamp);
+            const uniqueId = `winner-${index}-${participantPhone}`;
             
             item.innerHTML = `
-                <div class="participante-info">
+                <div class="participante-info" style="flex: 1;">
                     <h4>${participante.nome} ${deviceIcon}</h4>
                     <p>${participante.celular}</p>
+                    <small style="color: #999; font-size: 12px;">${dateStr}</small>
                 </div>
-                <div>
-                    <input type="checkbox" id="winner-${index}" data-index="${index}" ${isWinner ? 'checked' : ''}>
-                    <label for="winner-${index}">Ganhador</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="${uniqueId}" data-index="${index}" class="winner-checkbox" ${isWinner ? 'checked' : ''}>
+                    <label for="${uniqueId}" style="cursor: pointer; margin: 0;">Selecionar</label>
                 </div>
             `;
             
-            item.querySelector('input').addEventListener('change', updateSelectedWinners);
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', updateSelectedWinners);
             container.appendChild(item);
         });
         
+        // Atualizar lista de selecionados
         updateSelectedWinners();
+        console.log('✅ Ganhadores carregados. Participantes:', normalized.length, 'Ganhadores:', winners.length);
     } catch (error) {
-        console.error('Erro ao carregar ganhadores:', error);
+        console.error('❌ Erro ao carregar ganhadores:', error);
+        const container = document.getElementById('participantes-list');
+        if (container) {
+            container.innerHTML = '<div class="participante-item"><p>Erro ao carregar participantes. Tente atualizar.</p></div>';
+        }
     }
 }
 
@@ -633,14 +679,33 @@ function filterGanhadores() {
 
 let selectedWinners = [];
 
-function updateSelectedWinners() {
-    const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+async function updateSelectedWinners() {
+    // Buscar participantes (pode ser do Supabase ou localStorage)
+    let participantes = globalParticipants;
+    if (participantes.length === 0) {
+        participantes = await getAllParticipants();
+        globalParticipants = participantes;
+    }
+    
+    // Se ainda estiver vazio, usar localStorage como fallback
+    if (participantes.length === 0) {
+        participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+    }
+    
     const checkboxes = document.querySelectorAll('#participantes-list input[type="checkbox"]:checked');
     
     selectedWinners = Array.from(checkboxes).map(cb => {
         const index = parseInt(cb.getAttribute('data-index'));
-        return participantes[index];
-    });
+        if (participantes[index]) {
+            return {
+                id: participantes[index].id || null,
+                nome: participantes[index].nome,
+                celular: participantes[index].celular,
+                device: participantes[index].device || 'desktop'
+            };
+        }
+        return null;
+    }).filter(w => w !== null);
     
     renderSelectedWinners();
 }
@@ -668,19 +733,22 @@ function renderSelectedWinners() {
 }
 
 // Make it globally accessible
-window.removeWinner = function(index) {
-    const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
-    const checkboxes = document.querySelectorAll('#participantes-list input[type="checkbox"]');
+window.removeWinner = async function(index) {
     const winner = selectedWinners[index];
+    if (!winner) return;
     
-    // Uncheck the checkbox
-    participantes.forEach((p, i) => {
-        if (p.celular === winner.celular) {
-            checkboxes[i].checked = false;
+    const checkboxes = document.querySelectorAll('#participantes-list input[type="checkbox"]');
+    
+    // Encontrar e desmarcar o checkbox correspondente
+    checkboxes.forEach(cb => {
+        const idx = parseInt(cb.getAttribute('data-index'));
+        const participant = globalParticipants[idx];
+        if (participant && (participant.celular || '').replace(/\D/g, '') === (winner.celular || '').replace(/\D/g, '')) {
+            cb.checked = false;
         }
     });
     
-    updateSelectedWinners();
+    await updateSelectedWinners();
 };
 
 async function confirmWinners() {
