@@ -556,13 +556,13 @@ async function getOfferConfig() {
     } catch (error) {
         console.error('Erro ao buscar configuração de oferta:', error);
         const defaultConfig = {
-            icon: '🔥',
-            titulo: 'Oferta Especial',
-            subtitulo: 'Aproveite Agora!',
-            mensagem: 'Não perca esta oportunidade única!',
-            detalhes: 'Confira nossa oferta especial!',
-            ctaTexto: 'Quero Aproveitar',
-            ctaLink: '#'
+            icon: '',
+            titulo: '',
+            subtitulo: '',
+            mensagem: '',
+            detalhes: '',
+            ctaTexto: '',
+            ctaLink: ''
         };
         return JSON.parse(localStorage.getItem('admin_offer_config') || JSON.stringify(defaultConfig));
     }

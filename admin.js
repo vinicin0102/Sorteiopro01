@@ -1402,11 +1402,11 @@ async function saveOfferConfigHandler() {
         titulo: document.getElementById('offer-title-input').value.trim() || '',
         subtitulo: document.getElementById('offer-subtitle-input').value.trim() || '',
         mensagem: document.getElementById('offer-message-input').value.trim() || '',
-        detalhes: document.getElementById('offer-details-input').value.trim() || 'Confira nossa oferta especial!',
-        ctaTexto: document.getElementById('offer-cta-text-input').value.trim() || 'Quero Aproveitar',
+        detalhes: document.getElementById('offer-details-input').value.trim() || '',
+        ctaTexto: document.getElementById('offer-cta-text-input').value.trim() || '',
         ctaLink: (() => {
             const linkValue = document.getElementById('offer-cta-link-input').value.trim();
-            if (!linkValue || linkValue === '#') return '#';
+            if (!linkValue || linkValue === '#') return '';
             return normalizeUrl(linkValue);
         })()
     };
