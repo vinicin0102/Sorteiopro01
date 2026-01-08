@@ -185,19 +185,121 @@ function initializeEventListeners() {
     
     // Carregar mensagem de ganhador ao abrir seção de sorteio
     loadWinnerMessage();
+    
+    // Botão de atualizar logs
+    const refreshLogsBtn = document.getElementById('refresh-logs-btn');
+    if (refreshLogsBtn) {
+        refreshLogsBtn.addEventListener('click', loadAccessLogs);
+    }
 }
 
-function handleLogin() {
+async function handleLogin() {
     const password = document.getElementById('admin-password').value;
     const errorMsg = document.getElementById('login-error');
     
     if (password === ADMIN_PASSWORD) {
+        // Salvar log de acesso bem-sucedido
+        if (typeof saveAdminLoginLog === 'function') {
+            await saveAdminLoginLog(true, null); // Não salvar senha, apenas sucesso
+        }
+        
         localStorage.setItem('admin_logged_in', 'true');
         showAdminPanel();
         errorMsg.classList.remove('show');
+        
+        // Limpar campo de senha
+        document.getElementById('admin-password').value = '';
     } else {
+        // Salvar log de tentativa de acesso falhada
+        if (typeof saveAdminLoginLog === 'function') {
+            await saveAdminLoginLog(false, password ? 'attempted' : null);
+        }
+        
         errorMsg.textContent = 'Senha incorreta!';
         errorMsg.classList.add('show');
+        
+        // Limpar campo de senha após erro
+        document.getElementById('admin-password').value = '';
+    }
+}
+
+// Carregar e exibir logs de acesso
+async function loadAccessLogs() {
+    try {
+        const logsList = document.getElementById('logs-list');
+        const totalLogsEl = document.getElementById('total-logs');
+        const successLogsEl = document.getElementById('success-logs');
+        const failedLogsEl = document.getElementById('failed-logs');
+        
+        if (!logsList) return;
+        
+        logsList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Carregando logs...</p>';
+        
+        let logs = [];
+        if (typeof getAdminLoginLogs === 'function') {
+            logs = await getAdminLoginLogs();
+        } else {
+            // Fallback
+            const stored = localStorage.getItem('admin_login_logs');
+            if (stored) {
+                logs = JSON.parse(stored).reverse();
+            }
+        }
+        
+        // Estatísticas
+        const total = logs.length;
+        const success = logs.filter(l => l.success === true || l.success === 'true').length;
+        const failed = total - success;
+        
+        if (totalLogsEl) totalLogsEl.textContent = total;
+        if (successLogsEl) successLogsEl.textContent = success;
+        if (failedLogsEl) failedLogsEl.textContent = failed;
+        
+        // Exibir logs
+        if (logs.length === 0) {
+            logsList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Nenhum log de acesso encontrado.</p>';
+            return;
+        }
+        
+        logsList.innerHTML = logs.map(log => {
+            const date = new Date(log.timestamp || log.created_at);
+            const formattedDate = date.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const success = log.success === true || log.success === 'true';
+            const device = log.device || 'desktop';
+            const deviceIcon = device === 'mobile' ? '📱' : '💻';
+            
+            return `
+                <div style="padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; ${success ? 'background: #e8f5e9;' : 'background: #ffebee;'}">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                            <span style="font-weight: 600; color: ${success ? '#2e7d32' : '#c62828'};">
+                                ${success ? '✅ Login Bem-sucedido' : '❌ Tentativa Falhada'}
+                            </span>
+                            <span style="color: #666; font-size: 14px;">${deviceIcon} ${device}</span>
+                        </div>
+                        <div style="color: #666; font-size: 13px;">
+                            ${formattedDate}
+                        </div>
+                        ${log.user_agent ? `<div style="color: #999; font-size: 12px; margin-top: 5px; word-break: break-all;">${log.user_agent.substring(0, 100)}${log.user_agent.length > 100 ? '...' : ''}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Erro ao carregar logs:', error);
+        const logsList = document.getElementById('logs-list');
+        if (logsList) {
+            logsList.innerHTML = '<p style="text-align: center; color: #c62828; padding: 20px;">Erro ao carregar logs. Tente novamente.</p>';
+        }
     }
 }
 

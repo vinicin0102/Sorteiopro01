@@ -26,7 +26,7 @@
         <!-- Navigation Tabs -->
         <nav class="nav-tabs">
             <button class="nav-tab active" data-section="comentarios">Comentários</button>
-            <button class="nav-tab" data-section="agendados">Agendados</button>
+            <button class="nav-tab" data-section="logs">Logs de Acesso</button>
             <button class="nav-tab" data-section="sorteio">Sorteio</button>
             <button class="nav-tab" data-section="formulario">Formulário</button>
             <button class="nav-tab" data-section="oferta">Oferta</button>
@@ -94,11 +94,39 @@
                 </div>
             </section>
 
-            <!-- Seção Agendados -->
-            <section id="agendados-section" class="content-section">
+            <!-- Seção Logs de Acesso -->
+            <section id="logs-section" class="content-section">
                 <div class="section-content">
-                    <h2>Comentários Agendados</h2>
-                    <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2>Logs de Acesso ao Painel Admin</h2>
+                        <button id="refresh-logs-btn" class="refresh-btn">🔄 Atualizar</button>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-header">
+                            <h3>Histórico de Acessos</h3>
+                            <p class="action-description">Registro de todos os logins bem-sucedidos e tentativas falhadas</p>
+                        </div>
+                        
+                        <div id="logs-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-box" style="background: #e8f5e9;">
+                                <span class="stat-label">Total de Acessos</span>
+                                <span id="total-logs" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-box" style="background: #c8e6c9;">
+                                <span class="stat-label">Logins Bem-sucedidos</span>
+                                <span id="success-logs" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-box" style="background: #ffcdd2;">
+                                <span class="stat-label">Tentativas Falhadas</span>
+                                <span id="failed-logs" class="stat-value">0</span>
+                            </div>
+                        </div>
+                        
+                        <div id="logs-list" style="max-height: 600px; overflow-y: auto;">
+                            <p style="text-align: center; color: #666; padding: 20px;">Carregando logs...</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 

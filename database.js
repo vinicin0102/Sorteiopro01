@@ -648,3 +648,100 @@ function saveParticipantLocalStorage(nome, celular) {
     return registrationData;
 }
 
+// ============ LOGS DE ACESSO ADMIN ============
+
+// Salvar log de acesso ao admin
+async function saveAdminLoginLog(success, password = null) {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            // Fallback para localStorage
+            return saveAdminLoginLogLocalStorage(success, password);
+        }
+
+        const logData = {
+            success: success,
+            timestamp: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+            device: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+            // Não salvar a senha real por segurança, apenas indicar se foi tentativa
+            attempted: password !== null
+        };
+
+        const { data, error } = await db
+            .from('admin_login_logs')
+            .insert([logData])
+            .select();
+
+        if (error) {
+            console.error('Erro ao salvar log de acesso:', error);
+            // Fallback para localStorage
+            return saveAdminLoginLogLocalStorage(success, password);
+        }
+
+        console.log('✅ Log de acesso salvo:', data);
+        return data;
+    } catch (error) {
+        console.error('Erro ao salvar log de acesso:', error);
+        // Fallback para localStorage
+        return saveAdminLoginLogLocalStorage(success, password);
+    }
+}
+
+// Fallback localStorage para logs de acesso
+function saveAdminLoginLogLocalStorage(success, password = null) {
+    try {
+        const logs = JSON.parse(localStorage.getItem('admin_login_logs') || '[]');
+        const logData = {
+            success: success,
+            timestamp: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+            device: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+            attempted: password !== null
+        };
+        
+        logs.push(logData);
+        // Manter apenas os últimos 100 logs
+        if (logs.length > 100) {
+            logs.shift();
+        }
+        localStorage.setItem('admin_login_logs', JSON.stringify(logs));
+        console.log('✅ Log de acesso salvo no localStorage');
+        return logData;
+    } catch (error) {
+        console.error('Erro ao salvar log no localStorage:', error);
+        return null;
+    }
+}
+
+// Obter logs de acesso
+async function getAdminLoginLogs() {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            // Fallback para localStorage
+            const logs = JSON.parse(localStorage.getItem('admin_login_logs') || '[]');
+            return logs.reverse(); // Mais recentes primeiro
+        }
+
+        const { data, error } = await db
+            .from('admin_login_logs')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(100);
+
+        if (error) {
+            console.error('Erro ao buscar logs de acesso:', error);
+            // Fallback para localStorage
+            const logs = JSON.parse(localStorage.getItem('admin_login_logs') || '[]');
+            return logs.reverse();
+        }
+
+        return data || [];
+    } catch (error) {
+        console.error('Erro ao buscar logs de acesso:', error);
+        const logs = JSON.parse(localStorage.getItem('admin_login_logs') || '[]');
+        return logs.reverse();
+    }
+}
+
