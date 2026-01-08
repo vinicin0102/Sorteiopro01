@@ -677,15 +677,22 @@ let globalParticipants = [];
 // Participantes (para visualização simples - sem checkboxes)
 async function loadParticipantes() {
     try {
+        console.log('🔄 Carregando participantes...');
         const participantes = await getAllParticipants();
+        console.log(`✅ Total de participantes recebidos: ${participantes.length}`);
+        
         globalParticipants = participantes; // Salvar globalmente
         
         // Normalizar dados (Supabase usa created_at, localStorage usa timestamp)
         const normalized = participantes.map(p => ({
             ...p,
+            nome: p.nome || 'Sem nome',
+            celular: p.celular || 'Sem celular',
             timestamp: p.created_at || p.timestamp || new Date().toISOString(),
-            device: p.device || 'desktop'
+            device: p.device || (/Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop')
         }));
+        
+        console.log(`📊 Participantes normalizados: ${normalized.length}`);
         
         const totalEl = document.getElementById('total-participantes');
         const hojeEl = document.getElementById('hoje-participantes');

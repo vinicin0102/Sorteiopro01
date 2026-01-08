@@ -112,28 +112,56 @@ async function saveParticipant(nome, celular) {
 async function getAllParticipants() {
     try {
         const db = await getSupabase();
+        
+        // Sempre buscar do localStorage primeiro (dados mais recentes)
+        const localData = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+        console.log(`Participantes no localStorage: ${localData.length}`);
+        
         if (!db) {
-            console.log('Usando fallback localStorage para participantes');
-            return JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+            console.log('⚠️ Supabase não disponível, usando apenas localStorage');
+            return localData;
         }
 
-        console.log('Buscando participantes do Supabase...');
+        console.log('🔍 Buscando participantes do Supabase...');
         const { data, error } = await db
             .from('participantes')
             .select('*')
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Erro ao buscar participantes do Supabase:', error);
-            throw error;
+            console.error('❌ Erro ao buscar participantes do Supabase:', error);
+            console.log('📦 Usando fallback localStorage...');
+            return localData;
         }
         
-        console.log(`Participantes encontrados no Supabase: ${data?.length || 0}`);
-        return data || [];
+        console.log(`✅ Participantes encontrados no Supabase: ${data?.length || 0}`);
+        
+        // Mesclar dados do Supabase com localStorage (evitar duplicatas)
+        const supabaseData = data || [];
+        const merged = [...supabaseData];
+        
+        // Adicionar participantes do localStorage que não estão no Supabase
+        localData.forEach(localParticipant => {
+            const phoneOnly = (localParticipant.celular || '').replace(/\D/g, '');
+            const exists = merged.some(p => {
+                const pPhone = (p.celular || '').replace(/\D/g, '');
+                return pPhone === phoneOnly;
+            });
+            
+            if (!exists) {
+                console.log(`➕ Adicionando participante do localStorage: ${localParticipant.nome}`);
+                merged.push(localParticipant);
+            }
+        });
+        
+        console.log(`📊 Total de participantes após mesclar: ${merged.length}`);
+        return merged;
     } catch (error) {
-        console.error('Erro ao buscar participantes:', error);
-        console.log('Tentando usar fallback localStorage...');
-        return JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+        console.error('❌ Erro ao buscar participantes:', error);
+        console.log('📦 Usando fallback localStorage...');
+        const localData = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+        console.log(`📊 Participantes no localStorage: ${localData.length}`);
+        return localData;
     }
 }
 
