@@ -280,23 +280,79 @@ async function showOfferPopup() {
     // Pequeno delay para garantir que DOM está pronto
     await new Promise(resolve => setTimeout(resolve, 50));
     
-    // Aplicar configurações ao modal
+    // Aplicar configurações ao modal - OCULTAR elementos vazios
     const iconEl = document.getElementById('offer-icon');
     const titleEl = document.getElementById('offer-title');
     const subtitleEl = document.getElementById('offer-subtitle');
     const messageEl = document.getElementById('offer-message');
     const detailsEl = document.getElementById('offer-details-text');
+    const detailsContainer = document.getElementById('offer-details');
     const ctaBtn = document.getElementById('offer-cta-btn');
     
-    // Aplicar textos mesmo sem config (valores padrão)
-    if (iconEl) iconEl.textContent = (offerConfig && offerConfig.icon) || '🔥';
-    if (titleEl) titleEl.textContent = (offerConfig && offerConfig.titulo) || 'Oferta Especial';
-    if (subtitleEl) subtitleEl.textContent = (offerConfig && offerConfig.subtitulo) || 'Aproveite Agora!';
-    if (messageEl) messageEl.textContent = (offerConfig && offerConfig.mensagem) || 'Não perca esta oportunidade única!';
-    if (detailsEl) detailsEl.textContent = (offerConfig && offerConfig.detalhes) || 'Confira nossa oferta especial!';
+    // Aplicar textos e ocultar se estiverem vazios
+    if (iconEl) {
+        const iconValue = (offerConfig && offerConfig.icon) ? String(offerConfig.icon).trim() : '';
+        if (iconValue) {
+            iconEl.textContent = iconValue;
+            iconEl.style.display = '';
+        } else {
+            iconEl.style.display = 'none';
+        }
+    }
+    
+    if (titleEl) {
+        const titleValue = (offerConfig && offerConfig.titulo) ? String(offerConfig.titulo).trim() : '';
+        if (titleValue) {
+            titleEl.textContent = titleValue;
+            titleEl.style.display = '';
+        } else {
+            titleEl.style.display = 'none';
+        }
+    }
+    
+    if (subtitleEl) {
+        const subtitleValue = (offerConfig && offerConfig.subtitulo) ? String(offerConfig.subtitulo).trim() : '';
+        if (subtitleValue) {
+            subtitleEl.textContent = subtitleValue;
+            subtitleEl.style.display = '';
+        } else {
+            subtitleEl.style.display = 'none';
+        }
+    }
+    
+    if (messageEl) {
+        const messageValue = (offerConfig && offerConfig.mensagem) ? String(offerConfig.mensagem).trim() : '';
+        if (messageValue) {
+            messageEl.textContent = messageValue;
+            messageEl.style.display = '';
+        } else {
+            messageEl.style.display = 'none';
+        }
+    }
+    
+    if (detailsEl) {
+        const detailsValue = (offerConfig && offerConfig.detalhes) ? String(offerConfig.detalhes).trim() : '';
+        if (detailsValue) {
+            detailsEl.textContent = detailsValue;
+            detailsEl.style.display = '';
+            if (detailsContainer) detailsContainer.style.display = '';
+        } else {
+            detailsEl.style.display = 'none';
+            if (detailsContainer) detailsContainer.style.display = 'none';
+        }
+    }
+    
     if (ctaBtn) {
-        ctaBtn.textContent = (offerConfig && offerConfig.ctaTexto) || 'Quero Aproveitar';
-        ctaBtn.href = (offerConfig && offerConfig.ctaLink) || '#';
+        const ctaTextoValue = (offerConfig && offerConfig.ctaTexto) ? String(offerConfig.ctaTexto).trim() : '';
+        const ctaLinkValue = (offerConfig && offerConfig.ctaLink) ? String(offerConfig.ctaLink).trim() : '';
+        
+        if (ctaTextoValue && ctaLinkValue && ctaLinkValue !== '#') {
+            ctaBtn.textContent = ctaTextoValue;
+            ctaBtn.href = ctaLinkValue;
+            ctaBtn.style.display = '';
+        } else {
+            ctaBtn.style.display = 'none';
+        }
     }
     
     // FORÇAR EXIBIÇÃO DO MODAL - TODOS OS MÉTODOS POSSÍVEIS
