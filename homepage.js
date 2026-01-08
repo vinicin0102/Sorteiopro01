@@ -8,11 +8,19 @@ async function loadFormData() {
     const highlightSubtitleEl = document.getElementById('form-highlight-subtitle-text');
     const timeEl = document.getElementById('form-time-text');
     
-    if (titleEl && formData.title) titleEl.textContent = formData.title;
-    if (subtitleEl && formData.subtitle) subtitleEl.textContent = formData.subtitle;
-    if (highlightTitleEl && formData.highlightTitle) highlightTitleEl.textContent = formData.highlightTitle;
-    if (highlightSubtitleEl && formData.highlightSubtitle) highlightSubtitleEl.textContent = formData.highlightSubtitle;
-    if (timeEl && formData.time) timeEl.textContent = formData.time;
+    // Atualizar textos - sempre usar dados do admin, mesmo se vazios
+    if (titleEl) titleEl.textContent = formData.title || '';
+    if (subtitleEl) subtitleEl.textContent = formData.subtitle || '';
+    if (highlightTitleEl) highlightTitleEl.textContent = formData.highlightTitle || '';
+    if (highlightSubtitleEl) highlightSubtitleEl.textContent = formData.highlightSubtitle || '';
+    if (timeEl) timeEl.textContent = formData.time || '';
+    
+    // Atualizar info-title também (se existir no formData)
+    const infoTitleEl = document.querySelector('.info-title');
+    if (infoTitleEl) {
+        // Se não houver infoTitle no formData, deixar vazio ou usar um padrão
+        infoTitleEl.textContent = formData.infoTitle || '';
+    }
     
     // Load images
     const mainImageContainer = document.getElementById('main-image-container');
