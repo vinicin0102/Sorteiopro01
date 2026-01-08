@@ -71,17 +71,25 @@ async function loadFormData() {
         }
     }
     
-    // Ocultar highlight-box inteiro se ambos os textos estiverem vazios
+    // Ocultar highlight-box inteiro se todos os campos estiverem vazios
     const highlightBox = document.querySelector('.highlight-box');
     if (highlightBox) {
         const hasHighlightTitle = (formData.highlightTitle || '').trim();
         const hasHighlightSubtitle = (formData.highlightSubtitle || '').trim();
-        const hasHighlightImage = formData.imageHighlight;
+        const hasHighlightImage = formData.imageHighlight && formData.imageHighlight.trim();
+        
+        console.log('🔍 Verificando highlight-box:', {
+            hasHighlightTitle,
+            hasHighlightSubtitle,
+            hasHighlightImage
+        });
         
         if (!hasHighlightTitle && !hasHighlightSubtitle && !hasHighlightImage) {
             highlightBox.style.display = 'none';
+            console.log('❌ highlight-box ocultado (todos campos vazios)');
         } else {
             highlightBox.style.display = '';
+            console.log('✅ highlight-box visível');
         }
     }
     
@@ -100,19 +108,33 @@ async function loadFormData() {
         }
     }
     
-    // Load images
+    // Load images - GARANTIR EXIBIÇÃO
     const mainImageContainer = document.getElementById('main-image-container');
-    if (mainImageContainer && formData.imageMain) {
-        mainImageContainer.innerHTML = `<img src="${formData.imageMain}" alt="Imagem Principal">`;
-    } else if (mainImageContainer) {
-        mainImageContainer.innerHTML = '';
+    if (mainImageContainer) {
+        if (formData.imageMain && formData.imageMain.trim()) {
+            const imgUrl = formData.imageMain.trim();
+            console.log('📸 Carregando imagem principal:', imgUrl);
+            mainImageContainer.innerHTML = `<img src="${imgUrl}" alt="Imagem Principal" onerror="console.error('❌ Erro ao carregar imagem principal:', this.src); this.style.display='none';">`;
+            mainImageContainer.style.display = '';
+        } else {
+            console.log('⚠️ Nenhuma imagem principal configurada');
+            mainImageContainer.innerHTML = '';
+            mainImageContainer.style.display = 'none';
+        }
     }
     
     const highlightImageContainer = document.getElementById('highlight-image-container');
-    if (highlightImageContainer && formData.imageHighlight) {
-        highlightImageContainer.innerHTML = `<img src="${formData.imageHighlight}" alt="Imagem de Destaque">`;
-    } else if (highlightImageContainer) {
-        highlightImageContainer.innerHTML = '';
+    if (highlightImageContainer) {
+        if (formData.imageHighlight && formData.imageHighlight.trim()) {
+            const imgUrl = formData.imageHighlight.trim();
+            console.log('📸 Carregando imagem de destaque:', imgUrl);
+            highlightImageContainer.innerHTML = `<img src="${imgUrl}" alt="Imagem de Destaque" onerror="console.error('❌ Erro ao carregar imagem de destaque:', this.src); this.style.display='none';">`;
+            highlightImageContainer.style.display = '';
+        } else {
+            console.log('⚠️ Nenhuma imagem de destaque configurada');
+            highlightImageContainer.innerHTML = '';
+            highlightImageContainer.style.display = 'none';
+        }
     }
     
     // Load file download link if exists
