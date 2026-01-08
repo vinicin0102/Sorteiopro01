@@ -8,18 +8,96 @@ async function loadFormData() {
     const highlightSubtitleEl = document.getElementById('form-highlight-subtitle-text');
     const timeEl = document.getElementById('form-time-text');
     
-    // Atualizar textos - sempre usar dados do admin, mesmo se vazios
-    if (titleEl) titleEl.textContent = formData.title || '';
-    if (subtitleEl) subtitleEl.textContent = formData.subtitle || '';
-    if (highlightTitleEl) highlightTitleEl.textContent = formData.highlightTitle || '';
-    if (highlightSubtitleEl) highlightSubtitleEl.textContent = formData.highlightSubtitle || '';
-    if (timeEl) timeEl.textContent = formData.time || '';
+    // Atualizar textos - ocultar elementos se estiverem vazios
+    if (titleEl) {
+        const titleValue = (formData.title || '').trim();
+        if (titleValue) {
+            titleEl.textContent = titleValue;
+            titleEl.style.display = '';
+        } else {
+            titleEl.style.display = 'none';
+        }
+    }
+    
+    if (subtitleEl) {
+        const subtitleValue = (formData.subtitle || '').trim();
+        if (subtitleValue) {
+            subtitleEl.textContent = subtitleValue;
+            subtitleEl.style.display = '';
+        } else {
+            subtitleEl.style.display = 'none';
+        }
+    }
+    
+    if (highlightTitleEl) {
+        const highlightTitleValue = (formData.highlightTitle || '').trim();
+        if (highlightTitleValue) {
+            highlightTitleEl.textContent = highlightTitleValue;
+            highlightTitleEl.style.display = '';
+        } else {
+            highlightTitleEl.style.display = 'none';
+        }
+    }
+    
+    if (highlightSubtitleEl) {
+        const highlightSubtitleValue = (formData.highlightSubtitle || '').trim();
+        if (highlightSubtitleValue) {
+            highlightSubtitleEl.textContent = highlightSubtitleValue;
+            highlightSubtitleEl.style.display = '';
+        } else {
+            highlightSubtitleEl.style.display = 'none';
+        }
+    }
+    
+    if (timeEl) {
+        const timeValue = (formData.time || '').trim();
+        if (timeValue) {
+            timeEl.textContent = timeValue;
+            timeEl.style.display = '';
+        } else {
+            timeEl.style.display = 'none';
+        }
+    }
     
     // Atualizar info-title também (se existir no formData)
     const infoTitleEl = document.querySelector('.info-title');
     if (infoTitleEl) {
-        // Se não houver infoTitle no formData, deixar vazio ou usar um padrão
-        infoTitleEl.textContent = formData.infoTitle || '';
+        const infoTitleValue = (formData.infoTitle || '').trim();
+        if (infoTitleValue) {
+            infoTitleEl.textContent = infoTitleValue;
+            infoTitleEl.style.display = '';
+        } else {
+            infoTitleEl.style.display = 'none';
+        }
+    }
+    
+    // Ocultar highlight-box inteiro se ambos os textos estiverem vazios
+    const highlightBox = document.querySelector('.highlight-box');
+    if (highlightBox) {
+        const hasHighlightTitle = (formData.highlightTitle || '').trim();
+        const hasHighlightSubtitle = (formData.highlightSubtitle || '').trim();
+        const hasHighlightImage = formData.imageHighlight;
+        
+        if (!hasHighlightTitle && !hasHighlightSubtitle && !hasHighlightImage) {
+            highlightBox.style.display = 'none';
+        } else {
+            highlightBox.style.display = '';
+        }
+    }
+    
+    // Ocultar info-box inteiro se ambos os textos estiverem vazios
+    const infoBox = document.querySelector('.info-box');
+    if (infoBox) {
+        const infoTitleEl = infoBox.querySelector('.info-title');
+        const infoTimeEl = infoBox.querySelector('.info-time');
+        const hasInfoTitle = infoTitleEl && (infoTitleEl.textContent || '').trim();
+        const hasInfoTime = infoTimeEl && (infoTimeEl.textContent || '').trim();
+        
+        if (!hasInfoTitle && !hasInfoTime) {
+            infoBox.style.display = 'none';
+        } else {
+            infoBox.style.display = '';
+        }
     }
     
     // Load images
