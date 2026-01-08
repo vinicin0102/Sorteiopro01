@@ -321,6 +321,9 @@ async function switchSection(section) {
         await loadOfferConfig(); // Carrega configuração de oferta
         await loadVideoConfig(); // Carrega configuração de vídeo
     }
+    if (section === 'logs') {
+        await loadAccessLogs(); // Carrega logs de acesso
+    }
 }
 
 // Lista de nomes brasileiros para simular pessoas reais
