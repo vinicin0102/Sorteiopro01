@@ -1244,7 +1244,16 @@ async function triggerOfferPopup() {
     
     const timestamp = Date.now();
     
-    // Salvar timestamp no localStorage para polling
+    // SALVAR NO SUPABASE (PRINCIPAL) - Isso alcança TODOS os usuários
+    const savedToSupabase = await saveOfferPopupTrigger(timestamp);
+    
+    if (savedToSupabase) {
+        console.log('✅✅✅ TIMESTAMP SALVO NO SUPABASE - TODOS OS USUÁRIOS RECEBERÃO! ✅✅✅');
+    } else {
+        console.warn('⚠️ Não foi possível salvar no Supabase, usando apenas localStorage');
+    }
+    
+    // Salvar timestamp no localStorage também (para resposta imediata local)
     localStorage.setItem('last_offer_popup', timestamp.toString());
     
     // Disparar na mesma aba - IMEDIATAMENTE
@@ -1255,7 +1264,7 @@ async function triggerOfferPopup() {
     document.dispatchEvent(offerEvent); // Backup
     console.log('✅ Evento disparado na mesma aba (window + document)');
     
-    // BroadcastChannel para outras abas
+    // BroadcastChannel para outras abas (mesma máquina)
     try {
         const channel = new BroadcastChannel('offer-popup');
         channel.postMessage({
@@ -1279,32 +1288,7 @@ async function triggerOfferPopup() {
         console.log('✅ StorageEvent disparado');
     } catch (e) {}
     
-    // FORÇAR EXIBIÇÃO IMEDIATA (backup múltiplo)
-    setTimeout(() => {
-        const evt = new CustomEvent('show-offer-popup', { 
-            detail: { timestamp: Date.now(), force: true } 
-        });
-        window.dispatchEvent(evt);
-        document.dispatchEvent(evt);
-    }, 100);
-    
-    setTimeout(() => {
-        const evt = new CustomEvent('show-offer-popup', { 
-            detail: { timestamp: Date.now(), force: true } 
-        });
-        window.dispatchEvent(evt);
-        document.dispatchEvent(evt);
-    }, 300);
-    
-    setTimeout(() => {
-        const evt = new CustomEvent('show-offer-popup', { 
-            detail: { timestamp: Date.now(), force: true } 
-        });
-        window.dispatchEvent(evt);
-        document.dispatchEvent(evt);
-    }, 500);
-    
-    alert('✅ Popup disparado!\n\nVerifique o console (F12) na aba do webinar.\n\nSe não aparecer, execute no console: testOffer()');
+    alert('✅ Popup disparado!\n\nO popup será enviado para TODOS os usuários através do Supabase.\n\nUsuários em diferentes dispositivos/navegadores receberão em até 1 segundo.');
 }
 
 // Configuração de Oferta

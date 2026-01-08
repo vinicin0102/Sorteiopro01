@@ -534,16 +534,50 @@ localStorage.setItem = function(key, value) {
     }
 };
 
-// Polling para verificar se há popup de oferta pendente (backup)
-let lastOfferTimestamp = localStorage.getItem('last_offer_popup') || '0';
-setInterval(() => {
-    const currentOfferTimestamp = localStorage.getItem('last_offer_popup') || '0';
-    if (currentOfferTimestamp !== lastOfferTimestamp && currentOfferTimestamp !== '0') {
-        console.log('🔄 Polling detectou popup de oferta pendente!');
-        lastOfferTimestamp = currentOfferTimestamp;
-        showOfferPopup();
+// Polling para verificar se há popup de oferta pendente - VERIFICA NO SUPABASE
+let lastOfferTimestamp = parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
+
+// Verificar imediatamente ao carregar
+(async function checkInitialOffer() {
+    try {
+        if (typeof getOfferPopupTrigger === 'function') {
+            const supabaseTimestamp = await getOfferPopupTrigger();
+            if (supabaseTimestamp > lastOfferTimestamp) {
+                console.log('🔄 Popup de oferta pendente detectado ao carregar página!');
+                lastOfferTimestamp = supabaseTimestamp;
+                await showOfferPopup();
+            }
+        }
+    } catch (e) {
+        console.warn('Erro ao verificar oferta inicial:', e);
     }
-}, 500); // Verifica a cada 500ms
+})();
+
+// Polling contínuo no Supabase para detectar novos disparos
+setInterval(async () => {
+    try {
+        // Verificar localStorage primeiro (resposta mais rápida)
+        const localTimestamp = parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
+        if (localTimestamp > lastOfferTimestamp) {
+            console.log('🔄 Polling (localStorage) detectou popup de oferta pendente!');
+            lastOfferTimestamp = localTimestamp;
+            await showOfferPopup();
+            return;
+        }
+        
+        // Verificar Supabase (para usuários em diferentes dispositivos/navegadores)
+        if (typeof getOfferPopupTrigger === 'function') {
+            const supabaseTimestamp = await getOfferPopupTrigger();
+            if (supabaseTimestamp > lastOfferTimestamp) {
+                console.log('🔄🔄🔄 POLLING (SUPABASE) DETECTOU POPUP DE OFERTA PENDENTE! 🔄🔄🔄');
+                lastOfferTimestamp = supabaseTimestamp;
+                await showOfferPopup();
+            }
+        }
+    } catch (e) {
+        console.warn('Erro no polling de oferta:', e);
+    }
+}, 1000); // Verifica a cada 1 segundo no Supabase
 
 // Close button - attach event listener
 setTimeout(() => {

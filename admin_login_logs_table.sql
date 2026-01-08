@@ -48,3 +48,4 @@ COMMENT ON COLUMN admin_login_logs.user_agent IS 'User agent do navegador';
 COMMENT ON COLUMN admin_login_logs.device IS 'Tipo de dispositivo (mobile/desktop)';
 COMMENT ON COLUMN admin_login_logs.attempted IS 'Indica se houve tentativa de login (senha digitada)';
 
+

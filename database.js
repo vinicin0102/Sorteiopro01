@@ -773,3 +773,84 @@ async function getAdminLoginLogs() {
     }
 }
 
+// ============ DISPARO DE POPUP DE OFERTA (SUPABASE) ============
+
+// Salvar timestamp de disparo de oferta no Supabase
+async function saveOfferPopupTrigger(timestamp) {
+    try {
+        const db = await getSupabase();
+        
+        // Sempre salvar no localStorage também para compatibilidade
+        localStorage.setItem('last_offer_popup', timestamp.toString());
+        
+        if (!db) {
+            console.warn('⚠️ Supabase não disponível, salvando apenas em localStorage');
+            return true;
+        }
+
+        // Salvar no Supabase na tabela configuracoes
+        const { error } = await db
+            .from('configuracoes')
+            .upsert({
+                id: 6,
+                tipo: 'oferta_disparo',
+                dados: { timestamp: timestamp },
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) {
+            console.error('❌ Erro ao salvar disparo de oferta no Supabase:', error);
+            return false;
+        }
+        
+        console.log('✅ Timestamp de disparo salvo no Supabase:', timestamp);
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao salvar disparo de oferta:', error);
+        return false;
+    }
+}
+
+// Buscar timestamp de disparo de oferta do Supabase
+async function getOfferPopupTrigger() {
+    try {
+        const db = await getSupabase();
+        
+        // Sempre verificar localStorage primeiro para resposta rápida
+        const localTimestamp = localStorage.getItem('last_offer_popup') || '0';
+        
+        if (!db) {
+            console.warn('⚠️ Supabase não disponível, usando localStorage');
+            return parseInt(localTimestamp) || 0;
+        }
+
+        // Buscar do Supabase
+        const { data, error } = await db
+            .from('configuracoes')
+            .select('*')
+            .eq('tipo', 'oferta_disparo')
+            .maybeSingle();
+
+        if (error) {
+            if (error.code !== 'PGRST116') {
+                console.warn('⚠️ Aviso ao buscar disparo de oferta:', error);
+            }
+            return parseInt(localTimestamp) || 0;
+        }
+        
+        if (data?.dados?.timestamp) {
+            const supabaseTimestamp = parseInt(data.dados.timestamp) || 0;
+            // Atualizar localStorage com o valor do Supabase se for mais recente
+            if (supabaseTimestamp > parseInt(localTimestamp)) {
+                localStorage.setItem('last_offer_popup', supabaseTimestamp.toString());
+            }
+            return supabaseTimestamp;
+        }
+        
+        return parseInt(localTimestamp) || 0;
+    } catch (error) {
+        console.error('❌ Erro ao buscar disparo de oferta:', error);
+        return parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
+    }
+}
+
