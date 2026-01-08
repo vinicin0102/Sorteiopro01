@@ -778,24 +778,34 @@ function getRandomParticipantName() {
         // Ignorar erro
     }
     
-    const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
-    
-    // Filtrar participantes excluindo o usuário atual
-    const availableParticipants = participantes.filter(p => {
-        const participantName = (p.nome || '').trim().toLowerCase();
-        const participantFirstName = participantName.split(' ')[0];
-        return participantName !== currentUserName && participantFirstName !== currentUserName;
-    });
-    
-    if (availableParticipants.length > 0) {
-        const random = availableParticipants[Math.floor(Math.random() * availableParticipants.length)];
-        return random.nome.split(' ')[0]; // First name only
+    try {
+        const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+        
+        // Filtrar participantes válidos excluindo o usuário atual
+        const availableParticipants = participantes.filter(p => {
+            if (!p || !p.nome) return false;
+            const participantName = (p.nome || '').trim().toLowerCase();
+            const participantFirstName = participantName.split(' ')[0];
+            return participantName !== currentUserName && 
+                   participantFirstName !== currentUserName &&
+                   participantName !== '';
+        });
+        
+        if (availableParticipants.length > 0) {
+            const random = availableParticipants[Math.floor(Math.random() * availableParticipants.length)];
+            const firstName = random.nome.split(' ')[0].trim();
+            if (firstName) {
+                return firstName;
+            }
+        }
+    } catch (e) {
+        console.warn('Erro ao buscar participantes:', e);
     }
     
     // Filtrar nomes automáticos excluindo o primeiro nome do usuário atual
+    const userFirstName = currentUserName.split(' ')[0];
     const availableNames = automaticNames.filter(name => {
         const nameLower = name.toLowerCase();
-        const userFirstName = currentUserName.split(' ')[0];
         return nameLower !== currentUserName && nameLower !== userFirstName;
     });
     
@@ -803,8 +813,13 @@ function getRandomParticipantName() {
         return availableNames[Math.floor(Math.random() * availableNames.length)];
     }
     
-    // Se não houver nomes disponíveis, retornar um aleatório mesmo
-    return automaticNames[Math.floor(Math.random() * automaticNames.length)];
+    // Se não houver nomes disponíveis, retornar um aleatório mesmo (garantir que sempre retorna algo)
+    if (automaticNames.length > 0) {
+        return automaticNames[Math.floor(Math.random() * automaticNames.length)];
+    }
+    
+    // Fallback final - nunca deve chegar aqui
+    return 'Usuário';
 }
 
 // Process pending messages from admin
@@ -813,10 +828,22 @@ function processPendingMessages() {
     
     if (pendingMessages.length > 0) {
         const now = Date.now();
-        const messagesToShow = pendingMessages.filter(msg => msg.timestamp <= now);
+        const messagesToShow = pendingMessages.filter(msg => {
+            // Filtrar apenas mensagens válidas com username e message
+            return msg && 
+                   msg.timestamp <= now && 
+                   msg.username && 
+                   msg.message && 
+                   String(msg.message).trim() !== '';
+        });
         
         messagesToShow.forEach(msg => {
-            addChatMessage(msg.username, msg.message);
+            // Validar antes de adicionar
+            if (msg.username && msg.message) {
+                addChatMessage(msg.username, msg.message);
+            } else {
+                console.warn('⚠️ Mensagem inválida ignorada:', msg);
+            }
         });
         
         // Remove processed messages
@@ -858,7 +885,13 @@ function addAdminMessage() {
     if (activeComentarios && activeComentarios.length > 0) {
         const randomMessage = activeComentarios[Math.floor(Math.random() * activeComentarios.length)];
         const randomName = getRandomParticipantName();
-        addChatMessage(randomName, randomMessage);
+        
+        // Validar antes de adicionar
+        if (randomMessage && randomMessage.trim() && randomName && randomName.trim()) {
+            addChatMessage(randomName, randomMessage);
+        } else {
+            console.warn('⚠️ Mensagem ou nome inválido:', { randomName, randomMessage });
+        }
     }
     
     // Alternate message type
@@ -871,24 +904,37 @@ setTimeout(() => {
 }, 5000);
 
 function addChatMessage(username, message) {
+    // Validar e garantir que username e message não sejam undefined/null
+    const validUsername = (username && String(username).trim()) || 'Usuário';
+    const validMessage = (message && String(message).trim()) || '...';
+    
+    // Se ainda estiver vazio após validação, não adicionar
+    if (!validMessage || validMessage === '...') {
+        console.warn('⚠️ Tentativa de adicionar mensagem inválida:', { username, message });
+        return;
+    }
+    
     const messageDiv = document.createElement('div');
     messageDiv.className = 'chat-message';
     
     const usernameSpan = document.createElement('span');
     usernameSpan.className = 'username';
-    usernameSpan.textContent = username + ':';
+    usernameSpan.textContent = validUsername + ':';
     
     const textSpan = document.createElement('span');
     textSpan.className = 'message-text';
-    textSpan.textContent = ' ' + message;
+    textSpan.textContent = ' ' + validMessage;
     
     messageDiv.appendChild(usernameSpan);
     messageDiv.appendChild(textSpan);
     
-    chatMessages.appendChild(messageDiv);
-    
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (chatMessages) {
+        chatMessages.appendChild(messageDiv);
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    } else {
+        console.error('❌ Elemento chat-messages não encontrado!');
+    }
 }
 
 // Send message function
