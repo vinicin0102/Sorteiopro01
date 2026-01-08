@@ -1244,7 +1244,11 @@ async function saveOfferConfigHandler() {
         mensagem: document.getElementById('offer-message-input').value.trim() || 'Não perca esta oportunidade única!',
         detalhes: document.getElementById('offer-details-input').value.trim() || 'Confira nossa oferta especial!',
         ctaTexto: document.getElementById('offer-cta-text-input').value.trim() || 'Quero Aproveitar',
-        ctaLink: normalizeUrl(document.getElementById('offer-cta-link-input').value.trim()) || '#'
+        ctaLink: (() => {
+            const linkValue = document.getElementById('offer-cta-link-input').value.trim();
+            if (!linkValue || linkValue === '#') return '#';
+            return normalizeUrl(linkValue);
+        })()
     };
     
     const success = await saveOfferConfig(config);
