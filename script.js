@@ -409,7 +409,7 @@ function processEmbedForLive(embedCode) {
     iframes.forEach(iframe => {
         let src = iframe.getAttribute('src') || '';
         
-        // YouTube - adicionar parâmetros para parecer live
+        // YouTube - adicionar parâmetros para parecer live (SEM CONTROLES)
         if (src.includes('youtube.com') || src.includes('youtu.be')) {
             // Parse URL e parâmetros
             const url = new URL(src);
@@ -419,8 +419,8 @@ function processEmbedForLive(embedCode) {
             url.searchParams.delete('start');
             url.searchParams.delete('time_continue');
             
-            // Adicionar parâmetros para live-like
-            url.searchParams.set('controls', '0'); // Sem controles
+            // Adicionar parâmetros para live-like (SEM CONTROLES VISÍVEIS)
+            url.searchParams.set('controls', '0'); // SEM controles
             url.searchParams.set('disablekb', '1'); // Desabilitar teclado
             url.searchParams.set('modestbranding', '1'); // Sem branding
             url.searchParams.set('rel', '0'); // Sem vídeos relacionados
@@ -432,11 +432,52 @@ function processEmbedForLive(embedCode) {
             url.searchParams.set('mute', '0'); // Com áudio
             url.searchParams.set('loop', '0'); // Sem loop (para live)
             url.searchParams.set('playlist', ''); // Limpar playlist
+            url.searchParams.set('playsinline', '1'); // Mobile inline
+            url.searchParams.set('enablejsapi', '0'); // Desabilitar JS API (reduz controles)
+            url.searchParams.set('origin', window.location.origin); // Origin para segurança
             
             // Para parecer live, remover controle de tempo
             iframe.setAttribute('src', url.toString());
-            iframe.setAttribute('allow', 'autoplay; encrypted-media');
-            iframe.style.pointerEvents = 'auto'; // Permitir cliques, mas sem controles visíveis
+            iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+            iframe.setAttribute('allowfullscreen', 'false'); // Desabilitar fullscreen
+            iframe.style.pointerEvents = 'auto';
+            iframe.style.overflow = 'hidden';
+            
+            // Adicionar listener para remover controles se aparecerem
+            setTimeout(() => {
+                try {
+                    // Tentar acessar o iframe e forçar ocultação de controles
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    if (iframeDoc) {
+                        // Ocultar qualquer elemento de controle
+                        const style = iframeDoc.createElement('style');
+                        style.textContent = `
+                            .ytp-chrome-bottom,
+                            .ytp-chrome-controls,
+                            .ytp-progress-bar-container,
+                            .ytp-gradient-bottom,
+                            .ytp-show-cards-title,
+                            .ytp-watermark,
+                            .ytp-pause-overlay,
+                            .ytp-scroll-min,
+                            .ytp-scroll-max {
+                                display: none !important;
+                                visibility: hidden !important;
+                                opacity: 0 !important;
+                                height: 0 !important;
+                                pointer-events: none !important;
+                            }
+                            .html5-video-player {
+                                overflow: hidden !important;
+                            }
+                        `;
+                        iframeDoc.head.appendChild(style);
+                    }
+                } catch (e) {
+                    // Cross-origin - não podemos acessar, mas os parâmetros URL devem funcionar
+                    console.log('ℹ️ Não foi possível acessar iframe (cross-origin), usando parâmetros URL');
+                }
+            }, 1000);
         }
         
         // Vimeo - adicionar parâmetros
