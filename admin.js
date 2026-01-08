@@ -1245,16 +1245,18 @@ async function triggerOfferPopup() {
     const timestamp = Date.now();
     
     // SALVAR NO SUPABASE (PRINCIPAL) - Isso alcança TODOS os usuários
-    const savedToSupabase = await saveOfferPopupTrigger(timestamp);
+    const result = await saveOfferPopupTrigger(timestamp);
     
-    if (savedToSupabase) {
+    if (result && result.success) {
         console.log('✅✅✅ TIMESTAMP SALVO NO SUPABASE - TODOS OS USUÁRIOS RECEBERÃO! ✅✅✅');
+        console.log('📊 ID do disparo:', result.disparoId);
     } else {
         console.warn('⚠️ Não foi possível salvar no Supabase, usando apenas localStorage');
     }
     
     // Salvar timestamp no localStorage também (para resposta imediata local)
     localStorage.setItem('last_offer_popup', timestamp.toString());
+    localStorage.setItem('current_offer_disparo_id', timestamp.toString());
     
     // Disparar na mesma aba - IMEDIATAMENTE
     const offerEvent = new CustomEvent('show-offer-popup', { 
@@ -1288,7 +1290,23 @@ async function triggerOfferPopup() {
         console.log('✅ StorageEvent disparado');
     } catch (e) {}
     
-    alert('✅ Popup disparado!\n\nO popup será enviado para TODOS os usuários através do Supabase.\n\nUsuários em diferentes dispositivos/navegadores receberão em até 1 segundo.');
+    // Atualizar contagem após 2 segundos (dar tempo para os usuários receberem)
+    setTimeout(async () => {
+        if (typeof getOfferDeliveryCount === 'function' && result && result.disparoId) {
+            const count = await getOfferDeliveryCount(result.disparoId);
+            console.log(`📊 Contagem de entregas até agora: ${count} usuários`);
+            
+            // Atualizar botão ou mostrar contagem se necessário
+            const triggerBtn = document.querySelector('[onclick*="triggerOfferPopup"]') || 
+                              document.querySelector('button:contains("Disparar Oferta")');
+            if (triggerBtn && count > 0) {
+                const originalText = triggerBtn.textContent.replace(/ \(\d+\)$/, '');
+                triggerBtn.textContent = `${originalText} (${count} entregas)`;
+            }
+        }
+    }, 2000);
+    
+    alert('✅ Popup disparado!\n\nO popup será enviado para TODOS os usuários através do Supabase.\n\nUsuários em diferentes dispositivos/navegadores receberão em até 1 segundo.\n\nA contagem de entregas será atualizada automaticamente.');
 }
 
 // Configuração de Oferta

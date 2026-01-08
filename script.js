@@ -266,6 +266,10 @@ async function loadOfferConfig() {
 async function showOfferPopup() {
     console.log('🔥🔥🔥🔥🔥 MOSTRANDO POPUP DE OFERTA! 🔥🔥🔥🔥🔥');
     
+    // Obter ID do disparo atual e timestamp
+    const disparoTimestamp = parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
+    const disparoId = parseInt(localStorage.getItem('current_offer_disparo_id') || disparoTimestamp.toString()) || disparoTimestamp;
+    
     // Carregar configuração se ainda não foi carregada
     if (!offerConfig) {
         console.log('📦 Carregando configuração de oferta...');
@@ -337,6 +341,37 @@ async function showOfferPopup() {
         setTimeout(() => {
             modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;';
         }, 100);
+    
+    // REGISTRAR ENTREGA NO SUPABASE (depois que o modal foi exibido)
+    if (typeof registerOfferDelivery === 'function' && disparoId > 0) {
+        // Obter dados do usuário
+        const registrationData = localStorage.getItem('webinar_registration');
+        let participanteNome = null;
+        let participanteCelular = null;
+        
+        if (registrationData) {
+            try {
+                const data = JSON.parse(registrationData);
+                participanteNome = data.nome || null;
+                participanteCelular = data.celular || null;
+            } catch (e) {
+                console.warn('Erro ao parsear dados de registro:', e);
+            }
+        }
+        
+        // Registrar entrega (sem await para não bloquear a exibição)
+        registerOfferDelivery(disparoId, disparoTimestamp, participanteNome, participanteCelular)
+            .then(success => {
+                if (success) {
+                    console.log('✅ Entrega registrada no Supabase');
+                } else {
+                    console.warn('⚠️ Falha ao registrar entrega no Supabase');
+                }
+            })
+            .catch(err => {
+                console.error('❌ Erro ao registrar entrega:', err);
+            });
+    }
 }
 
 // Hide offer popup - VERSÃO FORÇADA

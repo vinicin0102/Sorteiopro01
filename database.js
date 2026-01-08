@@ -782,10 +782,11 @@ async function saveOfferPopupTrigger(timestamp) {
         
         // Sempre salvar no localStorage também para compatibilidade
         localStorage.setItem('last_offer_popup', timestamp.toString());
+        localStorage.setItem('current_offer_disparo_id', timestamp.toString()); // ID único do disparo
         
         if (!db) {
             console.warn('⚠️ Supabase não disponível, salvando apenas em localStorage');
-            return true;
+            return { success: true, disparoId: timestamp };
         }
 
         // Salvar no Supabase na tabela configuracoes
@@ -794,20 +795,20 @@ async function saveOfferPopupTrigger(timestamp) {
             .upsert({
                 id: 6,
                 tipo: 'oferta_disparo',
-                dados: { timestamp: timestamp },
+                dados: { timestamp: timestamp, disparo_id: timestamp },
                 updated_at: new Date().toISOString()
             });
 
         if (error) {
             console.error('❌ Erro ao salvar disparo de oferta no Supabase:', error);
-            return false;
+            return { success: false, disparoId: timestamp };
         }
         
         console.log('✅ Timestamp de disparo salvo no Supabase:', timestamp);
-        return true;
+        return { success: true, disparoId: timestamp };
     } catch (error) {
         console.error('❌ Erro ao salvar disparo de oferta:', error);
-        return false;
+        return { success: false, disparoId: timestamp };
     }
 }
 
@@ -851,6 +852,84 @@ async function getOfferPopupTrigger() {
     } catch (error) {
         console.error('❌ Erro ao buscar disparo de oferta:', error);
         return parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
+    }
+}
+
+// Registrar entrega de popup de oferta para um usuário
+async function registerOfferDelivery(disparoId, disparoTimestamp, participanteNome = null, participanteCelular = null) {
+    try {
+        const db = await getSupabase();
+        
+        if (!db) {
+            console.warn('⚠️ Supabase não disponível, não é possível registrar entrega');
+            return false;
+        }
+
+        // Verificar se já registrou esta entrega (evitar duplicatas)
+        const phoneOnly = participanteCelular ? participanteCelular.replace(/\D/g, '') : null;
+        if (phoneOnly) {
+            const { data: existing } = await db
+                .from('oferta_entregas')
+                .select('id')
+                .eq('disparo_id', disparoId)
+                .eq('participante_celular', phoneOnly)
+                .maybeSingle();
+                
+            if (existing) {
+                console.log('⚠️ Entrega já registrada para este usuário neste disparo');
+                return true; // Já registrado, considerar sucesso
+            }
+        }
+
+        // Registrar entrega
+        const { error } = await db
+            .from('oferta_entregas')
+            .insert({
+                disparo_id: disparoId,
+                disparo_timestamp: disparoTimestamp,
+                participante_nome: participanteNome || null,
+                participante_celular: phoneOnly || null,
+                user_agent: navigator.userAgent,
+                device: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+            });
+
+        if (error) {
+            console.error('❌ Erro ao registrar entrega de oferta:', error);
+            return false;
+        }
+        
+        console.log('✅ Entrega de oferta registrada no Supabase');
+        return true;
+    } catch (error) {
+        console.error('❌ Erro ao registrar entrega de oferta:', error);
+        return false;
+    }
+}
+
+// Obter contagem de entregas de um disparo específico
+async function getOfferDeliveryCount(disparoId) {
+    try {
+        const db = await getSupabase();
+        
+        if (!db) {
+            console.warn('⚠️ Supabase não disponível, não é possível obter contagem');
+            return 0;
+        }
+
+        const { count, error } = await db
+            .from('oferta_entregas')
+            .select('*', { count: 'exact', head: true })
+            .eq('disparo_id', disparoId);
+
+        if (error) {
+            console.error('❌ Erro ao obter contagem de entregas:', error);
+            return 0;
+        }
+        
+        return count || 0;
+    } catch (error) {
+        console.error('❌ Erro ao obter contagem de entregas:', error);
+        return 0;
     }
 }
 
