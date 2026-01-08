@@ -1,6 +1,13 @@
 // Load form data from admin
 async function loadFormData() {
     const formData = await getFormConfig();
+    console.log('📦 Dados do formulário carregados:', {
+        hasTitle: !!formData.title,
+        hasImageMain: !!formData.imageMain,
+        hasImageHighlight: !!formData.imageHighlight,
+        imageMainType: formData.imageMain ? (formData.imageMain.substring(0, 20) + '...') : 'null',
+        imageHighlightType: formData.imageHighlight ? (formData.imageHighlight.substring(0, 20) + '...') : 'null'
+    });
     
     const titleEl = document.getElementById('form-main-title');
     const subtitleEl = document.getElementById('form-subtitle-text');
