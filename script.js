@@ -690,11 +690,44 @@ function getAdminComments() {
 const automaticNames = ['Maria', 'João', 'Ana', 'Pedro', 'Julia', 'Carlos', 'Fernanda', 'Lucas', 'Beatriz', 'Rafael', 'Mariana', 'Bruno'];
 
 function getRandomParticipantName() {
+    // Obter nome do usuário atual para excluir
+    let currentUserName = '';
+    try {
+        const registrationData = localStorage.getItem('webinar_registration');
+        if (registrationData) {
+            const data = JSON.parse(registrationData);
+            currentUserName = (data.nome || '').trim().toLowerCase();
+        }
+    } catch (e) {
+        // Ignorar erro
+    }
+    
     const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
-    if (participantes.length > 0) {
-        const random = participantes[Math.floor(Math.random() * participantes.length)];
+    
+    // Filtrar participantes excluindo o usuário atual
+    const availableParticipants = participantes.filter(p => {
+        const participantName = (p.nome || '').trim().toLowerCase();
+        const participantFirstName = participantName.split(' ')[0];
+        return participantName !== currentUserName && participantFirstName !== currentUserName;
+    });
+    
+    if (availableParticipants.length > 0) {
+        const random = availableParticipants[Math.floor(Math.random() * availableParticipants.length)];
         return random.nome.split(' ')[0]; // First name only
     }
+    
+    // Filtrar nomes automáticos excluindo o primeiro nome do usuário atual
+    const availableNames = automaticNames.filter(name => {
+        const nameLower = name.toLowerCase();
+        const userFirstName = currentUserName.split(' ')[0];
+        return nameLower !== currentUserName && nameLower !== userFirstName;
+    });
+    
+    if (availableNames.length > 0) {
+        return availableNames[Math.floor(Math.random() * availableNames.length)];
+    }
+    
+    // Se não houver nomes disponíveis, retornar um aleatório mesmo
     return automaticNames[Math.floor(Math.random() * automaticNames.length)];
 }
 

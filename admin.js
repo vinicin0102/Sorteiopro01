@@ -235,13 +235,50 @@ const randomNames = [
     'Gustavo Peixoto', 'Melissa Miranda', 'Henrique Bento', 'Clara Tavares', 'Vicente Andrade'
 ];
 
+// Normalizar URL - adiciona http:// se necessário
+function normalizeUrl(url) {
+    if (!url || url.trim() === '' || url === '#') {
+        return '#';
+    }
+    
+    url = url.trim();
+    
+    // Se já começar com http:// ou https://, retorna como está
+    if (/^https?:\/\//i.test(url)) {
+        return url;
+    }
+    
+    // Se começar com www., adiciona https://
+    if (/^www\./i.test(url)) {
+        return 'https://' + url;
+    }
+    
+    // Caso contrário, adiciona https://
+    return 'https://' + url;
+}
+
 // Get unique random name (ensures different names for each message)
 const usedNames = new Set();
 
 function getUniqueRandomName(participantes) {
-    // Try to use real participant names first
+    // Obter nome do usuário atual para excluir
+    let currentUserName = '';
+    try {
+        const registrationData = localStorage.getItem('webinar_registration');
+        if (registrationData) {
+            const data = JSON.parse(registrationData);
+            currentUserName = (data.nome || '').trim().toLowerCase();
+        }
+    } catch (e) {
+        console.warn('Erro ao obter nome do usuário atual:', e);
+    }
+    
+    // Try to use real participant names first (excluindo o usuário atual)
     if (participantes.length > 0) {
-        const availableParticipants = participantes.filter(p => !usedNames.has(p.nome));
+        const availableParticipants = participantes.filter(p => {
+            const participantName = (p.nome || '').trim().toLowerCase();
+            return !usedNames.has(p.nome) && participantName !== currentUserName;
+        });
         if (availableParticipants.length > 0) {
             const selected = availableParticipants[Math.floor(Math.random() * availableParticipants.length)];
             usedNames.add(selected.nome);
@@ -249,11 +286,26 @@ function getUniqueRandomName(participantes) {
         }
     }
     
-    // Use random names from list
-    const availableNames = randomNames.filter(name => !usedNames.has(name));
+    // Use random names from list (excluindo o nome do usuário atual se estiver na lista)
+    const availableNames = randomNames.filter(name => {
+        const nameLower = name.trim().toLowerCase();
+        const firstNameLower = name.split(' ')[0].toLowerCase();
+        return !usedNames.has(name) && 
+               nameLower !== currentUserName && 
+               firstNameLower !== currentUserName;
+    });
+    
     if (availableNames.length === 0) {
-        // Reset if all names used
+        // Reset if all names used (mas ainda excluir o usuário atual)
         usedNames.clear();
+        const resetNames = randomNames.filter(name => {
+            const firstNameLower = name.split(' ')[0].toLowerCase();
+            return firstNameLower !== currentUserName;
+        });
+        if (resetNames.length > 0) {
+            return resetNames[Math.floor(Math.random() * resetNames.length)].split(' ')[0];
+        }
+        // Se ainda não tiver nomes, usar qualquer um
         return randomNames[Math.floor(Math.random() * randomNames.length)].split(' ')[0];
     }
     
@@ -1162,7 +1214,23 @@ async function loadOfferConfig() {
         if (messageEl) messageEl.value = config.mensagem || 'Não perca esta oportunidade única!';
         if (detailsEl) detailsEl.value = config.detalhes || 'Confira nossa oferta especial!';
         if (ctaTextEl) ctaTextEl.value = config.ctaTexto || 'Quero Aproveitar';
-        if (ctaLinkEl) ctaLinkEl.value = config.ctaLink || '#';
+        if (ctaLinkEl) {
+            ctaLinkEl.value = (config.ctaLink && config.ctaLink !== '#') ? config.ctaLink : '';
+            // Normalizar URL automaticamente ao colar ou digitar
+            ctaLinkEl.addEventListener('blur', function() {
+                if (this.value.trim() && this.value.trim() !== '#') {
+                    this.value = normalizeUrl(this.value.trim());
+                }
+            });
+            // Normalizar ao colar
+            ctaLinkEl.addEventListener('paste', function(e) {
+                setTimeout(() => {
+                    if (this.value.trim() && this.value.trim() !== '#') {
+                        this.value = normalizeUrl(this.value.trim());
+                    }
+                }, 10);
+            });
+        }
     } catch (error) {
         console.error('Erro ao carregar configuração de oferta:', error);
     }
@@ -1176,7 +1244,7 @@ async function saveOfferConfigHandler() {
         mensagem: document.getElementById('offer-message-input').value.trim() || 'Não perca esta oportunidade única!',
         detalhes: document.getElementById('offer-details-input').value.trim() || 'Confira nossa oferta especial!',
         ctaTexto: document.getElementById('offer-cta-text-input').value.trim() || 'Quero Aproveitar',
-        ctaLink: document.getElementById('offer-cta-link-input').value.trim() || '#'
+        ctaLink: normalizeUrl(document.getElementById('offer-cta-link-input').value.trim()) || '#'
     };
     
     const success = await saveOfferConfig(config);
