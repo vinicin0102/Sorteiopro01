@@ -1398,10 +1398,10 @@ async function loadOfferConfig() {
 
 async function saveOfferConfigHandler() {
     const config = {
-        icon: document.getElementById('offer-icon-input').value.trim() || '🔥',
-        titulo: document.getElementById('offer-title-input').value.trim() || 'Oferta Especial',
-        subtitulo: document.getElementById('offer-subtitle-input').value.trim() || 'Aproveite Agora!',
-        mensagem: document.getElementById('offer-message-input').value.trim() || 'Não perca esta oportunidade única!',
+        icon: document.getElementById('offer-icon-input').value.trim() || '',
+        titulo: document.getElementById('offer-title-input').value.trim() || '',
+        subtitulo: document.getElementById('offer-subtitle-input').value.trim() || '',
+        mensagem: document.getElementById('offer-message-input').value.trim() || '',
         detalhes: document.getElementById('offer-details-input').value.trim() || 'Confira nossa oferta especial!',
         ctaTexto: document.getElementById('offer-cta-text-input').value.trim() || 'Quero Aproveitar',
         ctaLink: (() => {

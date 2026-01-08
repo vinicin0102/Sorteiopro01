@@ -542,15 +542,15 @@ async function getOfferConfig() {
             return data.dados;
         }
         
-        // Retornar configuração padrão se não existir
+        // Retornar configuração vazia se não existir (sem valores padrão)
         const defaultConfig = {
-            icon: '🔥',
-            titulo: 'Oferta Especial',
-            subtitulo: 'Aproveite Agora!',
-            mensagem: 'Não perca esta oportunidade única!',
-            detalhes: 'Confira nossa oferta especial!',
-            ctaTexto: 'Quero Aproveitar',
-            ctaLink: '#'
+            icon: '',
+            titulo: '',
+            subtitulo: '',
+            mensagem: '',
+            detalhes: '',
+            ctaTexto: '',
+            ctaLink: ''
         };
         return defaultConfig;
     } catch (error) {
