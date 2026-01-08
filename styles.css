@@ -106,6 +106,19 @@ html, body {
     justify-content: center;
 }
 
+/* Overlay para bloquear completamente controles do vídeo */
+.video-controls-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px; /* Altura generosa para cobrir controles do YouTube/Vimeo */
+    background: transparent;
+    pointer-events: none; /* Permite cliques passar através, mas bloqueia visualmente */
+    z-index: 10;
+    /* Garantir que está acima do vídeo mas abaixo de modais */
+}
+
 .video-container iframe {
     position: absolute;
     top: 0;
@@ -136,17 +149,17 @@ html, body {
     overflow: hidden;
 }
 
-/* Ocultar qualquer overlay de controles que apareça no YouTube */
+/* Overlay adicional via ::before para garantir cobertura */
 .video-container::before {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 60px; /* Altura típica da barra de controles */
-    background: transparent;
+    height: 80px; /* Altura generosa para cobrir controles */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.3) 0%, transparent 100%);
     pointer-events: none; /* Não bloquear o vídeo */
-    z-index: 2;
+    z-index: 3;
 }
 
 /* Bloquear qualquer elemento de controle que apareça */
