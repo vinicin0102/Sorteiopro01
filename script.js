@@ -394,6 +394,78 @@ function hideOfferPopup() {
 }
 
 // Load video configuration
+// Função para processar embed code e torná-lo "live-like" (sem controles)
+function processEmbedForLive(embedCode) {
+    if (!embedCode || !embedCode.trim()) {
+        return embedCode;
+    }
+    
+    // Criar um elemento temporário para processar o HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = embedCode.trim();
+    
+    // Processar iframes (YouTube, Vimeo, etc)
+    const iframes = tempDiv.querySelectorAll('iframe');
+    iframes.forEach(iframe => {
+        let src = iframe.getAttribute('src') || '';
+        
+        // YouTube - adicionar parâmetros para parecer live
+        if (src.includes('youtube.com') || src.includes('youtu.be')) {
+            // Parse URL e parâmetros
+            const url = new URL(src);
+            
+            // Remover parâmetros que mostram tempo
+            url.searchParams.delete('t');
+            url.searchParams.delete('start');
+            url.searchParams.delete('time_continue');
+            
+            // Adicionar parâmetros para live-like
+            url.searchParams.set('controls', '0'); // Sem controles
+            url.searchParams.set('disablekb', '1'); // Desabilitar teclado
+            url.searchParams.set('modestbranding', '1'); // Sem branding
+            url.searchParams.set('rel', '0'); // Sem vídeos relacionados
+            url.searchParams.set('showinfo', '0'); // Sem informações
+            url.searchParams.set('iv_load_policy', '3'); // Sem anotações
+            url.searchParams.set('cc_load_policy', '0'); // Sem legendas
+            url.searchParams.set('fs', '0'); // Sem tela cheia
+            url.searchParams.set('autoplay', '1'); // Autoplay
+            url.searchParams.set('mute', '0'); // Com áudio
+            url.searchParams.set('loop', '0'); // Sem loop (para live)
+            url.searchParams.set('playlist', ''); // Limpar playlist
+            
+            // Para parecer live, remover controle de tempo
+            iframe.setAttribute('src', url.toString());
+            iframe.setAttribute('allow', 'autoplay; encrypted-media');
+            iframe.style.pointerEvents = 'auto'; // Permitir cliques, mas sem controles visíveis
+        }
+        
+        // Vimeo - adicionar parâmetros
+        if (src.includes('vimeo.com')) {
+            const url = new URL(src);
+            url.searchParams.set('autoplay', '1');
+            url.searchParams.set('controls', '0');
+            url.searchParams.set('byline', '0');
+            url.searchParams.set('title', '0');
+            url.searchParams.set('portrait', '0');
+            iframe.setAttribute('src', url.toString());
+        }
+        
+        // Adicionar classe para estilo live
+        iframe.classList.add('live-video-embed');
+    });
+    
+    // Processar elementos de vídeo HTML5
+    const videos = tempDiv.querySelectorAll('video');
+    videos.forEach(video => {
+        video.setAttribute('controls', 'false');
+        video.setAttribute('controlsList', 'nodownload nofullscreen noremoteplayback');
+        video.setAttribute('disablePictureInPicture', 'true');
+        video.classList.add('live-video-embed');
+    });
+    
+    return tempDiv.innerHTML;
+}
+
 async function loadVideoEmbed() {
     try {
         if (typeof getVideoConfig === 'function') {
@@ -402,8 +474,10 @@ async function loadVideoEmbed() {
             if (videoContainer) {
                 // Se houver código embed, usar. Senão, deixar vazio
                 if (config.embedCode && config.embedCode.trim()) {
-                    videoContainer.innerHTML = config.embedCode;
-                    console.log('✅ Vídeo embed carregado:', config.embedCode.substring(0, 50) + '...');
+                    // Processar embed para parecer live (sem controles)
+                    const processedEmbed = processEmbedForLive(config.embedCode);
+                    videoContainer.innerHTML = processedEmbed;
+                    console.log('✅ Vídeo embed carregado como LIVE (sem controles):', config.embedCode.substring(0, 50) + '...');
                 } else {
                     // Sem vídeo configurado - deixar container vazio
                     videoContainer.innerHTML = '';
@@ -418,7 +492,9 @@ async function loadVideoEmbed() {
                 const videoContainer = document.getElementById('video-container');
                 if (videoContainer) {
                     if (config.embedCode && config.embedCode.trim()) {
-                        videoContainer.innerHTML = config.embedCode;
+                        // Processar embed para parecer live
+                        const processedEmbed = processEmbedForLive(config.embedCode);
+                        videoContainer.innerHTML = processedEmbed;
                     } else {
                         videoContainer.innerHTML = '';
                     }
