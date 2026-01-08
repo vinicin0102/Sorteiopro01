@@ -701,20 +701,37 @@ async function saveFormData() {
     // Get existing formData to preserve images and files
     const existingData = await getFormConfig();
     
+    // Verificar se há imagens no localStorage temporário (upload recente)
+    const tempFormData = JSON.parse(localStorage.getItem('admin_form_data') || '{}');
+    
     const formData = {
         title: document.getElementById('form-title').value,
         subtitle: document.getElementById('form-subtitle').value,
         highlightTitle: document.getElementById('form-highlight-title').value,
         highlightSubtitle: document.getElementById('form-highlight-subtitle').value,
         time: document.getElementById('form-time').value,
-        // Preserve images and files
-        imageMain: existingData.imageMain || null,
-        imageHighlight: existingData.imageHighlight || null,
-        file: existingData.file || null
+        // Priorizar imagens do localStorage temporário (upload recente), senão usar do banco
+        imageMain: tempFormData.imageMain || existingData.imageMain || null,
+        imageHighlight: tempFormData.imageHighlight || existingData.imageHighlight || null,
+        file: tempFormData.file || existingData.file || null
     };
     
-    await saveFormConfig(formData);
-    alert('Formulário salvo com sucesso! As alterações serão aplicadas na homepage.');
+    console.log('💾 Salvando formulário com dados:', {
+        title: formData.title,
+        hasImageMain: !!formData.imageMain,
+        hasImageHighlight: !!formData.imageHighlight,
+        imageMainLength: formData.imageMain ? formData.imageMain.length : 0,
+        imageHighlightLength: formData.imageHighlight ? formData.imageHighlight.length : 0
+    });
+    
+    const success = await saveFormConfig(formData);
+    if (success) {
+        // Limpar localStorage temporário após salvar
+        localStorage.removeItem('admin_form_data');
+        alert('✅ Formulário salvo com sucesso! As alterações serão aplicadas na homepage.');
+    } else {
+        alert('⚠️ Erro ao salvar formulário. Tente novamente.');
+    }
 }
 
 // Armazenar participantes globalmente para uso em outras funções
