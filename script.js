@@ -219,52 +219,9 @@ async function showWinnerModal() {
     }
 }
 
-// Hide winner modal
-function hideWinnerModal() {
-    const modal = document.getElementById('winner-modal');
-    if (modal) {
-        modal.classList.remove('show');
-    }
-}
+// Sistema de ganhadores removido
 
-// Check for winners periodically and on load
-let forceCheck = false; // Flag para forçar verificação mesmo se já foi mostrado
-
-async function checkWinnerStatus(force = false) {
-    console.log('🔔 checkWinnerStatus chamado!', force ? '(FORÇADO)' : '');
-    try {
-        const isWinner = await checkIfWinnerWrapper();
-        console.log('🎯 Resultado da verificação:', isWinner ? 'É GANHADOR!' : 'NÃO é ganhador');
-        
-        if (isWinner) {
-            const phoneKey = (userPhone || '').replace(/\D/g, '');
-            const alreadyShown = localStorage.getItem('winner_shown_' + phoneKey);
-            console.log('📌 Modal já foi mostrado?', alreadyShown ? 'SIM' : 'NÃO');
-            
-            // Se for forçado ou se ainda não foi mostrado, mostrar
-            if (force || !alreadyShown) {
-                console.log('🎉🎉🎉 MOSTRANDO MODAL DE GANHADOR! 🎉🎉🎉', force ? '(FORÇADO)' : '');
-                await showWinnerModal();
-                localStorage.setItem('winner_shown_' + phoneKey, 'true');
-                console.log('✅ Modal exibido e flag salvo!');
-            } else {
-                console.log('ℹ️ Modal já foi mostrado anteriormente (pulando)');
-            }
-        } else {
-            console.log('ℹ️ Não é ganhador, não mostrando modal');
-        }
-    } catch (error) {
-        console.error('❌ ERRO ao verificar status de ganhador:', error);
-    }
-}
-
-// Função global de debug para testar manualmente
-window.debugWinner = async function() {
-    console.log('🧪 === TESTE MANUAL DE GANHADOR ===');
-    console.log('📱 userPhone:', userPhone);
-    console.log('📦 Ganhadores:', JSON.parse(localStorage.getItem('webinar_winners') || '[]'));
-    await checkWinnerStatus(true);
-};
+// Sistema de ganhadores removido - apenas popup de oferta será usado
 
 // Load offer configuration
 let offerConfig = null;
@@ -553,44 +510,13 @@ async function loadVideoEmbed() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     await loadOfferConfig(); // Carregar configuração de oferta
     await loadVideoEmbed();
-    await checkWinnerStatus();
     
     console.log('✅ Sistema carregado completamente');
-    console.log('💡 Funções disponíveis: testOffer(), debugWinner()');
+    console.log('💡 Funções disponíveis: testOffer(), showOffer(), popup()');
 })();
 
-// Listen for admin winner confirmations (same tab)
-window.addEventListener('winners-confirmed', async function(e) {
-    console.log('========================================');
-    console.log('🎉🎉🎉 EVENTO WINNERS-CONFIRMED RECEBIDO! 🎉🎉🎉');
-    console.log('Detalhes:', e.detail);
-    console.log('========================================');
-    // Verificação IMEDIATA - FORÇADA (ignora se já foi mostrado)
-    if (e.detail.timestamp) {
-        lastWinnersTimestamp = e.detail.timestamp.toString();
-    }
-    await checkWinnerStatus(e.detail.force !== false); // TRUE = força mostrar mesmo se já foi exibido
-});
-
-// Listen for storage changes (cross-tab)
+// Listen for storage changes (cross-tab) - apenas para popup de oferta
 window.addEventListener('storage', async function(e) {
-    if (e.key === 'webinar_winners' || e.key === 'webinar_winners_timestamp') {
-        console.log('========================================');
-        console.log('📢 STORAGE EVENT RECEBIDO!');
-        console.log('Key:', e.key);
-        console.log('New Value:', e.newValue);
-        console.log('========================================');
-        // Atualizar timestamp local
-        if (e.key === 'webinar_winners_timestamp') {
-            lastWinnersTimestamp = e.newValue || '0';
-            // Se timestamp mudou, é uma nova confirmação - FORÇAR mostrar
-            await checkWinnerStatus(true);
-        } else if (e.key === 'webinar_winners') {
-            // Se ganhadores mudaram, verificar (mas não forçar - pode ser revalidação)
-            await checkWinnerStatus();
-        }
-    }
-    
     // Verificar popup de oferta via storage
     if (e.key === 'last_offer_popup') {
         console.log('🔥 Storage event: Popup de oferta solicitado!');
@@ -598,68 +524,15 @@ window.addEventListener('storage', async function(e) {
     }
 });
 
-// Monitorar mudanças no localStorage usando timestamp
-let lastWinnersTimestamp = localStorage.getItem('webinar_winners_timestamp') || '0';
-
-function checkWinnersUpdate() {
-    const currentTimestamp = localStorage.getItem('webinar_winners_timestamp') || '0';
-    if (currentTimestamp !== lastWinnersTimestamp) {
-        console.log('🔄 Detecada atualização de ganhadores! Verificando...');
-        lastWinnersTimestamp = currentTimestamp;
-        checkWinnerStatus();
-    }
-}
-
-// Check when localStorage changes (for same-tab) - método melhorado
+// Check when localStorage changes (for same-tab) - apenas para popup de oferta
 const originalSetItem = localStorage.setItem;
 localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
-    if (key === 'webinar_winners') {
-        console.log('📢 localStorage.winners atualizado, verificando IMEDIATAMENTE...');
-        // Verificação IMEDIATA - sem setTimeout
-        checkWinnerStatus();
-    }
-    if (key === 'webinar_winners_timestamp') {
-        checkWinnersUpdate();
-    }
     if (key === 'last_offer_popup') {
         console.log('🔥 localStorage.last_offer_popup atualizado! Mostrando popup...');
         showOfferPopup();
     }
 };
-
-// Usar BroadcastChannel para comunicação entre abas (mais confiável)
-try {
-    const winnerChannel = new BroadcastChannel('winner-notifications');
-    winnerChannel.addEventListener('message', async function(e) {
-        if (e.data && e.data.type === 'winners-updated') {
-            console.log('========================================');
-            console.log('📢📢📢 BROADCASTCHANNEL RECEBIDO! 📢📢📢');
-            console.log('Dados:', e.data);
-            console.log('========================================');
-            // Atualizar timestamp local IMEDIATAMENTE
-            if (e.data.timestamp) {
-                lastWinnersTimestamp = e.data.timestamp.toString();
-            }
-            // Forçar verificação IMEDIATA - FORÇADA (mostra mesmo se já foi exibido antes)
-            await checkWinnerStatus(true);
-        }
-    });
-    console.log('✅ BroadcastChannel configurado e pronto');
-} catch (e) {
-    console.warn('BroadcastChannel não disponível, usando fallback:', e);
-}
-
-// Check periodically (backup mais frequente quando há ganhadores)
-let checkInterval = setInterval(async () => {
-    // Verificar se há ganhadores primeiro (para polling mais eficiente)
-    const winners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
-    if (winners.length > 0) {
-        // Se há ganhadores, verificar mais frequentemente
-        checkWinnersUpdate();
-        await checkWinnerStatus();
-    }
-}, 1000); // A cada 1 segundo (MUITO mais frequente para garantir)
 
 // Polling para verificar se há popup de oferta pendente (backup)
 let lastOfferTimestamp = localStorage.getItem('last_offer_popup') || '0';
@@ -674,11 +547,6 @@ setInterval(() => {
 
 // Close button - attach event listener
 setTimeout(() => {
-    const closeBtn = document.getElementById('winner-close-btn');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', hideWinnerModal);
-    }
-    
     // Offer popup close buttons
     const offerCloseX = document.getElementById('offer-close-btn');
     const offerCloseBottom = document.getElementById('offer-close-bottom-btn');
@@ -902,17 +770,7 @@ window.addEventListener('admin-clear-chat', function() {
     chatMessages.innerHTML = '';
 });
 
-// Listen for winners confirmation (same tab)
-window.addEventListener('winners-confirmed', async function(e) {
-    await checkWinnerStatus();
-});
-
-// Listen for storage changes (cross-tab and same-tab trigger)
-window.addEventListener('storage', async function(e) {
-    if (e.key === 'webinar_winners' || e.key === 'webinar_winners_timestamp') {
-        await checkWinnerStatus();
-    }
-});
+// Sistema de ganhadores removido - apenas popup de oferta será usado
 
 // Check for pending messages every second
 setInterval(processPendingMessages, 1000);
@@ -1010,11 +868,7 @@ if (chatInput) {
     });
 }
 
-// Close winner modal button
-const winnerCloseBtn = document.getElementById('winner-close-btn');
-if (winnerCloseBtn) {
-    winnerCloseBtn.addEventListener('click', hideWinnerModal);
-}
+// Sistema de ganhadores removido
 
 // Auto-scroll chat to bottom on load
 if (chatMessages) {
