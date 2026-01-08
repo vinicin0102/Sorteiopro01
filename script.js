@@ -802,47 +802,102 @@ function getRandomParticipantName() {
 
 // Process pending messages from admin
 function processPendingMessages() {
-    const pendingMessages = JSON.parse(localStorage.getItem('webinar_pending_messages') || '[]');
-    
-    if (pendingMessages.length > 0) {
-        const now = Date.now();
-        const messagesToShow = pendingMessages.filter(msg => {
-            // Filtrar apenas mensagens válidas com username e message
-            return msg && 
-                   msg.timestamp <= now && 
-                   msg.username && 
-                   msg.message && 
-                   String(msg.message).trim() !== '';
-        });
+    try {
+        const pendingMessages = JSON.parse(localStorage.getItem('webinar_pending_messages') || '[]');
         
-        messagesToShow.forEach(msg => {
-            // Validar antes de adicionar
-            if (msg.username && msg.message) {
-                addChatMessage(msg.username, msg.message);
-            } else {
-                console.warn('⚠️ Mensagem inválida ignorada:', msg);
+        if (!Array.isArray(pendingMessages)) {
+            console.warn('⚠️ webinar_pending_messages não é um array válido');
+            return;
+        }
+        
+        if (pendingMessages.length > 0) {
+            console.log(`📦 Processando ${pendingMessages.length} mensagem(ns) pendente(s)...`);
+            
+            const now = Date.now();
+            const messagesToShow = pendingMessages.filter(msg => {
+                // Filtrar apenas mensagens válidas com username e message
+                return msg && 
+                       msg.timestamp <= now && 
+                       msg.username && 
+                       String(msg.username).trim() !== '' &&
+                       msg.message && 
+                       String(msg.message).trim() !== '';
+            });
+            
+            console.log(`✅ ${messagesToShow.length} mensagem(ns) pronta(s) para exibição`);
+            
+            messagesToShow.forEach(msg => {
+                // Validar antes de adicionar
+                const validUsername = String(msg.username || '').trim();
+                const validMessage = String(msg.message || '').trim();
+                
+                if (validUsername && validMessage) {
+                    addChatMessage(validUsername, validMessage);
+                    console.log(`✅ Mensagem adicionada: ${validUsername}: ${validMessage.substring(0, 50)}...`);
+                } else {
+                    console.warn('⚠️ Mensagem inválida ignorada:', msg);
+                }
+            });
+            
+            // Remove processed messages
+            const remainingMessages = pendingMessages.filter(msg => msg.timestamp > now);
+            
+            if (remainingMessages.length !== pendingMessages.length) {
+                localStorage.setItem('webinar_pending_messages', JSON.stringify(remainingMessages));
+                console.log(`📊 ${remainingMessages.length} mensagem(ns) ainda pendente(s)`);
             }
-        });
-        
-        // Remove processed messages
-        const remainingMessages = pendingMessages.filter(msg => msg.timestamp > now);
-        localStorage.setItem('webinar_pending_messages', JSON.stringify(remainingMessages));
+        }
+    } catch (error) {
+        console.error('❌ Erro ao processar mensagens pendentes:', error);
     }
 }
 
-// Listen for admin actions
+// Listen for admin actions - MÚLTIPLOS MÉTODOS PARA GARANTIR SINCRONIZAÇÃO
 window.addEventListener('admin-messages-added', function() {
+    console.log('🔥 Evento admin-messages-added recebido! Processando mensagens...');
     processPendingMessages();
 });
 
+// Storage event para sincronizar entre abas (CRÍTICO)
+window.addEventListener('storage', function(e) {
+    if (e.key === 'webinar_pending_messages') {
+        console.log('🔥 Storage event detectado para webinar_pending_messages! Processando...');
+        processPendingMessages();
+    }
+});
+
+// BroadcastChannel para sincronizar entre abas (mais confiável)
+try {
+    const messageChannel = new BroadcastChannel('webinar-messages');
+    messageChannel.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'messages-added') {
+            console.log(`🔥 BroadcastChannel: ${e.data.count} nova(s) mensagem(ns) recebida(s)! Processando...`);
+            processPendingMessages();
+        }
+    });
+    console.log('✅ BroadcastChannel configurado para mensagens');
+} catch (e) {
+    console.warn('⚠️ BroadcastChannel não disponível para mensagens:', e);
+}
+
 window.addEventListener('admin-clear-chat', function() {
-    chatMessages.innerHTML = '';
+    if (chatMessages) {
+        chatMessages.innerHTML = '';
+        console.log('✅ Chat limpo');
+    }
 });
 
 // Sistema de ganhadores removido - apenas popup de oferta será usado
 
-// Check for pending messages every second
-setInterval(processPendingMessages, 1000);
+// Check for pending messages every second (polling como backup)
+setInterval(() => {
+    processPendingMessages();
+}, 1000);
+
+// Processar imediatamente ao carregar (caso haja mensagens pendentes)
+setTimeout(() => {
+    processPendingMessages();
+}, 500);
 
 // Add admin-controlled messages periodically (automatic)
 let messageType = 'animacao'; // Alternate between animacao and tristes

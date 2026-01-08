@@ -475,19 +475,37 @@ async function dispararComentarios(type) {
     // Shuffle messages to send
     const shuffledMessages = [...messagesToSend].sort(() => Math.random() - 0.5);
     
+    const baseTimestamp = Date.now();
     for (let i = 0; i < quantity; i++) {
         // Cycle through messages or use random
         const messageIndex = i % shuffledMessages.length;
         const message = shuffledMessages[messageIndex] || shuffledMessages[Math.floor(Math.random() * shuffledMessages.length)];
         
+        // Validar mensagem
+        if (!message || !String(message).trim()) {
+            console.warn(`⚠️ Mensagem vazia ignorada no índice ${i}`);
+            continue;
+        }
+        
         // Get unique name for each message
         const uniqueName = getUniqueRandomName(participantes);
         
+        // Validar nome
+        if (!uniqueName || !String(uniqueName).trim()) {
+            console.warn(`⚠️ Nome vazio ignorado no índice ${i}`);
+            continue;
+        }
+        
         messages.push({
-            username: uniqueName,
-            message: message,
-            timestamp: Date.now() + (i * 1000) // Stagger messages by 1 second
+            username: String(uniqueName).trim(),
+            message: String(message).trim(),
+            timestamp: baseTimestamp + (i * 1000) // Stagger messages by 1 second
         });
+    }
+    
+    if (messages.length === 0) {
+        alert('❌ Erro: Nenhuma mensagem válida foi preparada. Verifique se há comentários configurados.');
+        return;
     }
     
     // Store messages to be displayed
@@ -495,10 +513,38 @@ async function dispararComentarios(type) {
     pendingMessages.push(...messages);
     localStorage.setItem('webinar_pending_messages', JSON.stringify(pendingMessages));
     
-    // Trigger event or reload if webinar is open
+    // Disparar evento de storage para sincronizar entre abas (CRÍTICO)
+    try {
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'webinar_pending_messages',
+            newValue: JSON.stringify(pendingMessages),
+            oldValue: localStorage.getItem('webinar_pending_messages'),
+            storageArea: localStorage
+        }));
+        console.log('✅ StorageEvent disparado para sincronizar mensagens');
+    } catch (e) {
+        console.warn('Erro ao disparar StorageEvent:', e);
+    }
+    
+    // Trigger event na mesma aba
     window.dispatchEvent(new CustomEvent('admin-messages-added'));
     
-    alert(`Disparando ${quantity} comentário(s) ${type === 'tristes' ? 'tristes' : 'de animação'} com nomes diferentes!`);
+    // BroadcastChannel para outras abas (mais confiável)
+    try {
+        const channel = new BroadcastChannel('webinar-messages');
+        channel.postMessage({
+            type: 'messages-added',
+            count: messages.length
+        });
+        console.log('✅ BroadcastChannel disparado para outras abas');
+    } catch (e) {
+        console.warn('BroadcastChannel não disponível:', e);
+    }
+    
+    console.log(`✅ ${quantity} comentário(s) ${type === 'tristes' ? 'tristes' : 'de animação'} preparados para envio!`);
+    console.log('📦 Mensagens salvas:', messages);
+    
+    alert(`Disparando ${quantity} comentário(s) ${type === 'tristes' ? 'tristes' : 'de animação'} com nomes diferentes!\n\nAs mensagens aparecerão no webinar a cada 1 segundo.`);
 }
 
 
