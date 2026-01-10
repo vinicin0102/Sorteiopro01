@@ -1,7 +1,7 @@
 // ============================================
 // FUNÇÕES GLOBAIS DE TESTE - DEFINIDAS PRIMEIRO
 // ============================================
-window.testOffer = async function() {
+window.testOffer = async function () {
     console.log('🧪🧪🧪 TESTANDO POPUP DE OFERTA MANUALMENTE... 🧪🧪🧪');
     if (typeof showOfferPopup === 'function') {
         await showOfferPopup();
@@ -46,24 +46,24 @@ if (greetingElement) {
 }
 
 // Função de teste para verificar ganhadores (disponível no console)
-window.testWinner = async function() {
+window.testWinner = async function () {
     console.log('🧪 Testando verificação de ganhador...');
     console.log('📱 Celular do usuário:', userPhone);
     console.log('📱 Celular normalizado:', (userPhone || '').replace(/\D/g, ''));
-    
+
     const winners = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
     console.log('🏆 Ganhadores salvos:', winners);
-    
+
     const isWinner = await checkIfWinnerWrapper();
     console.log('✅ É ganhador?', isWinner);
-    
+
     if (isWinner) {
         await showWinnerModal();
         console.log('🎉 Modal de ganhador deve aparecer agora!');
     } else {
         console.log('❌ Não é ganhador ou não encontrado');
     }
-    
+
     return isWinner;
 };
 
@@ -72,24 +72,24 @@ async function checkIfWinnerWrapper() {
     console.log('========================================');
     console.log('🔍 INICIANDO VERIFICAÇÃO DE GANHADOR');
     console.log('========================================');
-    
+
     if (!userPhone) {
         console.error('❌ ERRO: userPhone não definido!', userPhone);
         console.log('📝 Dados do localStorage:', localStorage.getItem('webinar_registration'));
         return false;
     }
-    
+
     const userPhoneNormalized = userPhone.replace(/\D/g, '');
     console.log('📱 Celular do usuário FORMATADO:', userPhone);
     console.log('📱 Celular do usuário NORMALIZADO:', userPhoneNormalized);
-    
+
     // Primeiro verifica localStorage (mais rápido e funciona sempre)
     try {
         const winnersStr = localStorage.getItem('webinar_winners') || '[]';
         console.log('📦 String de ganhadores:', winnersStr);
         const localWinners = JSON.parse(winnersStr);
         console.log('📦 Total de ganhadores no localStorage:', localWinners.length);
-        
+
         if (localWinners.length > 0) {
             console.log('📋 LISTA COMPLETA DE GANHADORES:');
             localWinners.forEach((w, idx) => {
@@ -97,7 +97,7 @@ async function checkIfWinnerWrapper() {
                 console.log(`  ${idx + 1}. ${w.nome} - Celular: "${w.celular}" (normalizado: "${winPhoneNorm}")`);
                 console.log(`     Comparação: "${winPhoneNorm}" === "${userPhoneNormalized}" ? ${winPhoneNorm === userPhoneNormalized}`);
             });
-            
+
             const isWinnerLocal = localWinners.some(winner => {
                 const winnerPhoneNormalized = (winner.celular || '').replace(/\D/g, '');
                 const matches = winnerPhoneNormalized === userPhoneNormalized;
@@ -109,7 +109,7 @@ async function checkIfWinnerWrapper() {
                 }
                 return matches;
             });
-            
+
             if (isWinnerLocal) {
                 console.log('🎉🎉🎉 É GANHADOR! (verificado via localStorage) 🎉🎉🎉');
                 console.log('========================================');
@@ -124,7 +124,7 @@ async function checkIfWinnerWrapper() {
     } catch (error) {
         console.error('❌ ERRO ao verificar localStorage:', error);
     }
-    
+
     // Depois verifica Supabase (fallback)
     try {
         const isWinnerDB = await checkIfWinner(userPhone);
@@ -138,7 +138,7 @@ async function checkIfWinnerWrapper() {
     } catch (error) {
         console.error('Erro ao verificar Supabase:', error);
     }
-    
+
     console.log('❌ Não é ganhador - verificação completa');
     console.log('========================================');
     return false;
@@ -188,14 +188,14 @@ async function showWinnerModal() {
     if (!winnerMessageConfig) {
         await loadWinnerMessageConfig();
     }
-    
+
     // Aplicar configurações ao modal
     const tituloEl = document.getElementById('winner-title');
     const subtituloEl = document.getElementById('winner-subtitle');
     const mensagemEl = document.getElementById('winner-message');
     const detalhesEl = document.getElementById('winner-details-text');
     const resgateBtn = document.getElementById('winner-resgate-btn');
-    
+
     if (tituloEl && winnerMessageConfig) {
         tituloEl.textContent = winnerMessageConfig.titulo || 'PARABÉNS!';
     }
@@ -212,7 +212,7 @@ async function showWinnerModal() {
         resgateBtn.textContent = winnerMessageConfig.botaoTexto || 'Resgatar Prêmio';
         resgateBtn.href = winnerMessageConfig.botaoLink || '#';
     }
-    
+
     const modal = document.getElementById('winner-modal');
     if (modal) {
         modal.classList.add('show');
@@ -265,21 +265,21 @@ async function loadOfferConfig() {
 // Show offer popup - VERSÃO ULTRA FORÇADA
 async function showOfferPopup() {
     console.log('🔥🔥🔥🔥🔥 MOSTRANDO POPUP DE OFERTA! 🔥🔥🔥🔥🔥');
-    
+
     // Obter ID do disparo atual e timestamp
     const disparoTimestamp = parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
     const disparoId = parseInt(localStorage.getItem('current_offer_disparo_id') || disparoTimestamp.toString()) || disparoTimestamp;
-    
+
     // Carregar configuração se ainda não foi carregada
     if (!offerConfig) {
         console.log('📦 Carregando configuração de oferta...');
         await loadOfferConfig();
         console.log('✅ Configuração carregada:', offerConfig);
     }
-    
+
     // Pequeno delay para garantir que DOM está pronto
     await new Promise(resolve => setTimeout(resolve, 50));
-    
+
     // Aplicar configurações ao modal - OCULTAR elementos vazios
     const iconEl = document.getElementById('offer-icon');
     const titleEl = document.getElementById('offer-title');
@@ -288,7 +288,7 @@ async function showOfferPopup() {
     const detailsEl = document.getElementById('offer-details-text');
     const detailsContainer = document.getElementById('offer-details');
     const ctaBtn = document.getElementById('offer-cta-btn');
-    
+
     // Aplicar textos e ocultar se estiverem vazios
     if (iconEl) {
         const iconValue = (offerConfig && offerConfig.icon) ? String(offerConfig.icon).trim() : '';
@@ -299,7 +299,7 @@ async function showOfferPopup() {
             iconEl.style.display = 'none';
         }
     }
-    
+
     if (titleEl) {
         const titleValue = (offerConfig && offerConfig.titulo) ? String(offerConfig.titulo).trim() : '';
         if (titleValue) {
@@ -309,7 +309,7 @@ async function showOfferPopup() {
             titleEl.style.display = 'none';
         }
     }
-    
+
     if (subtitleEl) {
         const subtitleValue = (offerConfig && offerConfig.subtitulo) ? String(offerConfig.subtitulo).trim() : '';
         if (subtitleValue) {
@@ -319,7 +319,7 @@ async function showOfferPopup() {
             subtitleEl.style.display = 'none';
         }
     }
-    
+
     if (messageEl) {
         const messageValue = (offerConfig && offerConfig.mensagem) ? String(offerConfig.mensagem).trim() : '';
         if (messageValue) {
@@ -329,7 +329,7 @@ async function showOfferPopup() {
             messageEl.style.display = 'none';
         }
     }
-    
+
     if (detailsEl) {
         const detailsValue = (offerConfig && offerConfig.detalhes) ? String(offerConfig.detalhes).trim() : '';
         if (detailsValue) {
@@ -341,11 +341,11 @@ async function showOfferPopup() {
             if (detailsContainer) detailsContainer.style.display = 'none';
         }
     }
-    
+
     if (ctaBtn) {
         const ctaTextoValue = (offerConfig && offerConfig.ctaTexto) ? String(offerConfig.ctaTexto).trim() : '';
         const ctaLinkValue = (offerConfig && offerConfig.ctaLink) ? String(offerConfig.ctaLink).trim() : '';
-        
+
         if (ctaTextoValue && ctaLinkValue && ctaLinkValue !== '#') {
             ctaBtn.textContent = ctaTextoValue;
             ctaBtn.href = ctaLinkValue;
@@ -354,7 +354,7 @@ async function showOfferPopup() {
             ctaBtn.style.display = 'none';
         }
     }
-    
+
     // FORÇAR EXIBIÇÃO DO MODAL - TODOS OS MÉTODOS POSSÍVEIS
     const modal = document.getElementById('offer-modal');
     if (!modal) {
@@ -364,47 +364,47 @@ async function showOfferPopup() {
         alert('ERRO: Modal de oferta não encontrado. Recarregue a página (F5 ou Cmd+R).');
         return;
     }
-    
+
     console.log('✅ Modal encontrado! Forçando exibição...');
-    
+
     // Remover todos os estilos inline que possam estar bloqueando
     modal.removeAttribute('style');
-    
+
     // Método 1: Adicionar classe
     modal.classList.add('show');
-    
+
     // Método 2: Forçar display diretamente (fallback mais agressivo)
     modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;';
-    
-        // Método 3: Verificar após um frame
-        requestAnimationFrame(() => {
-            const computedStyle = window.getComputedStyle(modal);
-            console.log('✅ Popup FORÇADO! Verificação:');
-            console.log('   Classes:', modal.className);
-            console.log('   Display:', computedStyle.display);
-            console.log('   Visibility:', computedStyle.visibility);
-            console.log('   Opacity:', computedStyle.opacity);
-            console.log('   Z-index:', computedStyle.zIndex);
-            
-            // Se ainda não estiver visível, forçar novamente
-            if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
-                console.warn('⚠️ Modal ainda não visível, forçando novamente...');
-                modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important;';
-            }
-        });
-        
-        // Forçar novamente após 100ms (garantir que apareceu)
-        setTimeout(() => {
-            modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;';
-        }, 100);
-    
+
+    // Método 3: Verificar após um frame
+    requestAnimationFrame(() => {
+        const computedStyle = window.getComputedStyle(modal);
+        console.log('✅ Popup FORÇADO! Verificação:');
+        console.log('   Classes:', modal.className);
+        console.log('   Display:', computedStyle.display);
+        console.log('   Visibility:', computedStyle.visibility);
+        console.log('   Opacity:', computedStyle.opacity);
+        console.log('   Z-index:', computedStyle.zIndex);
+
+        // Se ainda não estiver visível, forçar novamente
+        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+            console.warn('⚠️ Modal ainda não visível, forçando novamente...');
+            modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important;';
+        }
+    });
+
+    // Forçar novamente após 100ms (garantir que apareceu)
+    setTimeout(() => {
+        modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;';
+    }, 100);
+
     // REGISTRAR ENTREGA NO SUPABASE (depois que o modal foi exibido)
     if (typeof registerOfferDelivery === 'function' && disparoId > 0) {
         // Obter dados do usuário
         const registrationData = localStorage.getItem('webinar_registration');
         let participanteNome = null;
         let participanteCelular = null;
-        
+
         if (registrationData) {
             try {
                 const data = JSON.parse(registrationData);
@@ -414,7 +414,7 @@ async function showOfferPopup() {
                 console.warn('Erro ao parsear dados de registro:', e);
             }
         }
-        
+
         // Registrar entrega (sem await para não bloquear a exibição)
         registerOfferDelivery(disparoId, disparoTimestamp, participanteNome, participanteCelular)
             .then(success => {
@@ -447,26 +447,26 @@ function processEmbedForLive(embedCode) {
     if (!embedCode || !embedCode.trim()) {
         return embedCode;
     }
-    
+
     // Criar um elemento temporário para processar o HTML
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = embedCode.trim();
-    
+
     // Processar iframes (YouTube, Vimeo, etc)
     const iframes = tempDiv.querySelectorAll('iframe');
     iframes.forEach(iframe => {
         let src = iframe.getAttribute('src') || '';
-        
+
         // YouTube - adicionar parâmetros para parecer live (SEM CONTROLES)
         if (src.includes('youtube.com') || src.includes('youtu.be')) {
             // Parse URL e parâmetros
             const url = new URL(src);
-            
+
             // Remover parâmetros que mostram tempo
             url.searchParams.delete('t');
             url.searchParams.delete('start');
             url.searchParams.delete('time_continue');
-            
+
             // Adicionar parâmetros para live-like (SEM CONTROLES VISÍVEIS)
             url.searchParams.set('controls', '0'); // SEM controles
             url.searchParams.set('disablekb', '1'); // Desabilitar teclado
@@ -483,14 +483,14 @@ function processEmbedForLive(embedCode) {
             url.searchParams.set('playsinline', '1'); // Mobile inline
             url.searchParams.set('enablejsapi', '0'); // Desabilitar JS API (reduz controles)
             url.searchParams.set('origin', window.location.origin); // Origin para segurança
-            
+
             // Para parecer live, remover controle de tempo
             iframe.setAttribute('src', url.toString());
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
             iframe.setAttribute('allowfullscreen', 'false'); // Desabilitar fullscreen
             iframe.style.pointerEvents = 'auto';
             iframe.style.overflow = 'hidden';
-            
+
             // Adicionar listener para remover controles se aparecerem
             setTimeout(() => {
                 try {
@@ -527,7 +527,7 @@ function processEmbedForLive(embedCode) {
                 }
             }, 1000);
         }
-        
+
         // Vimeo - adicionar parâmetros
         if (src.includes('vimeo.com')) {
             const url = new URL(src);
@@ -538,11 +538,11 @@ function processEmbedForLive(embedCode) {
             url.searchParams.set('portrait', '0');
             iframe.setAttribute('src', url.toString());
         }
-        
+
         // Adicionar classe para estilo live
         iframe.classList.add('live-video-embed');
     });
-    
+
     // Processar elementos de vídeo HTML5
     const videos = tempDiv.querySelectorAll('video');
     videos.forEach(video => {
@@ -551,7 +551,7 @@ function processEmbedForLive(embedCode) {
         video.setAttribute('disablePictureInPicture', 'true');
         video.classList.add('live-video-embed');
     });
-    
+
     return tempDiv.innerHTML;
 }
 
@@ -596,18 +596,18 @@ async function loadVideoEmbed() {
 }
 
 // Check on page load (async)
-(async function() {
+(async function () {
     // Aguardar um pouco para garantir que tudo carregou
     await new Promise(resolve => setTimeout(resolve, 1000));
     await loadOfferConfig(); // Carregar configuração de oferta
     await loadVideoEmbed();
-    
+
     console.log('✅ Sistema carregado completamente');
     console.log('💡 Funções disponíveis: testOffer(), showOffer(), popup()');
 })();
 
 // Listen for storage changes (cross-tab) - apenas para popup de oferta
-window.addEventListener('storage', async function(e) {
+window.addEventListener('storage', async function (e) {
     // Verificar popup de oferta via storage
     if (e.key === 'last_offer_popup') {
         console.log('🔥 Storage event: Popup de oferta solicitado!');
@@ -617,7 +617,7 @@ window.addEventListener('storage', async function(e) {
 
 // Check when localStorage changes (for same-tab) - apenas para popup de oferta
 const originalSetItem = localStorage.setItem;
-localStorage.setItem = function(key, value) {
+localStorage.setItem = function (key, value) {
     originalSetItem.apply(this, arguments);
     if (key === 'last_offer_popup') {
         console.log('🔥 localStorage.last_offer_popup atualizado! Mostrando popup...');
@@ -628,15 +628,28 @@ localStorage.setItem = function(key, value) {
 // Polling para verificar se há popup de oferta pendente - VERIFICA NO SUPABASE
 let lastOfferTimestamp = parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
 
-// Verificar imediatamente ao carregar
+// IMPORTANTE: Marcar o timestamp de quando o usuário entrou na página
+// Isso evita que ofertas antigas apareçam quando o usuário faz login
+const userSessionStartTime = Date.now();
+console.log('📌 Sessão iniciada em:', new Date(userSessionStartTime).toLocaleTimeString());
+
+// Verificar a última oferta que este usuário já viu (por dispositivo)
+const lastSeenOfferTimestamp = parseInt(localStorage.getItem('last_seen_offer_timestamp') || '0') || 0;
+
+// Ao carregar, NÃO mostrar ofertas antigas - apenas sincronizar o timestamp
 (async function checkInitialOffer() {
     try {
         if (typeof getOfferPopupTrigger === 'function') {
             const supabaseTimestamp = await getOfferPopupTrigger();
+            // Apenas atualizar o lastOfferTimestamp para o valor atual do Supabase
+            // NÃO mostrar o popup - ofertas antigas não devem aparecer ao fazer login
             if (supabaseTimestamp > lastOfferTimestamp) {
-                console.log('🔄 Popup de oferta pendente detectado ao carregar página!');
+                console.log('📌 Sincronizando timestamp de oferta (sem mostrar popup antigo)');
+                console.log('   - Timestamp do Supabase:', supabaseTimestamp);
+                console.log('   - Ofertas só aparecerão para disparos NOVOS após:', new Date(userSessionStartTime).toLocaleTimeString());
                 lastOfferTimestamp = supabaseTimestamp;
-                await showOfferPopup();
+                // Marcar como já vista para não aparecer novamente
+                localStorage.setItem('last_seen_offer_timestamp', supabaseTimestamp.toString());
             }
         }
     } catch (e) {
@@ -649,19 +662,25 @@ setInterval(async () => {
     try {
         // Verificar localStorage primeiro (resposta mais rápida)
         const localTimestamp = parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
-        if (localTimestamp > lastOfferTimestamp) {
-            console.log('🔄 Polling (localStorage) detectou popup de oferta pendente!');
+        const lastSeen = parseInt(localStorage.getItem('last_seen_offer_timestamp') || '0') || 0;
+
+        // Só mostrar se for um disparo NOVO que este usuário ainda não viu
+        if (localTimestamp > lastOfferTimestamp && localTimestamp > lastSeen) {
+            console.log('🔄 Polling (localStorage) detectou novo disparo de oferta!');
             lastOfferTimestamp = localTimestamp;
+            localStorage.setItem('last_seen_offer_timestamp', localTimestamp.toString());
             await showOfferPopup();
             return;
         }
-        
+
         // Verificar Supabase (para usuários em diferentes dispositivos/navegadores)
         if (typeof getOfferPopupTrigger === 'function') {
             const supabaseTimestamp = await getOfferPopupTrigger();
-            if (supabaseTimestamp > lastOfferTimestamp) {
-                console.log('🔄🔄🔄 POLLING (SUPABASE) DETECTOU POPUP DE OFERTA PENDENTE! 🔄🔄🔄');
+            // Só mostrar se for um disparo NOVO que este usuário ainda não viu
+            if (supabaseTimestamp > lastOfferTimestamp && supabaseTimestamp > lastSeen) {
+                console.log('🔄🔄🔄 POLLING (SUPABASE) DETECTOU NOVO DISPARO DE OFERTA! 🔄🔄🔄');
                 lastOfferTimestamp = supabaseTimestamp;
+                localStorage.setItem('last_seen_offer_timestamp', supabaseTimestamp.toString());
                 await showOfferPopup();
             }
         }
@@ -686,9 +705,9 @@ setTimeout(() => {
 }, 100);
 
 // Configurar listeners ANTES de tudo (garantir que estão prontos)
-(function() {
+(function () {
     // Listen for offer popup events (mesma aba) - MÚLTIPLOS LISTENERS
-    const handler1 = async function(e) {
+    const handler1 = async function (e) {
         console.log('========================================');
         console.log('🔥🔥🔥 EVENTO SHOW-OFFER-POPUP RECEBIDO! 🔥🔥🔥');
         console.log('Detalhes:', e.detail);
@@ -701,7 +720,7 @@ setTimeout(() => {
     // Listen for BroadcastChannel offer popup (outras abas)
     try {
         const offerChannel = new BroadcastChannel('offer-popup');
-        offerChannel.addEventListener('message', async function(e) {
+        offerChannel.addEventListener('message', async function (e) {
             if (e.data && e.data.type === 'show-offer') {
                 console.log('========================================');
                 console.log('🔥🔥🔥 BROADCASTCHANNEL: MOSTRAR OFERTA! 🔥🔥🔥');
@@ -714,7 +733,7 @@ setTimeout(() => {
     } catch (e) {
         console.warn('❌ BroadcastChannel de oferta não disponível:', e);
     }
-    
+
     console.log('✅ Listeners de oferta configurados');
 })();
 
@@ -728,12 +747,12 @@ function updateTimer() {
     const hours = Math.floor(elapsed / 3600000);
     const minutes = Math.floor((elapsed % 3600000) / 60000);
     const seconds = Math.floor((elapsed % 60000) / 1000);
-    
-    const formattedTime = 
+
+    const formattedTime =
         String(hours).padStart(2, '0') + ':' +
         String(minutes).padStart(2, '0') + ':' +
         String(seconds).padStart(2, '0');
-    
+
     document.getElementById('stream-timer').textContent = formattedTime;
 }
 
@@ -747,7 +766,7 @@ function updateViewersCount() {
     // Simulate realistic viewer count variations
     // Sometimes people join, sometimes they leave
     const random = Math.random();
-    
+
     // 60% chance of small change (-3 to +5)
     // 30% chance of medium change (-8 to +12)
     // 10% chance of larger change (-15 to +20)
@@ -759,7 +778,7 @@ function updateViewersCount() {
     } else {
         change = Math.floor(Math.random() * 36) - 15; // -15 to +20
     }
-    
+
     // Keep count between 850 and 1200 for realism
     viewersCount = Math.max(850, Math.min(1200, viewersCount + change));
     document.getElementById('viewers-count').textContent = viewersCount.toLocaleString('pt-BR');
@@ -773,27 +792,114 @@ const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const sendButton = document.getElementById('send-button');
 
-// Load admin comments
+// Histórico de mensagens recentes para evitar repetições
+let recentMessages = [];
+const MAX_RECENT_MESSAGES = 15;
+
+// Load admin comments - VERSÃO COM MUITO MAIS VARIEDADE
 function getAdminComments() {
     const comentarios = JSON.parse(localStorage.getItem('admin_comentarios') || '{}');
-    
+
     const animacao = comentarios.animacao || [
-        'Que sorteio incrível! Quero muito ganhar esse iPhone!',
+        // Entusiasmo geral
+        'Que sorteio incrível! Quero muito ganhar!',
         'Estou participando! Seria um sonho ganhar!',
         'Finalmente um sorteio de verdade! Torcendo muito!',
         'Meu celular está quebrado, seria perfeito ganhar!',
-        'iPhone é tudo de bom! Estou dentro!'
+        'Esse sorteio é tudo de bom! Estou dentro!',
+        'Nunca vi um sorteio tão bom assim!',
+        'Vou ganhar, tenho fé! 🙏',
+        'Esse prêmio vai mudar minha vida!',
+        'Participando e torcendo muito! 🍀',
+        'Que oportunidade maravilhosa!',
+        // Comentários sobre o prêmio
+        'Sempre quis ter um celular novo!',
+        'O meu celular já tá no último suspiro kkkk',
+        'Preciso muito desse prêmio!',
+        'Seria o presente perfeito! 🎁',
+        'Imagina ganhar isso! Que sonho!',
+        'Já tô imaginando ele na minha mão!',
+        'Esse prêmio é demais!',
+        'Preciso trocar meu celular urgente!',
+        'Participando com toda fé do mundo!',
+        'Quem sabe dessa vez eu ganho!',
+        // Interação natural
+        'Boa sorte a todos! 🍀',
+        'Tô muito ansioso pro resultado!',
+        'Alguém mais nervoso aqui? 😅',
+        'Esse sorteio tá demais!',
+        'Valeu pela oportunidade!',
+        'Que legal esse projeto!',
+        'Adorei! Tô participando!',
+        'Vamos que vamos! 💪',
+        'Confiante! Vai dar certo!',
+        'Obrigado por esse sorteio incrível!'
     ];
-    
+
     const tristes = comentarios.tristes || [
-        'Que triste, perdi o sorteio de novo...',
-        'Sempre participo mas nunca ganho nada 😢',
-        'Parece que não é pra mim mesmo...',
-        'Mais um sorteio que vou perder, certeza',
-        'Já desisti de ganhar alguma coisa'
+        // Lamentações leves
+        'Acho que nunca ganho nada... 😢',
+        'Sempre participo mas não tenho sorte',
+        'Será que dessa vez vai?',
+        'Tô sem esperança já...',
+        'Nunca ganhei um sorteio na vida',
+        'Queria tanto ganhar dessa vez',
+        'Minha sorte é péssima 😔',
+        'Já me conformei que não vou ganhar',
+        'Vou tentar, mas não tenho muita fé',
+        'Sorteios nunca dão certo pra mim',
+        // Comentários mais neutros/realistas
+        'Difícil ganhar com tanta gente...',
+        'Muita gente participando né',
+        'As chances são pequenas mas vou tentar',
+        'Pelo menos tô participando',
+        'Vai que dessa vez dá certo',
+        'Bom, custar não custa tentar né',
+        'Quem dera eu ganhasse algo...',
+        'Tomara que eu tenha sorte dessa vez',
+        'Faz tempo que não ganho nada',
+        'Espero que pelo menos alguém mereça ganhar',
+        // Ansiedade/nervosismo
+        'Tô nervoso demais já',
+        'Que ansiedade! 😰',
+        'Não aguento mais esperar...',
+        'Meu coração tá acelerado',
+        'Ai que tensão esse sorteio',
+        'Tô com o coração na mão',
+        'Nervosismo a mil aqui',
+        'Será que vai demorar muito?',
+        'Essa espera tá me matando',
+        'Não consigo parar de pensar no resultado'
     ];
-    
+
     return { animacao, tristes };
+}
+
+// Função para pegar mensagem sem repetir as recentes
+function getUniqueMessage(messages) {
+    if (!messages || messages.length === 0) return null;
+
+    // Filtrar mensagens que não foram usadas recentemente
+    const availableMessages = messages.filter(msg => !recentMessages.includes(msg));
+
+    // Se todas foram usadas recentemente, limpar histórico e usar qualquer uma
+    if (availableMessages.length === 0) {
+        recentMessages = [];
+        return messages[Math.floor(Math.random() * messages.length)];
+    }
+
+    // Pegar uma mensagem aleatória das disponíveis
+    const selectedMessage = availableMessages[Math.floor(Math.random() * availableMessages.length)];
+
+    // Adicionar ao histórico de recentes
+    recentMessages.push(selectedMessage);
+
+    // Manter o histórico limitado
+    if (recentMessages.length > MAX_RECENT_MESSAGES) {
+        recentMessages.shift();
+    }
+
+    return selectedMessage;
 }
 
 // Get random participant names for messages (for automatic messages only)
@@ -811,20 +917,20 @@ function getRandomParticipantName() {
     } catch (e) {
         // Ignorar erro
     }
-    
+
     try {
         const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
-        
+
         // Filtrar participantes válidos excluindo o usuário atual
         const availableParticipants = participantes.filter(p => {
             if (!p || !p.nome) return false;
             const participantName = (p.nome || '').trim().toLowerCase();
             const participantFirstName = participantName.split(' ')[0];
-            return participantName !== currentUserName && 
-                   participantFirstName !== currentUserName &&
-                   participantName !== '';
+            return participantName !== currentUserName &&
+                participantFirstName !== currentUserName &&
+                participantName !== '';
         });
-        
+
         if (availableParticipants.length > 0) {
             const random = availableParticipants[Math.floor(Math.random() * availableParticipants.length)];
             const firstName = random.nome.split(' ')[0].trim();
@@ -835,23 +941,23 @@ function getRandomParticipantName() {
     } catch (e) {
         console.warn('Erro ao buscar participantes:', e);
     }
-    
+
     // Filtrar nomes automáticos excluindo o primeiro nome do usuário atual
     const userFirstName = currentUserName.split(' ')[0];
     const availableNames = automaticNames.filter(name => {
         const nameLower = name.toLowerCase();
         return nameLower !== currentUserName && nameLower !== userFirstName;
     });
-    
+
     if (availableNames.length > 0) {
         return availableNames[Math.floor(Math.random() * availableNames.length)];
     }
-    
+
     // Se não houver nomes disponíveis, retornar um aleatório mesmo (garantir que sempre retorna algo)
     if (automaticNames.length > 0) {
         return automaticNames[Math.floor(Math.random() * automaticNames.length)];
     }
-    
+
     // Fallback final - nunca deve chegar aqui
     return 'Usuário';
 }
@@ -860,33 +966,33 @@ function getRandomParticipantName() {
 function processPendingMessages() {
     try {
         const pendingMessages = JSON.parse(localStorage.getItem('webinar_pending_messages') || '[]');
-        
+
         if (!Array.isArray(pendingMessages)) {
             console.warn('⚠️ webinar_pending_messages não é um array válido');
             return;
         }
-        
+
         if (pendingMessages.length > 0) {
             console.log(`📦 Processando ${pendingMessages.length} mensagem(ns) pendente(s)...`);
-            
+
             const now = Date.now();
             const messagesToShow = pendingMessages.filter(msg => {
                 // Filtrar apenas mensagens válidas com username e message
-                return msg && 
-                       msg.timestamp <= now && 
-                       msg.username && 
-                       String(msg.username).trim() !== '' &&
-                       msg.message && 
-                       String(msg.message).trim() !== '';
+                return msg &&
+                    msg.timestamp <= now &&
+                    msg.username &&
+                    String(msg.username).trim() !== '' &&
+                    msg.message &&
+                    String(msg.message).trim() !== '';
             });
-            
+
             console.log(`✅ ${messagesToShow.length} mensagem(ns) pronta(s) para exibição`);
-            
+
             messagesToShow.forEach(msg => {
                 // Validar antes de adicionar
                 const validUsername = String(msg.username || '').trim();
                 const validMessage = String(msg.message || '').trim();
-                
+
                 if (validUsername && validMessage) {
                     addChatMessage(validUsername, validMessage);
                     console.log(`✅ Mensagem adicionada: ${validUsername}: ${validMessage.substring(0, 50)}...`);
@@ -894,10 +1000,10 @@ function processPendingMessages() {
                     console.warn('⚠️ Mensagem inválida ignorada:', msg);
                 }
             });
-            
+
             // Remove processed messages
             const remainingMessages = pendingMessages.filter(msg => msg.timestamp > now);
-            
+
             if (remainingMessages.length !== pendingMessages.length) {
                 localStorage.setItem('webinar_pending_messages', JSON.stringify(remainingMessages));
                 console.log(`📊 ${remainingMessages.length} mensagem(ns) ainda pendente(s)`);
@@ -909,13 +1015,13 @@ function processPendingMessages() {
 }
 
 // Listen for admin actions - MÚLTIPLOS MÉTODOS PARA GARANTIR SINCRONIZAÇÃO
-window.addEventListener('admin-messages-added', function() {
+window.addEventListener('admin-messages-added', function () {
     console.log('🔥 Evento admin-messages-added recebido! Processando mensagens...');
     processPendingMessages();
 });
 
 // Storage event para sincronizar entre abas (CRÍTICO)
-window.addEventListener('storage', function(e) {
+window.addEventListener('storage', function (e) {
     if (e.key === 'webinar_pending_messages') {
         console.log('🔥 Storage event detectado para webinar_pending_messages! Processando...');
         processPendingMessages();
@@ -925,7 +1031,7 @@ window.addEventListener('storage', function(e) {
 // BroadcastChannel para sincronizar entre abas (mais confiável)
 try {
     const messageChannel = new BroadcastChannel('webinar-messages');
-    messageChannel.addEventListener('message', function(e) {
+    messageChannel.addEventListener('message', function (e) {
         if (e.data && e.data.type === 'messages-added') {
             console.log(`🔥 BroadcastChannel: ${e.data.count} nova(s) mensagem(ns) recebida(s)! Processando...`);
             processPendingMessages();
@@ -936,7 +1042,7 @@ try {
     console.warn('⚠️ BroadcastChannel não disponível para mensagens:', e);
 }
 
-window.addEventListener('admin-clear-chat', function() {
+window.addEventListener('admin-clear-chat', function () {
     if (chatMessages) {
         chatMessages.innerHTML = '';
         console.log('✅ Chat limpo');
@@ -955,16 +1061,17 @@ setTimeout(() => {
     processPendingMessages();
 }, 500);
 
-// Add admin-controlled messages periodically (automatic)
+// Add admin-controlled messages periodically (automatic) - COM SISTEMA ANTI-REPETIÇÃO
 let messageType = 'animacao'; // Alternate between animacao and tristes
 function addAdminMessage() {
     const comentarios = getAdminComments();
     const activeComentarios = comentarios[messageType];
-    
+
     if (activeComentarios && activeComentarios.length > 0) {
-        const randomMessage = activeComentarios[Math.floor(Math.random() * activeComentarios.length)];
+        // Usar função anti-repetição para pegar mensagem única
+        const randomMessage = getUniqueMessage(activeComentarios);
         const randomName = getRandomParticipantName();
-        
+
         // Validar antes de adicionar
         if (randomMessage && randomMessage.trim() && randomName && randomName.trim()) {
             addChatMessage(randomName, randomMessage);
@@ -972,7 +1079,7 @@ function addAdminMessage() {
             console.warn('⚠️ Mensagem ou nome inválido:', { randomName, randomMessage });
         }
     }
-    
+
     // Alternate message type
     messageType = messageType === 'animacao' ? 'tristes' : 'animacao';
 }
@@ -986,27 +1093,27 @@ function addChatMessage(username, message) {
     // Validar e garantir que username e message não sejam undefined/null
     const validUsername = (username && String(username).trim()) || 'Usuário';
     const validMessage = (message && String(message).trim()) || '...';
-    
+
     // Se ainda estiver vazio após validação, não adicionar
     if (!validMessage || validMessage === '...') {
         console.warn('⚠️ Tentativa de adicionar mensagem inválida:', { username, message });
         return;
     }
-    
+
     const messageDiv = document.createElement('div');
     messageDiv.className = 'chat-message';
-    
+
     const usernameSpan = document.createElement('span');
     usernameSpan.className = 'username';
     usernameSpan.textContent = validUsername + ':';
-    
+
     const textSpan = document.createElement('span');
     textSpan.className = 'message-text';
     textSpan.textContent = ' ' + validMessage;
-    
+
     messageDiv.appendChild(usernameSpan);
     messageDiv.appendChild(textSpan);
-    
+
     if (chatMessages) {
         chatMessages.appendChild(messageDiv);
         // Scroll to bottom
@@ -1023,7 +1130,7 @@ function sendMessage() {
         // In a real app, this would send to a server via WebSocket
         addChatMessage(userName, message);
         chatInput.value = '';
-        
+
         // Simulate other users responding occasionally
         if (Math.random() > 0.7) {
             setTimeout(() => {
