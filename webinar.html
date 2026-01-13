@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Webinar - Live</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Greeting Bar -->
+    <div class="greeting-bar">
+        <span>Olá, Visitante</span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Video Section -->
+        <div class="video-section">
+            <div class="video-wrapper">
+                <div class="video-container" id="video-container">
+                    <!-- Vídeo será carregado dinamicamente via código embed configurado no admin -->
+                    <!-- Se nenhum vídeo for configurado, esta área ficará em branco -->
+                    <!-- Overlay para bloquear controles do vídeo -->
+                    <div class="video-controls-overlay" id="video-controls-overlay"></div>
+                </div>
+                
+                <!-- Live Status Bar -->
+                <div class="live-status-bar">
+                    <div class="live-indicator">
+                        <span class="live-dot"></span>
+                        <span class="live-text">AO VIVO</span>
+                    </div>
+                    <div class="viewers-count">
+                        <span id="viewers-count">1.000</span> assistindo
+                    </div>
+                    <div class="timer">
+                        <span id="stream-timer">00:00:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <div class="chat-header">
+                <span>Chat</span>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be added dynamically -->
+                <div class="chat-message">
+                    <span class="username">bruno mota:</span>
+                    <span class="message-text">LUCAS DIAS MARQUES - ja joga conteudo no tiktok que sobe rapido tambem</span>
+                </div>
+                <div class="chat-message">
+                    <span class="username">gustavo h:</span>
+                    <span class="message-text">planejo criar algo d matematica</span>
+                </div>
+                <div class="chat-message">
+                    <span class="username">Kely Marçal:</span>
+                    <span class="message-text">👌</span>
+                </div>
+                <div class="chat-message">
+                    <span class="username">LUCAS DIAS MARQUES:</span>
+                    <span class="message-text">Muito bom</span>
+                </div>
+                <div class="chat-message">
+                    <span class="username">Cláudio Fernandes Tavares Modesto:</span>
+                    <span class="message-text">Sim</span>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    id="chat-input" 
+                    placeholder="Digite sua pergunta..."
+                    class="chat-input"
+                >
+                <button id="send-button" class="send-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offer Popup Modal -->
+    <div id="offer-modal" class="offer-modal">
+        <div class="offer-modal-content">
+            <button id="offer-close-btn" class="offer-close-x">×</button>
+            <div id="offer-icon" class="offer-icon">🔥</div>
+            <h1 id="offer-title" class="offer-title">Oferta Especial</h1>
+            <h2 id="offer-subtitle" class="offer-subtitle">Aproveite Agora!</h2>
+            <p id="offer-message" class="offer-message">
+                Não perca esta oportunidade única!
+            </p>
+            <div class="offer-details" id="offer-details">
+                <p id="offer-details-text">Confira nossa oferta especial!</p>
+            </div>
+            <a id="offer-cta-btn" href="#" target="_blank" class="offer-cta-btn">Quero Aproveitar</a>
+            <button id="offer-close-bottom-btn" class="offer-close-bottom-btn">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="database.js"></script>
+    <script src="script.js"></script>
+    
+    <!-- Debug Helper -->
+    <script>
+        // Funções de debug disponíveis no console
+        console.log('%c🔧 Funções de Debug Disponíveis:', 'color: #667eea; font-weight: bold;');
+        console.log('• testWinner() - Testa se você é ganhador');
+        console.log('• testOffer() - Testa popup de oferta');
+        console.log('• showOffer() - Força popup de oferta');
+        console.log('• popup() - Versão ultra simples do popup');
+        console.log('• localStorage.getItem("webinar_registration") - Ver seus dados');
+        console.log('• localStorage.getItem("webinar_winners") - Ver ganhadores');
+    </script>
+</body>
+</html>

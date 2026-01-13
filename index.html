@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garanta Sua Vaga na Live</title>
+    <link rel="stylesheet" href="homepage.css">
+</head>
+<body>
+    <div class="homepage-container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div id="main-image-container" class="main-image-container"></div>
+                <h1 class="main-title" id="form-main-title"></h1>
+                <h2 class="subtitle" id="form-subtitle-text"></h2>
+                
+                <div class="highlight-box">
+                    <div id="highlight-image-container" class="highlight-image-container"></div>
+                    <h3 class="highlight-title" id="form-highlight-title-text"></h3>
+                    <p class="highlight-subtitle" id="form-highlight-subtitle-text"></p>
+                </div>
+
+                <div class="info-box">
+                    <p class="info-title"></p>
+                    <p class="info-time" id="form-time-text"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="form-section">
+            <div class="form-container">
+                <h3 class="form-title">Garanta sua vaga na live!</h3>
+                <form id="registration-form" class="registration-form">
+                    <div class="form-group">
+                        <label for="nome">Nome</label>
+                        <input 
+                            type="text" 
+                            id="nome" 
+                            name="nome" 
+                            placeholder="Seu nome completo"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="celular">Celular</label>
+                        <input 
+                            type="tel" 
+                            id="celular" 
+                            name="celular" 
+                            placeholder="(00) 00000-0000"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="submit-button">
+                        Garantir Minha Vaga
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="database.js"></script>
+    <script src="homepage.js"></script>
+</body>
+</html>
