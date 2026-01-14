@@ -777,6 +777,35 @@ function updateTimer() {
     if (typeof checkScheduledComments === 'function') {
         checkScheduledComments(currentTimeStr);
     }
+
+    // Check for AUTO SAD COMMENTS TRIGGER at 08:18
+    if (currentTimeStr === '08:18' && !sadCommentsTriggered) {
+        console.log('😢 Disparando bateria de comentários tristes automáticos (08:18)!');
+        sadCommentsTriggered = true;
+        triggerSadCommentsBurst();
+    }
+}
+
+// Control variable for sad comments auto-trigger
+let sadCommentsTriggered = false;
+
+function triggerSadCommentsBurst() {
+    const comentarios = getAdminComments(); // Uses existing admin comments
+    const tristes = comentarios.tristes || ['Que pena...', 'Poxa vida', 'Não acredito', 'Triste demais', 'Queria tanto'];
+
+    // Disparar cerca de 24 comentários tristes num intervalo curto
+    const quantity = 24;
+
+    for (let i = 0; i < quantity; i++) {
+        // Espalhados pelos próximos 5 segundos
+        const delay = Math.random() * 5000;
+
+        setTimeout(() => {
+            const msg = tristes[Math.floor(Math.random() * tristes.length)];
+            const name = getRandomParticipantName();
+            addChatMessage(name, msg);
+        }, delay);
+    }
 }
 
 // Update timer every second
