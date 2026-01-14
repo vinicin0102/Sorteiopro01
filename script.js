@@ -1107,10 +1107,38 @@ function addAdminMessage() {
     messageType = messageType === 'animacao' ? 'tristes' : 'animacao';
 }
 
-// Start adding admin messages every 15-25 seconds (less frequent, admin has control)
+// Initial Comments Burst (First 20 seconds)
+function scheduleInitialComments() {
+    const initialPhrases = [
+        'Cheguei!', 'Cheguei',
+        'Estou ansioso', 'Ansioso demais!',
+        'Quero ganhar', 'Quero ganhar muito!', 'Hoje eu ganho!',
+        'Boa noite', 'Boa noite a todos', 'Boa noite!',
+        'Que sorteio bom', 'Top demais esse sorteio'
+    ];
+
+    // Create ~15-20 initial comments spread over 20 seconds
+    const numberOfComments = 15 + Math.floor(Math.random() * 6); // 15 to 20 comments
+
+    for (let i = 0; i < numberOfComments; i++) {
+        // Random time betweem 1s and 20s
+        const delay = Math.random() * 19000 + 1000;
+
+        setTimeout(() => {
+            const randomMessage = initialPhrases[Math.floor(Math.random() * initialPhrases.length)];
+            const randomName = getRandomParticipantName();
+            addChatMessage(randomName, randomMessage);
+        }, delay);
+    }
+}
+
+// Start initial comments immediately
+scheduleInitialComments();
+
+// Start adding regular admin messages AFTER 20 seconds (so they dont overlap too much with initial burst)
 setTimeout(() => {
     setInterval(addAdminMessage, Math.random() * 10000 + 15000);
-}, 5000);
+}, 20000);
 
 function addChatMessage(username, message) {
     // Validar e garantir que username e message não sejam undefined/null

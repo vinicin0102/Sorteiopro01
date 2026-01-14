@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Webinar - Live</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <!-- Greeting Bar -->
     <div class="greeting-bar">
@@ -23,7 +26,7 @@
                     <!-- Overlay para bloquear controles do vídeo -->
                     <div class="video-controls-overlay" id="video-controls-overlay"></div>
                 </div>
-                
+
                 <!-- Live Status Bar -->
                 <div class="live-status-bar">
                     <div class="live-indicator">
@@ -45,38 +48,13 @@
             <div class="chat-header">
                 <span>Chat</span>
             </div>
-            
+
             <div class="chat-messages" id="chat-messages">
                 <!-- Messages will be added dynamically -->
-                <div class="chat-message">
-                    <span class="username">bruno mota:</span>
-                    <span class="message-text">LUCAS DIAS MARQUES - ja joga conteudo no tiktok que sobe rapido tambem</span>
-                </div>
-                <div class="chat-message">
-                    <span class="username">gustavo h:</span>
-                    <span class="message-text">planejo criar algo d matematica</span>
-                </div>
-                <div class="chat-message">
-                    <span class="username">Kely Marçal:</span>
-                    <span class="message-text">👌</span>
-                </div>
-                <div class="chat-message">
-                    <span class="username">LUCAS DIAS MARQUES:</span>
-                    <span class="message-text">Muito bom</span>
-                </div>
-                <div class="chat-message">
-                    <span class="username">Cláudio Fernandes Tavares Modesto:</span>
-                    <span class="message-text">Sim</span>
-                </div>
             </div>
 
             <div class="chat-input-container">
-                <input 
-                    type="text" 
-                    id="chat-input" 
-                    placeholder="Digite sua pergunta..."
-                    class="chat-input"
-                >
+                <input type="text" id="chat-input" placeholder="Digite sua pergunta..." class="chat-input">
                 <button id="send-button" class="send-button">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -110,7 +88,7 @@
     <script src="config.js"></script>
     <script src="database.js"></script>
     <script src="script.js"></script>
-    
+
     <!-- Debug Helper -->
     <script>
         // Funções de debug disponíveis no console
@@ -123,4 +101,5 @@
         console.log('• localStorage.getItem("webinar_winners") - Ver ganhadores');
     </script>
 </body>
+
 </html>
