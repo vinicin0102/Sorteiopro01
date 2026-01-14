@@ -788,7 +788,8 @@ function updateTimer() {
         checkScheduledComments(totalSeconds);
     }
 
-    // Check for AUTO SAD COMMENTS TRIGGER at 08:18
+    // Check for AUTO SAD COMMENTS TRIGGER at 08:18 (8 minutes and 18 seconds)
+    const currentTimeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
     if (currentTimeStr === '08:18' && !sadCommentsTriggered) {
         console.log('😢 Disparando bateria de comentários tristes automáticos (08:18)!');
         sadCommentsTriggered = true;

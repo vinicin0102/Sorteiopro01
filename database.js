@@ -91,8 +91,8 @@ async function saveParticipant(nome, celular) {
 
         if (error) throw error;
 
-        // Retornar objeto formatado
-        return {
+        // Também atualizar localStorage para consistência
+        const participantData = {
             nome: data.nome,
             celular: data.celular,
             created_at: data.created_at,
@@ -100,6 +100,21 @@ async function saveParticipant(nome, celular) {
             device: data.device,
             id: data.id
         };
+
+        // Adicionar à lista local de participantes
+        try {
+            let participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+            const alreadyExists = participantes.some(p => (p.celular || '').replace(/\D/g, '') === phoneOnly);
+            if (!alreadyExists) {
+                participantes.push(participantData);
+                localStorage.setItem('webinar_participantes', JSON.stringify(participantes));
+            }
+        } catch (e) {
+            console.warn('Erro ao atualizar lista local:', e);
+        }
+
+        // Retornar objeto formatado
+        return participantData;
     } catch (error) {
         console.error('Erro ao salvar participante:', error);
         // Fallback para localStorage - sempre retorna algo
