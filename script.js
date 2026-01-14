@@ -788,10 +788,10 @@ function updateTimer() {
         checkScheduledComments(totalSeconds);
     }
 
-    // Check for AUTO SAD COMMENTS TRIGGER at 08:18 (8 minutes and 18 seconds)
+    // Check for AUTO SAD COMMENTS TRIGGER at 08:00 (8 minutes exactly)
     const currentTimeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-    if (currentTimeStr === '08:18' && !sadCommentsTriggered) {
-        console.log('😢 Disparando bateria de comentários tristes automáticos (08:18)!');
+    if (currentTimeStr === '08:00' && !sadCommentsTriggered) {
+        console.log('😢 Disparando bateria de comentários tristes automáticos (08:00)!');
         sadCommentsTriggered = true;
         triggerSadCommentsBurst();
     }
@@ -801,18 +801,39 @@ function updateTimer() {
 let sadCommentsTriggered = false;
 
 function triggerSadCommentsBurst() {
-    const comentarios = getAdminComments(); // Uses existing admin comments
-    const tristes = comentarios.tristes || ['Que pena...', 'Poxa vida', 'Não acredito', 'Triste demais', 'Queria tanto'];
+    // Comentários tristes específicos para o momento do sorteio
+    const sadMessages = [
+        'Que pena, não ganhei dessa vez 😢',
+        'Não ganhei... que triste',
+        'Cadê o ganhador?',
+        'Quando será o próximo sorteio?',
+        'Nunca ganhei nada...',
+        'Que pena não fui eu',
+        'Poxa vida, perdi de novo',
+        'Quem foi o ganhador?',
+        'Não acredito que perdi',
+        'Queria tanto ter ganhado',
+        'Parabéns ao ganhador! Mas queria ser eu 😅',
+        'Vou tentar no próximo!',
+        'Boa sorte pro ganhador!',
+        'Ah não, perdi de novo',
+        'Sempre perco esses sorteios',
+        'Quando vai ter outro?',
+        'Triste demais...',
+        'Não tive sorte hoje',
+        'Quem ganhou?',
+        'Parabéns ganhador!'
+    ];
 
-    // Disparar cerca de 24 comentários tristes num intervalo curto
-    const quantity = 24;
+    // Disparar cerca de 30 comentários tristes num intervalo curto
+    const quantity = 30;
 
     for (let i = 0; i < quantity; i++) {
-        // Espalhados pelos próximos 5 segundos
-        const delay = Math.random() * 5000;
+        // Espalhados pelos próximos 8 segundos
+        const delay = Math.random() * 8000;
 
         setTimeout(() => {
-            const msg = tristes[Math.floor(Math.random() * tristes.length)];
+            const msg = sadMessages[Math.floor(Math.random() * sadMessages.length)];
             const name = getRandomParticipantName();
             addChatMessage(name, msg);
         }, delay);
@@ -1154,15 +1175,17 @@ function scheduleInitialComments() {
         'Estou ansioso', 'Ansioso demais!',
         'Quero ganhar', 'Quero ganhar muito!', 'Hoje eu ganho!',
         'Boa noite', 'Boa noite a todos', 'Boa noite!',
-        'Que sorteio bom', 'Top demais esse sorteio'
+        'Que sorteio bom', 'Top demais esse sorteio',
+        'Vamos lá!', 'Tô aqui!', 'Animado!',
+        'Quem mais tá ansioso?', 'Bora!'
     ];
 
-    // Create ~15-20 initial comments spread over 20 seconds
-    const numberOfComments = 15 + Math.floor(Math.random() * 6); // 15 to 20 comments
+    // Create ~25-30 initial comments spread over 15 seconds (more intense)
+    const numberOfComments = 25 + Math.floor(Math.random() * 6); // 25 to 30 comments
 
     for (let i = 0; i < numberOfComments; i++) {
-        // Random time betweem 1s and 20s
-        const delay = Math.random() * 19000 + 1000;
+        // Random time between 0.5s and 15s
+        const delay = Math.random() * 14500 + 500;
 
         setTimeout(() => {
             const randomMessage = initialPhrases[Math.floor(Math.random() * initialPhrases.length)];
@@ -1175,10 +1198,17 @@ function scheduleInitialComments() {
 // Start initial comments immediately
 scheduleInitialComments();
 
-// Start adding regular admin messages AFTER 20 seconds (so they dont overlap too much with initial burst)
-setTimeout(() => {
-    setInterval(addAdminMessage, Math.random() * 10000 + 15000);
-}, 20000);
+// Start adding regular admin messages with variable intervals (3-8 seconds for busy feel)
+function scheduleNextAdminMessage() {
+    const nextInterval = Math.random() * 5000 + 3000; // 3-8 seconds
+    setTimeout(() => {
+        addAdminMessage();
+        scheduleNextAdminMessage(); // Schedule next one
+    }, nextInterval);
+}
+
+// Start the continuous admin messages
+scheduleNextAdminMessage();
 
 function addChatMessage(username, message) {
     // Validar e garantir que username e message não sejam undefined/null
