@@ -1256,12 +1256,18 @@ if (chatMessages) {
 let scheduledCommentsData = [];
 let firedScheduledComments = new Set();
 
-function loadScheduledCommentsData() {
+async function loadScheduledCommentsData() {
     try {
-        scheduledCommentsData = JSON.parse(localStorage.getItem('admin_scheduled_comments') || '[]');
+        if (typeof getScheduledComments === 'function') {
+            scheduledCommentsData = await getScheduledComments();
+        } else {
+            scheduledCommentsData = JSON.parse(localStorage.getItem('admin_scheduled_comments') || '[]');
+        }
         console.log('📅 Comentários agendados carregados:', scheduledCommentsData.length);
     } catch (e) {
         console.warn('Erro ao carregar comentários agendados:', e);
+        // Fallback
+        scheduledCommentsData = JSON.parse(localStorage.getItem('admin_scheduled_comments') || '[]');
     }
 }
 

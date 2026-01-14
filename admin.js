@@ -1518,12 +1518,12 @@ async function saveVideoConfigHandler() {
 }
 
 // Scheduled Comments Functions
-function loadScheduledComments() {
-    const comments = JSON.parse(localStorage.getItem('admin_scheduled_comments') || '[]');
+async function loadScheduledComments() {
+    const comments = await getScheduledComments();
     renderScheduledComments(comments);
 }
 
-function addScheduledComment() {
+async function addScheduledComment() {
     const nameInput = document.getElementById('scheduled-name');
     const messageInput = document.getElementById('scheduled-message');
     const minInput = document.getElementById('scheduled-min');
@@ -1541,7 +1541,7 @@ function addScheduledComment() {
 
     const timeStr = String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
 
-    const comments = JSON.parse(localStorage.getItem('admin_scheduled_comments') || '[]');
+    const comments = await getScheduledComments();
     comments.push({
         id: Date.now(),
         username: name,
@@ -1554,7 +1554,7 @@ function addScheduledComment() {
         return a.time.localeCompare(b.time);
     });
 
-    saveScheduledComments(comments);
+    await updateScheduledComments(comments);
     renderScheduledComments(comments);
 
     // Clear inputs
@@ -1564,8 +1564,13 @@ function addScheduledComment() {
     secInput.value = '';
 }
 
-function saveScheduledComments(comments) {
+async function updateScheduledComments(comments) {
+    // Save to database
+    await saveScheduledComments(comments);
+
+    // Also update localStorage for immediate feedback/fallback
     localStorage.setItem('admin_scheduled_comments', JSON.stringify(comments));
+
     // Dispatch storage event manually for same-tab listeners
     window.dispatchEvent(new StorageEvent('storage', {
         key: 'admin_scheduled_comments',
@@ -1596,12 +1601,12 @@ function renderScheduledComments(comments) {
     `).join('');
 }
 
-window.deleteScheduledComment = function (id) {
+window.deleteScheduledComment = async function (id) {
     if (!confirm('Deseja remover este agendamento?')) return;
 
-    let comments = JSON.parse(localStorage.getItem('admin_scheduled_comments') || '[]');
+    let comments = await getScheduledComments();
     comments = comments.filter(c => c.id !== id);
 
-    saveScheduledComments(comments);
+    await updateScheduledComments(comments);
     renderScheduledComments(comments);
 };
