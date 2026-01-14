@@ -2,27 +2,27 @@
 const ADMIN_PASSWORD = 'admin123'; // Mude esta senha!
 
 // Initialize
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     checkLogin();
-    
+
     // Aguardar Supabase carregar
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     initializeEventListeners();
     await loadFormData();
     await loadParticipantes();
-    
+
     // Carregar comentários (não precisa async)
     if (typeof loadComentariosEditor === 'function') {
         loadComentariosEditor();
     }
-    
+
     // Adicionar debug
     console.log('✅ Admin inicializado');
-    
+
     // Aguardar mais um pouco para garantir que Supabase carregou
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     const db = await getSupabase();
     if (db && typeof db.from === 'function') {
         console.log('✅ Supabase conectado no admin');
@@ -57,135 +57,173 @@ function showAdminPanel() {
 function initializeEventListeners() {
     // Login
     document.getElementById('login-btn').addEventListener('click', handleLogin);
-    document.getElementById('admin-password').addEventListener('keypress', function(e) {
+    document.getElementById('admin-password').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') handleLogin();
     });
-    
+
     // Navigation Tabs
     document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', async function() {
+        tab.addEventListener('click', async function () {
             const section = this.getAttribute('data-section');
             await switchSection(section);
-            
+
             // Update active nav
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
         });
     });
-    
+
     // Disparar comentários
     document.querySelectorAll('.disparar-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const type = this.getAttribute('data-type');
             dispararComentarios(type);
         });
     });
-    
+
     // Limpar chat
     document.getElementById('limpar-chat-btn').addEventListener('click', limparChat);
-    
+
     // Editor de comentários tabs
     document.querySelectorAll('.editor-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
+        tab.addEventListener('click', function () {
             const tabType = this.getAttribute('data-tab');
             switchComentariosTab(tabType);
         });
     });
-    
+
     // Adicionar comentários no editor
     document.querySelectorAll('.add-comentario-editor-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const type = this.getAttribute('data-type');
             addComentarioEditor(type);
         });
     });
-    
+
     // Salvar comentários
     const saveComentariosBtn = document.getElementById('save-comentarios-btn');
     if (saveComentariosBtn) {
         saveComentariosBtn.addEventListener('click', saveComentariosEditor);
     }
-    
+
     // Carregar comentários no editor
     (async () => await loadComentariosEditor())();
-    
+
     // Save Form
     const saveFormBtn = document.getElementById('save-form-btn');
     if (saveFormBtn) {
         saveFormBtn.addEventListener('click', saveFormData);
     }
-    
+
     // Image upload handlers
     const mainImageInput = document.getElementById('form-image-main');
     const highlightImageInput = document.getElementById('form-image-highlight');
     const fileInput = document.getElementById('form-file');
-    
+
     if (mainImageInput) {
-        mainImageInput.addEventListener('change', function(e) {
+        mainImageInput.addEventListener('change', function (e) {
             handleImageUpload(e, 'main');
         });
     }
-    
+
     if (highlightImageInput) {
-        highlightImageInput.addEventListener('change', function(e) {
+        highlightImageInput.addEventListener('change', function (e) {
             handleImageUpload(e, 'highlight');
         });
     }
-    
+
     if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
+        fileInput.addEventListener('change', function (e) {
             handleFileUpload(e);
         });
     }
-    
+
     // Participantes - busca
     const searchInput = document.getElementById('search-participante');
     if (searchInput) {
         searchInput.addEventListener('input', filterParticipantes);
     }
-    
+
     // Refresh participantes button
     const refreshBtn = document.getElementById('refresh-participantes');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', async () => {
             refreshBtn.disabled = true;
             refreshBtn.textContent = '🔄 Atualizando...';
-            
+
             // Sempre carregar visualização simples (sem checkboxes)
             await loadParticipantes();
-            
+
             refreshBtn.disabled = false;
             refreshBtn.textContent = '🔄 Atualizar';
         });
     }
-    
+
     // Salvar mensagem de ganhador
     const saveWinnerMessageBtn = document.getElementById('save-winner-message-btn');
     if (saveWinnerMessageBtn) {
         saveWinnerMessageBtn.addEventListener('click', saveWinnerMessage);
     }
-    
+
     // Disparar popup de oferta
     const triggerOfferBtn = document.getElementById('trigger-offer-btn');
     if (triggerOfferBtn) {
         triggerOfferBtn.addEventListener('click', triggerOfferPopup);
     }
-    
+
     // Salvar oferta
     const saveOfferBtn = document.getElementById('save-offer-btn');
     if (saveOfferBtn) {
         saveOfferBtn.addEventListener('click', saveOfferConfigHandler);
     }
-    
+
     // Salvar vídeo
     const saveVideoBtn = document.getElementById('save-video-btn');
     if (saveVideoBtn) {
         saveVideoBtn.addEventListener('click', saveVideoConfigHandler);
     }
-    
+
+    // Listeners para campos de tempo de disparo automático
+    const triggerMinutes = document.getElementById('offer-trigger-minutes');
+    const triggerSeconds = document.getElementById('offer-trigger-seconds');
+
+    function updateOfferTriggerPreview() {
+        const min = parseInt(triggerMinutes?.value || 0);
+        const sec = parseInt(triggerSeconds?.value || 0);
+        const totalSeconds = (min * 60) + sec;
+
+        const preview = document.getElementById('offer-trigger-preview');
+        const status = document.getElementById('offer-trigger-status');
+
+        if (preview) {
+            preview.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        }
+
+        if (status) {
+            if (totalSeconds > 0) {
+                status.style.background = '#d4edda';
+                status.style.color = '#155724';
+                status.innerHTML = `✅ Disparo automático <strong>ativado</strong>. A oferta aparecerá automaticamente aos ${preview?.textContent || '00:00'} do vídeo.`;
+            } else {
+                status.style.background = '#fff3cd';
+                status.style.color = '#856404';
+                status.innerHTML = `⚠️ Disparo automático <strong>desativado</strong>. Configure um tempo acima de 00:00 para ativar.`;
+            }
+        }
+    }
+
+    if (triggerMinutes) {
+        triggerMinutes.addEventListener('input', updateOfferTriggerPreview);
+        triggerMinutes.addEventListener('change', updateOfferTriggerPreview);
+    }
+    if (triggerSeconds) {
+        triggerSeconds.addEventListener('input', updateOfferTriggerPreview);
+        triggerSeconds.addEventListener('change', updateOfferTriggerPreview);
+    }
+
     // Carregar mensagem de ganhador ao abrir seção de sorteio
     loadWinnerMessage();
-    
+
     // Botão de atualizar logs
     const refreshLogsBtn = document.getElementById('refresh-logs-btn');
     if (refreshLogsBtn) {
@@ -196,17 +234,17 @@ function initializeEventListeners() {
 async function handleLogin() {
     const password = document.getElementById('admin-password').value;
     const errorMsg = document.getElementById('login-error');
-    
+
     if (password === ADMIN_PASSWORD) {
         // Salvar log de acesso bem-sucedido
         if (typeof saveAdminLoginLog === 'function') {
             await saveAdminLoginLog(true, null); // Não salvar senha, apenas sucesso
         }
-        
+
         localStorage.setItem('admin_logged_in', 'true');
         showAdminPanel();
         errorMsg.classList.remove('show');
-        
+
         // Limpar campo de senha
         document.getElementById('admin-password').value = '';
     } else {
@@ -214,10 +252,10 @@ async function handleLogin() {
         if (typeof saveAdminLoginLog === 'function') {
             await saveAdminLoginLog(false, password ? 'attempted' : null);
         }
-        
+
         errorMsg.textContent = 'Senha incorreta!';
         errorMsg.classList.add('show');
-        
+
         // Limpar campo de senha após erro
         document.getElementById('admin-password').value = '';
     }
@@ -230,11 +268,11 @@ async function loadAccessLogs() {
         const totalLogsEl = document.getElementById('total-logs');
         const successLogsEl = document.getElementById('success-logs');
         const failedLogsEl = document.getElementById('failed-logs');
-        
+
         if (!logsList) return;
-        
+
         logsList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Carregando logs...</p>';
-        
+
         let logs = [];
         if (typeof getAdminLoginLogs === 'function') {
             logs = await getAdminLoginLogs();
@@ -245,22 +283,22 @@ async function loadAccessLogs() {
                 logs = JSON.parse(stored).reverse();
             }
         }
-        
+
         // Estatísticas
         const total = logs.length;
         const success = logs.filter(l => l.success === true || l.success === 'true').length;
         const failed = total - success;
-        
+
         if (totalLogsEl) totalLogsEl.textContent = total;
         if (successLogsEl) successLogsEl.textContent = success;
         if (failedLogsEl) failedLogsEl.textContent = failed;
-        
+
         // Exibir logs
         if (logs.length === 0) {
             logsList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Nenhum log de acesso encontrado.</p>';
             return;
         }
-        
+
         logsList.innerHTML = logs.map(log => {
             const date = new Date(log.timestamp || log.created_at);
             const formattedDate = date.toLocaleString('pt-BR', {
@@ -271,11 +309,11 @@ async function loadAccessLogs() {
                 minute: '2-digit',
                 second: '2-digit'
             });
-            
+
             const success = log.success === true || log.success === 'true';
             const device = log.device || 'desktop';
             const deviceIcon = device === 'mobile' ? '📱' : '💻';
-            
+
             return `
                 <div style="padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; ${success ? 'background: #e8f5e9;' : 'background: #ffebee;'}">
                     <div style="flex: 1;">
@@ -293,7 +331,7 @@ async function loadAccessLogs() {
                 </div>
             `;
         }).join('');
-        
+
     } catch (error) {
         console.error('Erro ao carregar logs:', error);
         const logsList = document.getElementById('logs-list');
@@ -311,7 +349,7 @@ async function switchSection(section) {
     if (sectionEl) {
         sectionEl.classList.add('active');
     }
-    
+
     // Load data when switching to specific sections
     if (section === 'sorteio') {
         await loadParticipantes(); // Carrega participantes apenas para visualização
@@ -345,19 +383,19 @@ function normalizeUrl(url) {
     if (!url || url.trim() === '' || url === '#') {
         return '#';
     }
-    
+
     url = url.trim();
-    
+
     // Se já começar com http:// ou https://, retorna como está
     if (/^https?:\/\//i.test(url)) {
         return url;
     }
-    
+
     // Se começar com www., adiciona https://
     if (/^www\./i.test(url)) {
         return 'https://' + url;
     }
-    
+
     // Caso contrário, adiciona https://
     return 'https://' + url;
 }
@@ -377,7 +415,7 @@ function getUniqueRandomName(participantes) {
     } catch (e) {
         console.warn('Erro ao obter nome do usuário atual:', e);
     }
-    
+
     // Try to use real participant names first (excluindo o usuário atual)
     if (participantes.length > 0) {
         const availableParticipants = participantes.filter(p => {
@@ -390,16 +428,16 @@ function getUniqueRandomName(participantes) {
             return selected.nome.split(' ')[0]; // First name only
         }
     }
-    
+
     // Use random names from list (excluindo o nome do usuário atual se estiver na lista)
     const availableNames = randomNames.filter(name => {
         const nameLower = name.trim().toLowerCase();
         const firstNameLower = name.split(' ')[0].toLowerCase();
-        return !usedNames.has(name) && 
-               nameLower !== currentUserName && 
-               firstNameLower !== currentUserName;
+        return !usedNames.has(name) &&
+            nameLower !== currentUserName &&
+            firstNameLower !== currentUserName;
     });
-    
+
     if (availableNames.length === 0) {
         // Reset if all names used (mas ainda excluir o usuário atual)
         usedNames.clear();
@@ -413,7 +451,7 @@ function getUniqueRandomName(participantes) {
         // Se ainda não tiver nomes, usar qualquer um
         return randomNames[Math.floor(Math.random() * randomNames.length)].split(' ')[0];
     }
-    
+
     const selected = availableNames[Math.floor(Math.random() * availableNames.length)];
     usedNames.add(selected);
     return selected.split(' ')[0]; // First name only
@@ -423,12 +461,12 @@ function getUniqueRandomName(participantes) {
 async function dispararComentarios(type) {
     const inputId = type === 'tristes' ? 'qtd-tristes' : 'qtd-animacao';
     const quantity = parseInt(document.getElementById(inputId).value) || 1;
-    
+
     // Get comments from database
     const comentarios = await getComments();
-    
+
     let messagesToSend = [];
-    
+
     if (type === 'tristes') {
         // Comentários tristes
         const tristes = comentarios.tristes || [
@@ -464,55 +502,55 @@ async function dispararComentarios(type) {
         ];
         messagesToSend = animacao;
     }
-    
+
     // Clear used names for this batch
     usedNames.clear();
-    
+
     // Trigger messages in webinar (store in localStorage for webinar to read)
     const messages = [];
     const participantes = await getAllParticipants();
-    
+
     // Shuffle messages to send
     const shuffledMessages = [...messagesToSend].sort(() => Math.random() - 0.5);
-    
+
     const baseTimestamp = Date.now();
     for (let i = 0; i < quantity; i++) {
         // Cycle through messages or use random
         const messageIndex = i % shuffledMessages.length;
         const message = shuffledMessages[messageIndex] || shuffledMessages[Math.floor(Math.random() * shuffledMessages.length)];
-        
+
         // Validar mensagem
         if (!message || !String(message).trim()) {
             console.warn(`⚠️ Mensagem vazia ignorada no índice ${i}`);
             continue;
         }
-        
+
         // Get unique name for each message
         const uniqueName = getUniqueRandomName(participantes);
-        
+
         // Validar nome
         if (!uniqueName || !String(uniqueName).trim()) {
             console.warn(`⚠️ Nome vazio ignorado no índice ${i}`);
             continue;
         }
-        
+
         messages.push({
             username: String(uniqueName).trim(),
             message: String(message).trim(),
             timestamp: baseTimestamp + (i * 1000) // Stagger messages by 1 second
         });
     }
-    
+
     if (messages.length === 0) {
         alert('❌ Erro: Nenhuma mensagem válida foi preparada. Verifique se há comentários configurados.');
         return;
     }
-    
+
     // Store messages to be displayed
     const pendingMessages = JSON.parse(localStorage.getItem('webinar_pending_messages') || '[]');
     pendingMessages.push(...messages);
     localStorage.setItem('webinar_pending_messages', JSON.stringify(pendingMessages));
-    
+
     // Disparar evento de storage para sincronizar entre abas (CRÍTICO)
     try {
         window.dispatchEvent(new StorageEvent('storage', {
@@ -525,10 +563,10 @@ async function dispararComentarios(type) {
     } catch (e) {
         console.warn('Erro ao disparar StorageEvent:', e);
     }
-    
+
     // Trigger event na mesma aba
     window.dispatchEvent(new CustomEvent('admin-messages-added'));
-    
+
     // BroadcastChannel para outras abas (mais confiável)
     try {
         const channel = new BroadcastChannel('webinar-messages');
@@ -540,10 +578,10 @@ async function dispararComentarios(type) {
     } catch (e) {
         console.warn('BroadcastChannel não disponível:', e);
     }
-    
+
     console.log(`✅ ${quantity} comentário(s) ${type === 'tristes' ? 'tristes' : 'de animação'} preparados para envio!`);
     console.log('📦 Mensagens salvas:', messages);
-    
+
     alert(`Disparando ${quantity} comentário(s) ${type === 'tristes' ? 'tristes' : 'de animação'} com nomes diferentes!\n\nAs mensagens aparecerão no webinar a cada 1 segundo.`);
 }
 
@@ -564,13 +602,13 @@ async function loadFormData() {
     const highlightTitleEl = document.getElementById('form-highlight-title');
     const highlightSubtitleEl = document.getElementById('form-highlight-subtitle');
     const timeEl = document.getElementById('form-time');
-    
+
     if (titleEl) titleEl.value = formData.title || 'FABRICANDO SEU LOW TICKET';
     if (subtitleEl) subtitleEl.value = formData.subtitle || 'plug and play';
     if (highlightTitleEl) highlightTitleEl.value = formData.highlightTitle || 'Como fazer 1k/dia vendendo Low Ticket Plug and Play';
     if (highlightSubtitleEl) highlightSubtitleEl.value = formData.highlightSubtitle || 'Sem precisar de Audiência e 100% Automatizado';
     if (timeEl) timeEl.value = formData.time || 'Aula às 20h00';
-    
+
     // Load images
     if (formData.imageMain) {
         showImagePreview('main', formData.imageMain);
@@ -586,17 +624,17 @@ async function loadFormData() {
 function handleImageUpload(event, type) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     if (!file.type.startsWith('image/')) {
         alert('Por favor, selecione apenas arquivos de imagem!');
         return;
     }
-    
+
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const imageData = e.target.result;
         showImagePreview(type, imageData);
-        
+
         // Save to formData temporarily (will be saved on form save)
         const formData = JSON.parse(localStorage.getItem('admin_form_data') || '{}');
         if (type === 'main') {
@@ -612,9 +650,9 @@ function handleImageUpload(event, type) {
 function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const fileData = {
             name: file.name,
             size: file.size,
@@ -622,7 +660,7 @@ function handleFileUpload(event) {
             data: e.target.result
         };
         showFilePreview(fileData);
-        
+
         // Save to formData temporarily
         const formData = JSON.parse(localStorage.getItem('admin_form_data') || '{}');
         formData.file = fileData;
@@ -659,19 +697,19 @@ function showFilePreview(fileData) {
     }
 }
 
-window.removeImage = function(type) {
+window.removeImage = function (type) {
     const previewId = type === 'main' ? 'preview-main' : 'preview-highlight';
     const preview = document.getElementById(previewId);
     if (preview) {
         preview.innerHTML = '';
     }
-    
+
     const inputId = type === 'main' ? 'form-image-main' : 'form-image-highlight';
     const input = document.getElementById(inputId);
     if (input) {
         input.value = '';
     }
-    
+
     const formData = JSON.parse(localStorage.getItem('admin_form_data') || '{}');
     if (type === 'main') {
         delete formData.imageMain;
@@ -681,17 +719,17 @@ window.removeImage = function(type) {
     localStorage.setItem('admin_form_data', JSON.stringify(formData));
 };
 
-window.removeFile = function() {
+window.removeFile = function () {
     const preview = document.getElementById('preview-file');
     if (preview) {
         preview.innerHTML = '';
     }
-    
+
     const input = document.getElementById('form-file');
     if (input) {
         input.value = '';
     }
-    
+
     const formData = JSON.parse(localStorage.getItem('admin_form_data') || '{}');
     delete formData.file;
     localStorage.setItem('admin_form_data', JSON.stringify(formData));
@@ -700,10 +738,10 @@ window.removeFile = function() {
 async function saveFormData() {
     // Get existing formData to preserve images and files
     const existingData = await getFormConfig();
-    
+
     // Verificar se há imagens no localStorage temporário (upload recente)
     const tempFormData = JSON.parse(localStorage.getItem('admin_form_data') || '{}');
-    
+
     const formData = {
         title: document.getElementById('form-title').value,
         subtitle: document.getElementById('form-subtitle').value,
@@ -715,7 +753,7 @@ async function saveFormData() {
         imageHighlight: tempFormData.imageHighlight || existingData.imageHighlight || null,
         file: tempFormData.file || existingData.file || null
     };
-    
+
     console.log('💾 Salvando formulário com dados:', {
         title: formData.title,
         hasImageMain: !!formData.imageMain,
@@ -723,7 +761,7 @@ async function saveFormData() {
         imageMainLength: formData.imageMain ? formData.imageMain.length : 0,
         imageHighlightLength: formData.imageHighlight ? formData.imageHighlight.length : 0
     });
-    
+
     const success = await saveFormConfig(formData);
     if (success) {
         // Limpar localStorage temporário após salvar
@@ -743,9 +781,9 @@ async function loadParticipantes() {
         console.log('🔄 Carregando participantes...');
         const participantes = await getAllParticipants();
         console.log(`✅ Total de participantes recebidos: ${participantes.length}`);
-        
+
         globalParticipants = participantes; // Salvar globalmente
-        
+
         // Normalizar dados (Supabase usa created_at, localStorage usa timestamp)
         const normalized = participantes.map(p => ({
             ...p,
@@ -754,14 +792,14 @@ async function loadParticipantes() {
             timestamp: p.created_at || p.timestamp || new Date().toISOString(),
             device: p.device || (/Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop')
         }));
-        
+
         console.log(`📊 Participantes normalizados: ${normalized.length}`);
-        
+
         const totalEl = document.getElementById('total-participantes');
         const hojeEl = document.getElementById('hoje-participantes');
-        
+
         if (totalEl) totalEl.textContent = normalized.length;
-        
+
         if (hojeEl) {
             const today = new Date().toDateString();
             const hoje = normalized.filter(p => {
@@ -771,30 +809,30 @@ async function loadParticipantes() {
             }).length;
             hojeEl.textContent = hoje;
         }
-        
+
         const container = document.getElementById('participantes-list');
         if (!container) return;
-        
+
         container.innerHTML = '';
-        
+
         if (normalized.length === 0) {
             container.innerHTML = '<div class="participante-item"><p>Nenhum participante ainda.</p></div>';
             return;
         }
-        
+
         // Ordenar por data mais recente
         normalized.sort((a, b) => {
             const dateA = new Date(a.created_at || a.timestamp || 0);
             const dateB = new Date(b.created_at || b.timestamp || 0);
             return dateB - dateA;
         });
-        
+
         normalized.forEach(participante => {
             const item = document.createElement('div');
             item.className = 'participante-item';
             const dateStr = formatDate(participante.created_at || participante.timestamp);
             const deviceIcon = participante.device === 'mobile' ? '📱' : '💻';
-            
+
             item.innerHTML = `
                 <div class="participante-info">
                     <h4>${participante.nome} ${deviceIcon}</h4>
@@ -804,7 +842,7 @@ async function loadParticipantes() {
             `;
             container.appendChild(item);
         });
-        
+
         console.log('Participantes carregados:', normalized.length);
     } catch (error) {
         console.error('Erro ao carregar participantes:', error);
@@ -831,13 +869,13 @@ async function loadGanhadores() {
     try {
         const participantes = await getAllParticipants();
         globalParticipants = participantes; // Salvar globalmente
-        
+
         // Atualizar estatísticas
         const totalEl = document.getElementById('total-participantes');
         const hojeEl = document.getElementById('hoje-participantes');
-        
+
         if (totalEl) totalEl.textContent = participantes.length;
-        
+
         if (hojeEl) {
             const today = new Date().toDateString();
             const hoje = participantes.filter(p => {
@@ -847,18 +885,18 @@ async function loadGanhadores() {
             }).length;
             hojeEl.textContent = hoje;
         }
-        
+
         const winners = await getWinners();
         const container = document.getElementById('participantes-list');
         if (!container) return;
-        
+
         container.innerHTML = '';
-        
+
         if (participantes.length === 0) {
             container.innerHTML = '<div class="participante-item"><p>Nenhum participante disponível.</p></div>';
             return;
         }
-        
+
         // Normalizar dados
         const normalized = participantes.map(p => ({
             ...p,
@@ -866,27 +904,27 @@ async function loadGanhadores() {
             timestamp: p.created_at || p.timestamp || new Date().toISOString(),
             device: p.device || 'desktop'
         }));
-        
+
         // Ordenar por data mais recente
         normalized.sort((a, b) => {
             const dateA = new Date(a.created_at || a.timestamp || 0);
             const dateB = new Date(b.created_at || b.timestamp || 0);
             return dateB - dateA;
         });
-        
+
         normalized.forEach((participante, index) => {
             const participantPhone = (participante.celular || '').replace(/\D/g, '');
             const isWinner = winners.some(w => {
                 const winnerPhone = (w.celular || '').replace(/\D/g, '');
                 return winnerPhone === participantPhone;
             });
-            
+
             const item = document.createElement('div');
             item.className = 'participante-item';
             const deviceIcon = participante.device === 'mobile' ? '📱' : '💻';
             const dateStr = formatDate(participante.created_at || participante.timestamp);
             const uniqueId = `winner-${index}-${participantPhone}`;
-            
+
             item.innerHTML = `
                 <div class="participante-info" style="flex: 1;">
                     <h4>${participante.nome} ${deviceIcon}</h4>
@@ -898,12 +936,12 @@ async function loadGanhadores() {
                     <label for="${uniqueId}" style="cursor: pointer; margin: 0;">Selecionar</label>
                 </div>
             `;
-            
+
             const checkbox = item.querySelector('input[type="checkbox"]');
             checkbox.addEventListener('change', updateSelectedWinners);
             container.appendChild(item);
         });
-        
+
         // Atualizar lista de selecionados
         updateSelectedWinners();
         console.log('✅ Ganhadores carregados. Participantes:', normalized.length, 'Ganhadores:', winners.length);
@@ -919,7 +957,7 @@ async function loadGanhadores() {
 function filterParticipantes() {
     const search = document.getElementById('search-participante').value.toLowerCase();
     const items = document.querySelectorAll('.participante-item');
-    
+
     items.forEach(item => {
         const text = item.textContent.toLowerCase();
         item.style.display = text.includes(search) ? 'flex' : 'none';
@@ -935,14 +973,14 @@ async function updateSelectedWinners() {
         participantes = await getAllParticipants();
         globalParticipants = participantes;
     }
-    
+
     // Se ainda estiver vazio, usar localStorage como fallback
     if (participantes.length === 0) {
         participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
     }
-    
+
     const checkboxes = document.querySelectorAll('#participantes-list input[type="checkbox"]:checked');
-    
+
     selectedWinners = Array.from(checkboxes).map(cb => {
         const index = parseInt(cb.getAttribute('data-index'));
         if (participantes[index]) {
@@ -955,21 +993,21 @@ async function updateSelectedWinners() {
         }
         return null;
     }).filter(w => w !== null);
-    
+
     renderSelectedWinners();
 }
 
 function renderSelectedWinners() {
     const container = document.getElementById('winners-list');
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
     if (selectedWinners.length === 0) {
         container.innerHTML = '<p class="empty-winners">Nenhum ganhador selecionado ainda.</p>';
         return;
     }
-    
+
     selectedWinners.forEach((winner, index) => {
         const badge = document.createElement('div');
         badge.className = 'winner-badge';
@@ -982,12 +1020,12 @@ function renderSelectedWinners() {
 }
 
 // Make it globally accessible
-window.removeWinner = async function(index) {
+window.removeWinner = async function (index) {
     const winner = selectedWinners[index];
     if (!winner) return;
-    
+
     const checkboxes = document.querySelectorAll('#participantes-list input[type="checkbox"]');
-    
+
     // Encontrar e desmarcar o checkbox correspondente
     checkboxes.forEach(cb => {
         const idx = parseInt(cb.getAttribute('data-index'));
@@ -996,7 +1034,7 @@ window.removeWinner = async function(index) {
             cb.checked = false;
         }
     });
-    
+
     await updateSelectedWinners();
 };
 
@@ -1005,38 +1043,38 @@ async function confirmWinners() {
         alert('Selecione pelo menos um ganhador!');
         return;
     }
-    
+
     // Normalizar celulares antes de salvar
     const normalizedWinners = selectedWinners.map(w => ({
         ...w,
         celular: w.celular || '', // Garantir que não seja undefined
         celular_normalizado: (w.celular || '').replace(/\D/g, '')
     }));
-    
+
     console.log('💾 Salvando ganhadores normalizados:', normalizedWinners);
-    
+
     const confirmMessage = `Confirmar ${normalizedWinners.length} ganhador(es) do sorteio?\n\n${normalizedWinners.map(w => `- ${w.nome} (${w.celular})`).join('\n')}`;
-    
+
     if (confirm(confirmMessage)) {
         const success = await saveWinners(normalizedWinners);
-        
+
         if (success) {
             // Verificar se foi salvo corretamente
             const saved = JSON.parse(localStorage.getItem('webinar_winners') || '[]');
             console.log('✅ Ganhadores salvos. Verificação:', saved);
-            
+
             // IMPORTANTE: Forçar atualização do timestamp para disparar verificação
             const timestamp = Date.now();
             localStorage.setItem('webinar_winners_timestamp', timestamp.toString());
-            
+
             // DISPARAR TODOS OS EVENTOS IMEDIATAMENTE - SEM DELAY
             // 1. CustomEvent (mesma aba)
-            const event = new CustomEvent('winners-confirmed', { 
-                detail: { winners: normalizedWinners, timestamp: timestamp } 
+            const event = new CustomEvent('winners-confirmed', {
+                detail: { winners: normalizedWinners, timestamp: timestamp }
             });
             window.dispatchEvent(event);
             console.log('📢 Evento winners-confirmed disparado IMEDIATAMENTE');
-            
+
             // 2. BroadcastChannel (outras abas)
             try {
                 const channel = new BroadcastChannel('winner-notifications');
@@ -1050,7 +1088,7 @@ async function confirmWinners() {
             } catch (e) {
                 console.warn('BroadcastChannel não disponível:', e);
             }
-            
+
             // 3. Forçar storage event (funciona entre abas)
             try {
                 // Simular storage event disparando manualmente
@@ -1064,7 +1102,7 @@ async function confirmWinners() {
             } catch (e) {
                 console.warn('Erro ao criar StorageEvent:', e);
             }
-            
+
             // 4. Disparar evento de timestamp também
             try {
                 window.dispatchEvent(new StorageEvent('storage', {
@@ -1077,19 +1115,19 @@ async function confirmWinners() {
             } catch (e) {
                 console.warn('Erro ao criar StorageEvent timestamp:', e);
             }
-            
+
             // 5. DISPARAR POPUP DE OFERTA PARA TODOS OS USUÁRIOS
             console.log('========================================');
             console.log('🔥 DISPARANDO POPUP DE OFERTA PARA TODOS! 🔥');
             console.log('========================================');
-            
+
             // Disparar evento customizado para popup de oferta (mesma aba) - IMEDIATAMENTE
-            const offerEvent = new CustomEvent('show-offer-popup', { 
-                detail: { timestamp: timestamp, force: true } 
+            const offerEvent = new CustomEvent('show-offer-popup', {
+                detail: { timestamp: timestamp, force: true }
             });
             window.dispatchEvent(offerEvent);
             console.log('📢 Evento show-offer-popup disparado (mesma aba)');
-            
+
             // BroadcastChannel (outras abas)
             try {
                 const offerChannel = new BroadcastChannel('offer-popup');
@@ -1103,12 +1141,12 @@ async function confirmWinners() {
             } catch (e) {
                 console.warn('❌ Erro ao disparar popup de oferta via BroadcastChannel:', e);
             }
-            
+
             // Backup: disparar novamente após 300ms
             setTimeout(() => {
                 console.log('🔄 Backup: Disparando popup de oferta novamente...');
-                window.dispatchEvent(new CustomEvent('show-offer-popup', { 
-                    detail: { timestamp: timestamp, force: true } 
+                window.dispatchEvent(new CustomEvent('show-offer-popup', {
+                    detail: { timestamp: timestamp, force: true }
                 }));
                 try {
                     const offerChannel = new BroadcastChannel('offer-popup');
@@ -1118,9 +1156,9 @@ async function confirmWinners() {
                         action: 'show-now',
                         force: true
                     });
-                } catch (e) {}
+                } catch (e) { }
             }, 300);
-            
+
             // 6. Log final para debug
             console.log('========================================');
             console.log('✅ GANHADORES CONFIRMADOS:');
@@ -1129,17 +1167,17 @@ async function confirmWinners() {
             });
             console.log('📦 Verificar no localStorage: webinar_winners');
             console.log('========================================');
-            
+
             // Forçar uma verificação adicional após 500ms (caso os eventos não tenham chegado)
             setTimeout(() => {
                 console.log('🔄 Verificação adicional após 500ms...');
                 // Disparar evento novamente como backup
-                const backupEvent = new CustomEvent('winners-confirmed', { 
-                    detail: { winners: normalizedWinners, timestamp: timestamp, force: true } 
+                const backupEvent = new CustomEvent('winners-confirmed', {
+                    detail: { winners: normalizedWinners, timestamp: timestamp, force: true }
                 });
                 window.dispatchEvent(backupEvent);
             }, 500);
-            
+
             alert(`✅ Ganhadores confirmados!\n\n${normalizedWinners.length} ganhador(es) verão a notificação AGORA!\n\nO popup de oferta aparecerá para TODOS os usuários no site!\n\nGanhadores:\n${normalizedWinners.map(w => `• ${w.nome} - ${w.celular}`).join('\n')}\n\n💡 Dica: Se não aparecer, abra o console (F12) na aba do webinar e execute: debugWinner()`);
         } else {
             alert('⚠️ Erro ao salvar ganhadores. Tente novamente.');
@@ -1151,7 +1189,7 @@ async function confirmWinners() {
 function switchComentariosTab(tabType) {
     document.querySelectorAll('.editor-tab').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.comentarios-editor-panel').forEach(panel => panel.classList.remove('active'));
-    
+
     const tab = document.querySelector(`.editor-tab[data-tab="${tabType}"]`);
     const panel = document.getElementById(`editor-${tabType}`);
     if (tab) tab.classList.add('active');
@@ -1160,7 +1198,7 @@ function switchComentariosTab(tabType) {
 
 async function loadComentariosEditor() {
     const comentarios = await getComments();
-    
+
     const animacao = comentarios.animacao || [
         'Que sorteio incrível! Quero muito ganhar esse iPhone!',
         'Estou participando! Seria um sonho ganhar!',
@@ -1171,7 +1209,7 @@ async function loadComentariosEditor() {
         'Sonhando com esse iPhone! Seria perfeito!',
         'Estou animado demais com esse sorteio!'
     ];
-    
+
     const tristes = comentarios.tristes || [
         'Que triste, perdi o sorteio de novo...',
         'Sempre participo mas nunca ganho nada 😢',
@@ -1182,7 +1220,7 @@ async function loadComentariosEditor() {
         'Será que um dia eu vou ganhar?',
         'Tô triste, mais uma vez não fui sorteado'
     ];
-    
+
     renderComentariosEditor('animacao', animacao);
     renderComentariosEditor('tristes', tristes);
 }
@@ -1190,9 +1228,9 @@ async function loadComentariosEditor() {
 function renderComentariosEditor(type, comentarios) {
     const container = document.getElementById(type + '-comentarios-list');
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
     comentarios.forEach((comentario, index) => {
         const item = document.createElement('div');
         item.className = 'comentario-edit-item';
@@ -1212,7 +1250,7 @@ function addComentarioEditor(type) {
 }
 
 // Make it globally accessible
-window.removeComentarioEditor = function(type, index) {
+window.removeComentarioEditor = function (type, index) {
     const comentarios = getComentariosByTypeEditor(type);
     comentarios.splice(index, 1);
     saveComentariosToStorage(type, comentarios);
@@ -1237,7 +1275,7 @@ async function saveComentariosEditor() {
         animacao: getComentariosByTypeEditor('animacao'),
         tristes: getComentariosByTypeEditor('tristes')
     };
-    
+
     await saveComments(comentarios);
     alert('Comentários salvos com sucesso!');
 }
@@ -1246,14 +1284,14 @@ async function saveComentariosEditor() {
 async function loadWinnerMessage() {
     try {
         const config = await getWinnerMessageConfig();
-        
+
         const tituloEl = document.getElementById('winner-titulo');
         const subtituloEl = document.getElementById('winner-subtitulo');
         const mensagemEl = document.getElementById('winner-mensagem');
         const detalhesEl = document.getElementById('winner-detalhes');
         const botaoTextoEl = document.getElementById('winner-botao-texto');
         const botaoLinkEl = document.getElementById('winner-botao-link');
-        
+
         if (tituloEl) tituloEl.value = config.titulo || 'PARABÉNS!';
         if (subtituloEl) subtituloEl.value = config.subtitulo || 'Você Ganhou o iPhone!';
         if (mensagemEl) mensagemEl.value = config.mensagem || 'Você foi selecionado(a) como um dos ganhadores do sorteio!';
@@ -1274,7 +1312,7 @@ async function saveWinnerMessage() {
         botaoTexto: document.getElementById('winner-botao-texto').value.trim() || 'Resgatar Prêmio',
         botaoLink: document.getElementById('winner-botao-link').value.trim() || '#'
     };
-    
+
     const success = await saveWinnerMessageConfig(config);
     if (success) {
         alert('✅ Mensagem de ganhador salva com sucesso!');
@@ -1287,10 +1325,41 @@ async function saveWinnerMessage() {
 async function loadVideoConfig() {
     try {
         const config = await getVideoConfig();
-        
+
         const embedCodeEl = document.getElementById('video-embed-code');
         if (embedCodeEl) {
             embedCodeEl.value = config.embedCode || '';
+        }
+
+        // Carregar tempo de disparo automático
+        const offerTriggerSeconds = config.offerTriggerSeconds || 0;
+        const minutes = Math.floor(offerTriggerSeconds / 60);
+        const seconds = offerTriggerSeconds % 60;
+
+        const triggerMinutesEl = document.getElementById('offer-trigger-minutes');
+        const triggerSecondsEl = document.getElementById('offer-trigger-seconds');
+        const previewEl = document.getElementById('offer-trigger-preview');
+        const statusEl = document.getElementById('offer-trigger-status');
+
+        if (triggerMinutesEl) {
+            triggerMinutesEl.value = minutes;
+        }
+        if (triggerSecondsEl) {
+            triggerSecondsEl.value = seconds;
+        }
+        if (previewEl) {
+            previewEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        if (statusEl) {
+            if (offerTriggerSeconds > 0) {
+                statusEl.style.background = '#d4edda';
+                statusEl.style.color = '#155724';
+                statusEl.innerHTML = `✅ Disparo automático <strong>ativado</strong>. A oferta aparecerá automaticamente aos ${previewEl?.textContent || '00:00'} do vídeo.`;
+            } else {
+                statusEl.style.background = '#fff3cd';
+                statusEl.style.color = '#856404';
+                statusEl.innerHTML = `⚠️ Disparo automático <strong>desativado</strong>. Configure um tempo acima de 00:00 para ativar.`;
+            }
         }
     } catch (error) {
         console.error('Erro ao carregar configuração de vídeo:', error);
@@ -1302,33 +1371,33 @@ async function triggerOfferPopup() {
     if (!confirm('🔥 Disparar popup de oferta para TODOS os usuários no site agora?')) {
         return;
     }
-    
+
     console.log('🔥🔥🔥🔥🔥 DISPARANDO POPUP PARA TODOS! 🔥🔥🔥🔥🔥');
-    
+
     const timestamp = Date.now();
-    
+
     // SALVAR NO SUPABASE (PRINCIPAL) - Isso alcança TODOS os usuários
     const result = await saveOfferPopupTrigger(timestamp);
-    
+
     if (result && result.success) {
         console.log('✅✅✅ TIMESTAMP SALVO NO SUPABASE - TODOS OS USUÁRIOS RECEBERÃO! ✅✅✅');
         console.log('📊 ID do disparo:', result.disparoId);
     } else {
         console.warn('⚠️ Não foi possível salvar no Supabase, usando apenas localStorage');
     }
-    
+
     // Salvar timestamp no localStorage também (para resposta imediata local)
     localStorage.setItem('last_offer_popup', timestamp.toString());
     localStorage.setItem('current_offer_disparo_id', timestamp.toString());
-    
+
     // Disparar na mesma aba - IMEDIATAMENTE
-    const offerEvent = new CustomEvent('show-offer-popup', { 
-        detail: { timestamp: timestamp, force: true } 
+    const offerEvent = new CustomEvent('show-offer-popup', {
+        detail: { timestamp: timestamp, force: true }
     });
     window.dispatchEvent(offerEvent);
     document.dispatchEvent(offerEvent); // Backup
     console.log('✅ Evento disparado na mesma aba (window + document)');
-    
+
     // BroadcastChannel para outras abas (mesma máquina)
     try {
         const channel = new BroadcastChannel('offer-popup');
@@ -1341,7 +1410,7 @@ async function triggerOfferPopup() {
     } catch (e) {
         console.warn('BroadcastChannel erro:', e);
     }
-    
+
     // Storage event para outras abas (backup)
     try {
         window.dispatchEvent(new StorageEvent('storage', {
@@ -1351,24 +1420,24 @@ async function triggerOfferPopup() {
             storageArea: localStorage
         }));
         console.log('✅ StorageEvent disparado');
-    } catch (e) {}
-    
+    } catch (e) { }
+
     // Atualizar contagem após 2 segundos (dar tempo para os usuários receberem)
     setTimeout(async () => {
         if (typeof getOfferDeliveryCount === 'function' && result && result.disparoId) {
             const count = await getOfferDeliveryCount(result.disparoId);
             console.log(`📊 Contagem de entregas até agora: ${count} usuários`);
-            
+
             // Atualizar botão ou mostrar contagem se necessário
-            const triggerBtn = document.querySelector('[onclick*="triggerOfferPopup"]') || 
-                              document.querySelector('button:contains("Disparar Oferta")');
+            const triggerBtn = document.querySelector('[onclick*="triggerOfferPopup"]') ||
+                document.querySelector('button:contains("Disparar Oferta")');
             if (triggerBtn && count > 0) {
                 const originalText = triggerBtn.textContent.replace(/ \(\d+\)$/, '');
                 triggerBtn.textContent = `${originalText} (${count} entregas)`;
             }
         }
     }, 2000);
-    
+
     alert('✅ Popup disparado!\n\nO popup será enviado para TODOS os usuários através do Supabase.\n\nUsuários em diferentes dispositivos/navegadores receberão em até 1 segundo.\n\nA contagem de entregas será atualizada automaticamente.');
 }
 
@@ -1376,7 +1445,7 @@ async function triggerOfferPopup() {
 async function loadOfferConfig() {
     try {
         const config = await getOfferConfig();
-        
+
         const iconEl = document.getElementById('offer-icon-input');
         const titleEl = document.getElementById('offer-title-input');
         const subtitleEl = document.getElementById('offer-subtitle-input');
@@ -1384,7 +1453,7 @@ async function loadOfferConfig() {
         const detailsEl = document.getElementById('offer-details-input');
         const ctaTextEl = document.getElementById('offer-cta-text-input');
         const ctaLinkEl = document.getElementById('offer-cta-link-input');
-        
+
         if (iconEl) iconEl.value = config.icon || '🔥';
         if (titleEl) titleEl.value = config.titulo || 'Oferta Especial';
         if (subtitleEl) subtitleEl.value = config.subtitulo || 'Aproveite Agora!';
@@ -1394,13 +1463,13 @@ async function loadOfferConfig() {
         if (ctaLinkEl) {
             ctaLinkEl.value = (config.ctaLink && config.ctaLink !== '#') ? config.ctaLink : '';
             // Normalizar URL automaticamente ao colar ou digitar
-            ctaLinkEl.addEventListener('blur', function() {
+            ctaLinkEl.addEventListener('blur', function () {
                 if (this.value.trim() && this.value.trim() !== '#') {
                     this.value = normalizeUrl(this.value.trim());
                 }
             });
             // Normalizar ao colar
-            ctaLinkEl.addEventListener('paste', function(e) {
+            ctaLinkEl.addEventListener('paste', function (e) {
                 setTimeout(() => {
                     if (this.value.trim() && this.value.trim() !== '#') {
                         this.value = normalizeUrl(this.value.trim());
@@ -1427,7 +1496,7 @@ async function saveOfferConfigHandler() {
             return normalizeUrl(linkValue);
         })()
     };
-    
+
     const success = await saveOfferConfig(config);
     if (success) {
         alert('✅ Configuração de oferta salva com sucesso!');
@@ -1438,20 +1507,227 @@ async function saveOfferConfigHandler() {
 
 async function saveVideoConfigHandler() {
     const embedCode = document.getElementById('video-embed-code').value.trim();
-    
-    if (!embedCode) {
-        alert('⚠️ Por favor, insira o código embed do vídeo!');
-        return;
-    }
-    
+    const triggerMinutes = parseInt(document.getElementById('offer-trigger-minutes')?.value || 0);
+    const triggerSeconds = parseInt(document.getElementById('offer-trigger-seconds')?.value || 0);
+
+    // Calcular tempo total em segundos
+    const totalTriggerSeconds = (triggerMinutes * 60) + triggerSeconds;
+
     const config = {
-        embedCode: embedCode
+        embedCode: embedCode,
+        offerTriggerSeconds: totalTriggerSeconds
     };
-    
+
     const success = await saveVideoConfig(config);
     if (success) {
-        alert('✅ Configuração de vídeo salva com sucesso!');
+        let message = '✅ Configuração de vídeo salva com sucesso!';
+        if (totalTriggerSeconds > 0) {
+            const minStr = String(triggerMinutes).padStart(2, '0');
+            const secStr = String(triggerSeconds).padStart(2, '0');
+            message += `\n\n⏱️ Disparo automático ativado!\nA oferta aparecerá aos ${minStr}:${secStr} do vídeo.`;
+        } else {
+            message += '\n\n⚠️ Disparo automático desativado.\nVocê pode usar o botão "Disparar Oferta Agora" para enviar manualmente.';
+        }
+        alert(message);
     } else {
         alert('⚠️ Erro ao salvar configuração. Tente novamente.');
     }
 }
+
+// ============ COMENTÁRIOS PROGRAMADOS ============
+
+// Array para armazenar comentários programados temporariamente
+let scheduledCommentsTemp = [];
+
+// Inicializar listeners de comentários programados
+function initScheduledCommentsListeners() {
+    // Botão adicionar comentário
+    const addBtn = document.getElementById('add-scheduled-comment-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', addScheduledComment);
+    }
+
+    // Botão salvar comentários
+    const saveBtn = document.getElementById('save-scheduled-comments-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveScheduledCommentsHandler);
+    }
+
+    // Botão limpar todos
+    const clearBtn = document.getElementById('clear-scheduled-comments-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearScheduledComments);
+    }
+
+    // Carregar comentários existentes
+    loadScheduledCommentsList();
+}
+
+// Adicionar comentário programado
+function addScheduledComment() {
+    const minutesEl = document.getElementById('scheduled-minutes');
+    const secondsEl = document.getElementById('scheduled-seconds');
+    const authorEl = document.getElementById('scheduled-author');
+    const contentEl = document.getElementById('scheduled-content');
+
+    const minutes = parseInt(minutesEl?.value || 0);
+    const seconds = parseInt(secondsEl?.value || 0);
+    const author = (authorEl?.value || '').trim();
+    const content = (contentEl?.value || '').trim();
+
+    // Validações
+    if (!author) {
+        alert('⚠️ Por favor, informe o nome do autor do comentário.');
+        authorEl?.focus();
+        return;
+    }
+
+    if (!content) {
+        alert('⚠️ Por favor, informe o conteúdo do comentário.');
+        contentEl?.focus();
+        return;
+    }
+
+    const totalSeconds = (minutes * 60) + seconds;
+
+    // Criar objeto do comentário
+    const newComment = {
+        id: Date.now(), // ID único
+        triggerSeconds: totalSeconds,
+        author: author,
+        content: content,
+        createdAt: new Date().toISOString()
+    };
+
+    // Adicionar à lista temporária
+    scheduledCommentsTemp.push(newComment);
+
+    // Ordenar por tempo
+    scheduledCommentsTemp.sort((a, b) => a.triggerSeconds - b.triggerSeconds);
+
+    // Atualizar lista visual
+    renderScheduledCommentsList();
+
+    // Limpar formulário
+    if (minutesEl) minutesEl.value = 0;
+    if (secondsEl) secondsEl.value = 0;
+    if (authorEl) authorEl.value = '';
+    if (contentEl) contentEl.value = '';
+
+    console.log('✅ Comentário programado adicionado:', newComment);
+}
+
+// Renderizar lista de comentários programados
+function renderScheduledCommentsList() {
+    const container = document.getElementById('scheduled-comments-list');
+    const countEl = document.getElementById('scheduled-count');
+
+    if (!container) return;
+
+    if (scheduledCommentsTemp.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Nenhum comentário programado ainda. Adicione usando o formulário acima.</p>';
+        if (countEl) countEl.textContent = '0 comentários';
+        return;
+    }
+
+    if (countEl) {
+        countEl.textContent = `${scheduledCommentsTemp.length} comentário${scheduledCommentsTemp.length > 1 ? 's' : ''}`;
+    }
+
+    container.innerHTML = scheduledCommentsTemp.map((comment, index) => {
+        const minutes = Math.floor(comment.triggerSeconds / 60);
+        const seconds = comment.triggerSeconds % 60;
+        const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        return `
+            <div class="scheduled-comment-item" style="background: white; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; border-left: 4px solid #667eea;">
+                <div style="background: #667eea; color: white; padding: 8px 12px; border-radius: 6px; font-weight: bold; min-width: 60px; text-align: center;">
+                    ⏱️ ${timeStr}
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; color: #333; margin-bottom: 3px;">👤 ${escapeHtml(comment.author)}</div>
+                    <div style="color: #666; font-size: 14px;">${escapeHtml(comment.content)}</div>
+                </div>
+                <button onclick="removeScheduledComment(${comment.id})" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                    🗑️ Remover
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+// Função auxiliar para escapar HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Remover comentário programado
+window.removeScheduledComment = function (commentId) {
+    scheduledCommentsTemp = scheduledCommentsTemp.filter(c => c.id !== commentId);
+    renderScheduledCommentsList();
+    console.log('🗑️ Comentário removido:', commentId);
+};
+
+// Limpar todos os comentários programados
+function clearScheduledComments() {
+    if (scheduledCommentsTemp.length === 0) {
+        alert('ℹ️ Não há comentários para limpar.');
+        return;
+    }
+
+    if (confirm(`🗑️ Tem certeza que deseja remover TODOS os ${scheduledCommentsTemp.length} comentários programados?\n\nEsta ação não pode ser desfeita.`)) {
+        scheduledCommentsTemp = [];
+        renderScheduledCommentsList();
+        console.log('🗑️ Todos os comentários programados foram removidos');
+    }
+}
+
+// Carregar comentários salvos
+async function loadScheduledCommentsList() {
+    try {
+        if (typeof getScheduledComments === 'function') {
+            scheduledCommentsTemp = await getScheduledComments();
+        } else {
+            scheduledCommentsTemp = JSON.parse(localStorage.getItem('scheduled_comments') || '[]');
+        }
+        renderScheduledCommentsList();
+        console.log('✅ Comentários programados carregados:', scheduledCommentsTemp.length);
+    } catch (error) {
+        console.error('Erro ao carregar comentários programados:', error);
+        scheduledCommentsTemp = [];
+        renderScheduledCommentsList();
+    }
+}
+
+// Salvar comentários programados
+async function saveScheduledCommentsHandler() {
+    try {
+        let success = false;
+
+        if (typeof saveScheduledComments === 'function') {
+            success = await saveScheduledComments(scheduledCommentsTemp);
+        } else {
+            localStorage.setItem('scheduled_comments', JSON.stringify(scheduledCommentsTemp));
+            success = true;
+        }
+
+        if (success) {
+            alert(`✅ ${scheduledCommentsTemp.length} comentário(s) programado(s) salvo(s) com sucesso!\n\nOs comentários aparecerão automaticamente no chat dos usuários nos horários configurados.`);
+        } else {
+            alert('⚠️ Erro ao salvar comentários. Tente novamente.');
+        }
+    } catch (error) {
+        console.error('Erro ao salvar comentários programados:', error);
+        alert('⚠️ Erro ao salvar comentários. Tente novamente.');
+    }
+}
+
+// Inicializar listeners quando a página carregar
+document.addEventListener('DOMContentLoaded', function () {
+    // Aguardar um pouco para garantir que todos os elementos foram carregados
+    setTimeout(() => {
+        initScheduledCommentsListeners();
+    }, 500);
+});

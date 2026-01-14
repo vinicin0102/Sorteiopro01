@@ -741,9 +741,41 @@ setTimeout(() => {
 
 // Timer functionality
 let streamStartTime = Date.now();
+let offerTriggerSeconds = 0; // Tempo para disparo automático da oferta (0 = desativado)
+let offerTriggeredAutomatically = false; // Flag para evitar disparos múltiplos
+
+// Carregar configuração de tempo de disparo automático
+async function loadOfferTriggerConfig() {
+    try {
+        if (typeof getVideoConfig === 'function') {
+            const config = await getVideoConfig();
+            offerTriggerSeconds = config.offerTriggerSeconds || 0;
+            if (offerTriggerSeconds > 0) {
+                const min = Math.floor(offerTriggerSeconds / 60);
+                const sec = offerTriggerSeconds % 60;
+                console.log(`⏱️ Disparo automático configurado para ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')} (${offerTriggerSeconds}s)`);
+            } else {
+                console.log('ℹ️ Disparo automático de oferta desativado');
+            }
+        } else {
+            // Fallback localStorage
+            const stored = localStorage.getItem('admin_video_config');
+            if (stored) {
+                const config = JSON.parse(stored);
+                offerTriggerSeconds = config.offerTriggerSeconds || 0;
+            }
+        }
+    } catch (e) {
+        console.warn('Erro ao carregar config de disparo automático:', e);
+    }
+}
+
+// Carregar config ao iniciar
+loadOfferTriggerConfig();
 
 function updateTimer() {
     const elapsed = Date.now() - streamStartTime;
+    const elapsedSeconds = Math.floor(elapsed / 1000);
     const hours = Math.floor(elapsed / 3600000);
     const minutes = Math.floor((elapsed % 3600000) / 60000);
     const seconds = Math.floor((elapsed % 60000) / 1000);
@@ -754,7 +786,99 @@ function updateTimer() {
         String(seconds).padStart(2, '0');
 
     document.getElementById('stream-timer').textContent = formattedTime;
+
+    // VERIFICAR DISPARO AUTOMÁTICO DA OFERTA
+    if (offerTriggerSeconds > 0 && !offerTriggeredAutomatically && elapsedSeconds >= offerTriggerSeconds) {
+        offerTriggeredAutomatically = true; // Marcar como disparado
+        console.log('========================================');
+        console.log('⏱️🔥 TEMPO ATINGIDO! DISPARANDO OFERTA AUTOMATICAMENTE! 🔥⏱️');
+        console.log(`   Tempo configurado: ${offerTriggerSeconds}s`);
+        console.log(`   Tempo atual: ${elapsedSeconds}s`);
+        console.log('========================================');
+
+        // Disparar popup de oferta
+        showOfferPopup();
+
+        // Marcar no localStorage para este usuário não ver novamente nesta sessão
+        localStorage.setItem('offer_auto_triggered_at', Date.now().toString());
+    }
+
+    // VERIFICAR COMENTÁRIOS PROGRAMADOS
+    checkScheduledComments(elapsedSeconds);
 }
+
+// ============ COMENTÁRIOS PROGRAMADOS ============
+
+// Array para armazenar comentários programados
+let scheduledComments = [];
+let triggeredScheduledComments = new Set(); // IDs dos comentários já exibidos
+
+// Carregar comentários programados
+async function loadScheduledCommentsForWebinar() {
+    try {
+        if (typeof getScheduledComments === 'function') {
+            scheduledComments = await getScheduledComments();
+        } else {
+            scheduledComments = JSON.parse(localStorage.getItem('scheduled_comments') || '[]');
+        }
+
+        // Limpar comentários já exibidos nesta sessão
+        const triggeredIds = sessionStorage.getItem('triggered_scheduled_comments');
+        if (triggeredIds) {
+            triggeredScheduledComments = new Set(JSON.parse(triggeredIds));
+        }
+
+        console.log(`📅 ${scheduledComments.length} comentário(s) programado(s) carregado(s)`);
+
+        if (scheduledComments.length > 0) {
+            console.log('📋 Comentários programados:');
+            scheduledComments.forEach((c, idx) => {
+                const min = Math.floor(c.triggerSeconds / 60);
+                const sec = c.triggerSeconds % 60;
+                const timeStr = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+                console.log(`   ${idx + 1}. [${timeStr}] ${c.author}: "${c.content.substring(0, 40)}${c.content.length > 40 ? '...' : ''}"`);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar comentários programados:', error);
+        scheduledComments = [];
+    }
+}
+
+// Verificar e exibir comentários programados
+function checkScheduledComments(currentSeconds) {
+    if (scheduledComments.length === 0) return;
+
+    scheduledComments.forEach(comment => {
+        // Verificar se já foi exibido
+        if (triggeredScheduledComments.has(comment.id)) return;
+
+        // Verificar se é hora de exibir
+        if (currentSeconds >= comment.triggerSeconds) {
+            // Marcar como exibido
+            triggeredScheduledComments.add(comment.id);
+
+            // Salvar no sessionStorage para persistir durante a sessão
+            sessionStorage.setItem('triggered_scheduled_comments', JSON.stringify([...triggeredScheduledComments]));
+
+            // Exibir o comentário no chat
+            const min = Math.floor(comment.triggerSeconds / 60);
+            const sec = comment.triggerSeconds % 60;
+            const timeStr = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+
+            console.log(`📅 COMENTÁRIO PROGRAMADO DISPARADO às ${timeStr}:`);
+            console.log(`   👤 ${comment.author}: "${comment.content}"`);
+
+            // Adicionar ao chat
+            addChatMessage(comment.author, comment.content);
+        }
+    });
+}
+
+// Carregar comentários programados ao iniciar
+(async function () {
+    await loadScheduledCommentsForWebinar();
+})();
 
 // Update timer every second
 setInterval(updateTimer, 1000);

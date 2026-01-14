@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Admin - SorteioPro</title>
     <link rel="stylesheet" href="admin.css">
 </head>
+
 <body>
     <!-- Login Screen -->
     <div id="login-screen" class="login-screen">
@@ -42,7 +44,8 @@
                     <div class="action-card">
                         <div class="action-header">
                             <h3>Comentários de Animação</h3>
-                            <p class="action-description">Dispara comentários animados sobre o sorteio (varias pessoas diferentes)</p>
+                            <p class="action-description">Dispara comentários animados sobre o sorteio (varias pessoas
+                                diferentes)</p>
                         </div>
                         <div class="action-controls">
                             <input type="number" id="qtd-animacao" class="quantity-input" value="14" min="1">
@@ -53,7 +56,8 @@
                     <div class="action-card">
                         <div class="action-header">
                             <h3>Comentários Tristes</h3>
-                            <p class="action-description">Dispara comentários tristes de pessoas que perderam o sorteio (varias pessoas diferentes)</p>
+                            <p class="action-description">Dispara comentários tristes de pessoas que perderam o sorteio
+                                (varias pessoas diferentes)</p>
                         </div>
                         <div class="action-controls">
                             <input type="number" id="qtd-tristes" class="quantity-input" value="12" min="1">
@@ -63,9 +67,12 @@
 
                     <div class="action-card danger">
                         <button id="limpar-chat-btn" class="limpar-chat-btn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
                             </svg>
                             Limpar Chat
                         </button>
@@ -83,13 +90,104 @@
                         </div>
                         <div id="editor-animacao" class="comentarios-editor-panel active">
                             <div id="animacao-comentarios-list" class="comentarios-edit-list"></div>
-                            <button class="add-comentario-editor-btn" data-type="animacao">+ Adicionar Comentário</button>
+                            <button class="add-comentario-editor-btn" data-type="animacao">+ Adicionar
+                                Comentário</button>
                         </div>
                         <div id="editor-tristes" class="comentarios-editor-panel">
                             <div id="tristes-comentarios-list" class="comentarios-edit-list"></div>
-                            <button class="add-comentario-editor-btn" data-type="tristes">+ Adicionar Comentário</button>
+                            <button class="add-comentario-editor-btn" data-type="tristes">+ Adicionar
+                                Comentário</button>
                         </div>
-                        <button id="save-comentarios-btn" class="save-btn" style="margin-top: 20px;">Salvar Comentários</button>
+                        <button id="save-comentarios-btn" class="save-btn" style="margin-top: 20px;">Salvar
+                            Comentários</button>
+                    </div>
+
+                    <!-- Comentários Programados -->
+                    <div class="action-card" style="margin-top: 30px;">
+                        <div class="action-header">
+                            <h3>📅 Comentários Programados</h3>
+                            <p class="action-description">Crie comentários que aparecerão automaticamente em momentos
+                                específicos do vídeo. Defina o tempo exato, o nome do autor e o conteúdo de cada
+                                comentário.</p>
+                        </div>
+
+                        <!-- Formulário para adicionar comentário programado -->
+                        <div class="scheduled-comment-form"
+                            style="background: linear-gradient(135deg, #667eea15, #764ba215); padding: 20px; border-radius: 12px; margin-top: 15px; border: 1px solid #667eea30;">
+                            <h4 style="margin: 0 0 15px 0; color: #667eea; font-size: 16px;">➕ Adicionar Novo Comentário
+                            </h4>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label style="font-weight: 600; color: #333; margin-bottom: 5px; display: block;">⏱️
+                                        Tempo (quando aparecer)</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="number" id="scheduled-minutes" min="0" max="999" value="0"
+                                            placeholder="Min"
+                                            style="width: 70px; padding: 10px; border: 2px solid #667eea50; border-radius: 8px; text-align: center; font-weight: bold;">
+                                        <span style="font-size: 18px; font-weight: bold;">:</span>
+                                        <input type="number" id="scheduled-seconds" min="0" max="59" value="0"
+                                            placeholder="Seg"
+                                            style="width: 70px; padding: 10px; border: 2px solid #667eea50; border-radius: 8px; text-align: center; font-weight: bold;">
+                                        <span style="color: #666; font-size: 13px;">(min:seg)</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin: 0;">
+                                    <label style="font-weight: 600; color: #333; margin-bottom: 5px; display: block;">👤
+                                        Nome do Autor</label>
+                                    <input type="text" id="scheduled-author" placeholder="Ex: Maria, João, Pedro..."
+                                        style="width: 100%; padding: 10px; border: 2px solid #667eea50; border-radius: 8px;">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin: 0 0 15px 0;">
+                                <label style="font-weight: 600; color: #333; margin-bottom: 5px; display: block;">💬
+                                    Conteúdo do Comentário</label>
+                                <textarea id="scheduled-content" rows="2"
+                                    placeholder="Digite o conteúdo do comentário que aparecerá no chat..."
+                                    style="width: 100%; padding: 10px; border: 2px solid #667eea50; border-radius: 8px; resize: vertical;"></textarea>
+                            </div>
+
+                            <button id="add-scheduled-comment-btn" class="disparar-btn"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100%;">
+                                ➕ Adicionar Comentário Programado
+                            </button>
+                        </div>
+
+                        <!-- Lista de comentários programados -->
+                        <div style="margin-top: 20px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="margin: 0; color: #333;">📋 Lista de Comentários Programados</h4>
+                                <span id="scheduled-count"
+                                    style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 13px;">0
+                                    comentários</span>
+                            </div>
+                            <div id="scheduled-comments-list"
+                                style="max-height: 400px; overflow-y: auto; background: #f8f9fa; border-radius: 8px; padding: 10px;">
+                                <p style="text-align: center; color: #999; padding: 20px;">Nenhum comentário programado
+                                    ainda. Adicione usando o formulário acima.</p>
+                            </div>
+                        </div>
+
+                        <!-- Botões de ação -->
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button id="save-scheduled-comments-btn" class="save-btn" style="flex: 1;">
+                                💾 Salvar Comentários Programados
+                            </button>
+                            <button id="clear-scheduled-comments-btn" class="limpar-chat-btn"
+                                style="flex: 0.5; background: #dc3545;">
+                                🗑️ Limpar Todos
+                            </button>
+                        </div>
+
+                        <p
+                            style="margin-top: 15px; padding: 12px; background: #e7f3ff; border-radius: 8px; color: #0066cc; font-size: 13px;">
+                            💡 <strong>Dica:</strong> Os comentários aparecerão automaticamente no chat quando o tempo
+                            de vídeo atingir o momento configurado. O tempo é contado a partir de quando o usuário entra
+                            na página do webinar.
+                        </p>
                     </div>
                 </div>
             </section>
@@ -97,18 +195,21 @@
             <!-- Seção Logs de Acesso -->
             <section id="logs-section" class="content-section">
                 <div class="section-content">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                         <h2>Logs de Acesso ao Painel Admin</h2>
                         <button id="refresh-logs-btn" class="refresh-btn">🔄 Atualizar</button>
                     </div>
-                    
+
                     <div class="action-card">
                         <div class="action-header">
                             <h3>Histórico de Acessos</h3>
-                            <p class="action-description">Registro de todos os logins bem-sucedidos e tentativas falhadas</p>
+                            <p class="action-description">Registro de todos os logins bem-sucedidos e tentativas
+                                falhadas</p>
                         </div>
-                        
-                        <div id="logs-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+
+                        <div id="logs-stats"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
                             <div class="stat-box" style="background: #e8f5e9;">
                                 <span class="stat-label">Total de Acessos</span>
                                 <span id="total-logs" class="stat-value">0</span>
@@ -122,7 +223,7 @@
                                 <span id="failed-logs" class="stat-value">0</span>
                             </div>
                         </div>
-                        
+
                         <div id="logs-list" style="max-height: 600px; overflow-y: auto;">
                             <p style="text-align: center; color: #666; padding: 20px;">Carregando logs...</p>
                         </div>
@@ -161,7 +262,8 @@
                         <div class="action-card" style="margin-top: 30px;">
                             <div class="action-header">
                                 <h3>Mensagem de Ganhador</h3>
-                                <p class="action-description">Personalize a mensagem que aparecerá para os ganhadores</p>
+                                <p class="action-description">Personalize a mensagem que aparecerá para os ganhadores
+                                </p>
                             </div>
                             <div class="editor-form" style="margin-top: 20px;">
                                 <div class="form-group">
@@ -174,11 +276,13 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Mensagem Principal</label>
-                                    <textarea id="winner-mensagem" rows="3" placeholder="Ex: Você foi selecionado(a) como um dos ganhadores do sorteio!"></textarea>
+                                    <textarea id="winner-mensagem" rows="3"
+                                        placeholder="Ex: Você foi selecionado(a) como um dos ganhadores do sorteio!"></textarea>
                                 </div>
                                 <div class="form-group">
                                     <label>Detalhes/Instruções</label>
-                                    <textarea id="winner-detalhes" rows="2" placeholder="Ex: Entre em contato conosco para receber seu prêmio!"></textarea>
+                                    <textarea id="winner-detalhes" rows="2"
+                                        placeholder="Ex: Entre em contato conosco para receber seu prêmio!"></textarea>
                                 </div>
                                 <div class="form-group">
                                     <label>Texto do Botão</label>
@@ -220,14 +324,15 @@
                             <label>Horário da Aula</label>
                             <input type="text" id="form-time" placeholder="Ex: Aula às 20h00">
                         </div>
-                        
+
                         <!-- Upload de Imagens -->
                         <div class="form-group">
                             <label>Imagem Principal/Banner</label>
                             <div class="image-upload-container">
                                 <input type="file" id="form-image-main" accept="image/*" class="file-input">
                                 <label for="form-image-main" class="file-input-label">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                         <polyline points="17 8 12 3 7 8"></polyline>
                                         <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -243,7 +348,8 @@
                             <div class="image-upload-container">
                                 <input type="file" id="form-image-highlight" accept="image/*" class="file-input">
                                 <label for="form-image-highlight" class="file-input-label">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                         <polyline points="17 8 12 3 7 8"></polyline>
                                         <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -259,7 +365,8 @@
                             <div class="image-upload-container">
                                 <input type="file" id="form-file" accept=".pdf,.doc,.docx" class="file-input">
                                 <label for="form-file" class="file-input-label">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
                                         <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                                         <polyline points="13 2 13 9 20 9"></polyline>
                                     </svg>
@@ -278,15 +385,17 @@
             <section id="oferta-section" class="content-section">
                 <div class="section-content">
                     <h2>Popup de Oferta</h2>
-                    
+
                     <!-- Botão para Disparar Oferta -->
                     <div class="action-card" style="margin-bottom: 30px;">
                         <div class="action-header">
                             <h3>Disparar Popup de Oferta</h3>
-                            <p class="action-description">Dispara o popup de oferta para TODOS os usuários que estão no site agora</p>
+                            <p class="action-description">Dispara o popup de oferta para TODOS os usuários que estão no
+                                site agora</p>
                         </div>
                         <div class="action-controls" style="justify-content: center; margin-top: 20px;">
-                            <button id="trigger-offer-btn" class="disparar-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 40px; font-size: 18px;">
+                            <button id="trigger-offer-btn" class="disparar-btn"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 40px; font-size: 18px;">
                                 🔥 Disparar Oferta Agora
                             </button>
                         </div>
@@ -311,11 +420,13 @@
                         </div>
                         <div class="form-group">
                             <label>Mensagem Principal</label>
-                            <textarea id="offer-message-input" rows="3" placeholder="Ex: Não perca esta oportunidade única!"></textarea>
+                            <textarea id="offer-message-input" rows="3"
+                                placeholder="Ex: Não perca esta oportunidade única!"></textarea>
                         </div>
                         <div class="form-group">
                             <label>Detalhes/Descrição</label>
-                            <textarea id="offer-details-input" rows="2" placeholder="Ex: Confira nossa oferta especial!"></textarea>
+                            <textarea id="offer-details-input" rows="2"
+                                placeholder="Ex: Confira nossa oferta especial!"></textarea>
                         </div>
                         <div class="form-group">
                             <label>Texto do Botão CTA</label>
@@ -323,14 +434,12 @@
                         </div>
                         <div class="form-group">
                             <label>Link do Botão CTA</label>
-                            <input 
-                                type="text" 
-                                id="offer-cta-link-input" 
+                            <input type="text" id="offer-cta-link-input"
                                 placeholder="Cole aqui o link completo (ex: https://exemplo.com/oferta)"
-                                style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.3s;"
-                            >
+                                style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.3s;">
                             <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
-                                💡 Você pode colar qualquer link aqui. Se não começar com "http", será adicionado automaticamente.
+                                💡 Você pode colar qualquer link aqui. Se não começar com "http", será adicionado
+                                automaticamente.
                             </small>
                         </div>
                         <button id="save-offer-btn" class="save-btn">Salvar Oferta</button>
@@ -343,15 +452,50 @@
                                 <label>Código Embed do Vídeo</label>
                                 <p style="color: #666; font-size: 12px; margin-bottom: 10px;">
                                     Cole aqui o código embed completo (iframe) do YouTube, Vimeo ou outra plataforma.
-                                    <br>Exemplo: &lt;iframe src="https://www.youtube.com/embed/VIDEO_ID"&gt;&lt;/iframe&gt;
+                                    <br>Exemplo: &lt;iframe
+                                    src="https://www.youtube.com/embed/VIDEO_ID"&gt;&lt;/iframe&gt;
                                 </p>
-                                <textarea 
-                                    id="video-embed-code" 
-                                    rows="6" 
+                                <textarea id="video-embed-code" rows="6"
                                     placeholder='Cole aqui o código embed completo (iframe) do vídeo. Exemplo:&#10;&lt;iframe src="https://www.youtube.com/embed/VIDEO_ID?autoplay=1" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;'
                                     style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 12px; resize: vertical;"></textarea>
                             </div>
-                            <button id="save-video-btn" class="save-btn">Salvar Vídeo</button>
+
+                            <!-- Tempo para Disparo Automático da Oferta -->
+                            <div class="form-group"
+                                style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #667eea15, #764ba215); border-radius: 12px; border: 1px solid #667eea30;">
+                                <label
+                                    style="font-size: 16px; font-weight: bold; color: #667eea; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                    ⏱️ Disparo Automático da Oferta
+                                </label>
+                                <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+                                    Configure em qual momento do vídeo a oferta deve aparecer automaticamente para todos
+                                    os usuários.
+                                    <br><strong>Deixe em 00:00 para desativar o disparo automático.</strong>
+                                </p>
+                                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <label style="font-weight: 500; color: #333;">Minutos:</label>
+                                        <input type="number" id="offer-trigger-minutes" min="0" max="999" value="0"
+                                            style="width: 80px; padding: 10px; border: 2px solid #667eea50; border-radius: 8px; font-size: 16px; font-weight: bold; text-align: center;">
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <label style="font-weight: 500; color: #333;">Segundos:</label>
+                                        <input type="number" id="offer-trigger-seconds" min="0" max="59" value="0"
+                                            style="width: 80px; padding: 10px; border: 2px solid #667eea50; border-radius: 8px; font-size: 16px; font-weight: bold; text-align: center;">
+                                    </div>
+                                    <div id="offer-trigger-preview"
+                                        style="padding: 10px 15px; background: #667eea; color: white; border-radius: 8px; font-weight: bold; min-width: 100px; text-align: center;">
+                                        00:00
+                                    </div>
+                                </div>
+                                <p id="offer-trigger-status"
+                                    style="margin-top: 12px; padding: 8px 12px; background: #fff3cd; border-radius: 6px; color: #856404; font-size: 12px;">
+                                    ⚠️ Disparo automático <strong>desativado</strong>. Configure um tempo acima de 00:00
+                                    para ativar.
+                                </p>
+                            </div>
+
+                            <button id="save-video-btn" class="save-btn">Salvar Vídeo e Configurações</button>
                         </div>
                     </div>
                 </div>
@@ -379,10 +523,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Aguardar biblioteca carregar e inicializar
-        (function() {
+        (function () {
             let attempts = 0;
             const maxAttempts = 10;
-            
+
             function tryInit() {
                 attempts++;
                 if (typeof window.initSupabase === 'function') {
@@ -391,17 +535,17 @@
                         return;
                     }
                 }
-                
+
                 if (attempts < maxAttempts) {
                     setTimeout(tryInit, 200);
                 } else {
                     console.error('❌ Falha ao inicializar Supabase após várias tentativas');
                 }
             }
-            
+
             // Começar tentativas após DOM carregar
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() {
+                document.addEventListener('DOMContentLoaded', function () {
                     setTimeout(tryInit, 300);
                 });
             } else {
@@ -413,4 +557,5 @@
     <script src="database.js"></script>
     <script src="admin.js"></script>
 </body>
+
 </html>

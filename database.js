@@ -6,7 +6,7 @@ async function getSupabase() {
     if (window.supabaseClient) {
         return window.supabaseClient;
     }
-    
+
     // Tenta inicializar
     try {
         // Chama a função de inicialização se existir
@@ -16,7 +16,7 @@ async function getSupabase() {
                 return window.supabaseClient;
             }
         }
-        
+
         // Tentar diretamente também
         let supabaseLib = null;
         if (typeof supabase !== 'undefined' && supabase.createClient) {
@@ -24,7 +24,7 @@ async function getSupabase() {
         } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
             supabaseLib = window.supabase;
         }
-        
+
         if (supabaseLib && supabaseLib.createClient) {
             window.supabaseClient = supabaseLib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
             console.log('✅ Supabase inicializado em getSupabase()');
@@ -33,7 +33,7 @@ async function getSupabase() {
     } catch (error) {
         console.error('❌ Erro ao inicializar Supabase em getSupabase():', error);
     }
-    
+
     console.warn('⚠️ Supabase não disponível, usando fallback localStorage');
     return null;
 }
@@ -42,17 +42,48 @@ async function getSupabase() {
 
 // Salvar participante
 async function saveParticipant(nome, celular) {
+    const phoneOnly = celular.replace(/\D/g, '');
+    const registrationData = {
+        nome: nome,
+        celular: celular,
+        celular_normalizado: phoneOnly,
+        timestamp: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        device: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+    };
+
+    // SEMPRE salvar no localStorage primeiro (backup garantido)
+    try {
+        let participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
+        const alreadyExists = participantes.some(p => (p.celular || '').replace(/\D/g, '') === phoneOnly);
+
+        if (!alreadyExists) {
+            participantes.push(registrationData);
+            localStorage.setItem('webinar_participantes', JSON.stringify(participantes));
+            console.log('✅ Participante salvo no localStorage:', nome);
+        } else {
+            // Atualizar se já existe
+            participantes = participantes.map(p => {
+                if ((p.celular || '').replace(/\D/g, '') === phoneOnly) {
+                    return { ...p, nome: nome, celular: celular, updated_at: new Date().toISOString() };
+                }
+                return p;
+            });
+            localStorage.setItem('webinar_participantes', JSON.stringify(participantes));
+            console.log('✅ Participante atualizado no localStorage:', nome);
+        }
+    } catch (e) {
+        console.warn('Erro ao salvar no localStorage:', e);
+    }
+
     try {
         const db = await getSupabase();
         if (!db) {
-            console.error('Supabase não inicializado');
-            // Fallback para localStorage
-            return saveParticipantLocalStorage(nome, celular);
+            console.warn('⚠️ Supabase não disponível, usando apenas localStorage');
+            return registrationData;
         }
 
-        const phoneOnly = celular.replace(/\D/g, '');
-        
-        // Verificar se já existe
+        // Verificar se já existe no Supabase
         const { data: existing } = await db
             .from('participantes')
             .select('*')
@@ -73,24 +104,27 @@ async function saveParticipant(nome, celular) {
                 .single();
 
             if (error) throw error;
+            console.log('✅ Participante atualizado no Supabase:', nome);
             return data;
         }
 
-        // Criar novo
+        // Criar novo no Supabase
         const { data, error } = await db
             .from('participantes')
             .insert({
                 nome: nome,
                 celular: celular,
                 celular_normalizado: phoneOnly,
-                device: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
-                created_at: new Date().toISOString()
+                device: registrationData.device,
+                created_at: registrationData.created_at
             })
             .select()
             .single();
 
         if (error) throw error;
-        
+
+        console.log('✅ Participante salvo no Supabase:', nome);
+
         // Retornar objeto formatado
         return {
             nome: data.nome,
@@ -101,22 +135,22 @@ async function saveParticipant(nome, celular) {
             id: data.id
         };
     } catch (error) {
-        console.error('Erro ao salvar participante:', error);
-        // Fallback para localStorage - sempre retorna algo
-        const fallback = saveParticipantLocalStorage(nome, celular);
-        return fallback;
+        console.error('Erro ao salvar no Supabase:', error);
+        // Já salvou no localStorage, então retorna os dados locais
+        return registrationData;
     }
 }
+
 
 // Buscar todos os participantes
 async function getAllParticipants() {
     try {
         const db = await getSupabase();
-        
+
         // Sempre buscar do localStorage primeiro (dados mais recentes)
         const localData = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
         console.log(`Participantes no localStorage: ${localData.length}`);
-        
+
         if (!db) {
             console.log('⚠️ Supabase não disponível, usando apenas localStorage');
             return localData;
@@ -133,13 +167,13 @@ async function getAllParticipants() {
             console.log('📦 Usando fallback localStorage...');
             return localData;
         }
-        
+
         console.log(`✅ Participantes encontrados no Supabase: ${data?.length || 0}`);
-        
+
         // Mesclar dados do Supabase com localStorage (evitar duplicatas)
         const supabaseData = data || [];
         const merged = [...supabaseData];
-        
+
         // Adicionar participantes do localStorage que não estão no Supabase
         localData.forEach(localParticipant => {
             const phoneOnly = (localParticipant.celular || '').replace(/\D/g, '');
@@ -147,13 +181,13 @@ async function getAllParticipants() {
                 const pPhone = (p.celular || '').replace(/\D/g, '');
                 return pPhone === phoneOnly;
             });
-            
+
             if (!exists) {
                 console.log(`➕ Adicionando participante do localStorage: ${localParticipant.nome}`);
                 merged.push(localParticipant);
             }
         });
-        
+
         console.log(`📊 Total de participantes após mesclar: ${merged.length}`);
         return merged;
     } catch (error) {
@@ -192,7 +226,7 @@ async function getParticipantByPhone(celular) {
 async function saveWinners(winners) {
     try {
         console.log('💾 saveWinners chamado com:', winners);
-        
+
         // Normalizar os dados antes de salvar
         const normalizedForSave = winners.map(w => ({
             nome: w.nome || '',
@@ -201,21 +235,21 @@ async function saveWinners(winners) {
             id: w.id || null,
             participante_id: w.participante_id || w.id || null
         }));
-        
+
         console.log('💾 Dados normalizados para salvar:', normalizedForSave);
-        
+
         // Sempre salvar no localStorage primeiro para trigger imediato
         const oldWinners = localStorage.getItem('webinar_winners');
         localStorage.setItem('webinar_winners', JSON.stringify(normalizedForSave));
         const timestamp = Date.now().toString();
         localStorage.setItem('webinar_winners_timestamp', timestamp);
-        
+
         console.log('✅ Salvo no localStorage:', {
             ganhadores: normalizedForSave.length,
             timestamp: timestamp,
             dados: normalizedForSave
         });
-        
+
         // Disparar evento de storage para outras abas
         try {
             window.dispatchEvent(new StorageEvent('storage', {
@@ -227,7 +261,7 @@ async function saveWinners(winners) {
         } catch (e) {
             console.warn('Erro ao disparar StorageEvent:', e);
         }
-        
+
         const db = await getSupabase();
         if (!db) {
             console.log('⚠️ Supabase não disponível, salvando apenas em localStorage');
@@ -264,7 +298,7 @@ async function saveWinners(winners) {
                 console.log('✅ Ganhadores salvos no Supabase:', winners.length);
             }
         }
-        
+
         return true;
     } catch (error) {
         console.error('Erro ao salvar ganhadores:', error);
@@ -445,10 +479,12 @@ async function saveVideoConfig(config) {
 async function getVideoConfig() {
     try {
         const db = await getSupabase();
+        const defaultConfig = {
+            embedCode: '', // Sem vídeo padrão
+            offerTriggerSeconds: 0 // Tempo em segundos para disparo automático (0 = desativado)
+        };
+
         if (!db) {
-            const defaultConfig = {
-                embedCode: '' // Sem vídeo padrão
-            };
             return JSON.parse(localStorage.getItem('admin_video_config') || JSON.stringify(defaultConfig));
         }
 
@@ -463,24 +499,26 @@ async function getVideoConfig() {
                 console.warn('Aviso ao buscar configuração de vídeo:', error);
             }
         }
-        
+
         if (data?.dados) {
-            return data.dados;
+            // Mesclar com defaults para garantir que todos os campos existam
+            return {
+                ...defaultConfig,
+                ...data.dados
+            };
         }
-        
-        // Retornar configuração vazia se não existir (sem vídeo padrão)
-        const defaultConfig = {
-            embedCode: '' // Sem vídeo padrão - admin deve configurar
-        };
+
         return defaultConfig;
     } catch (error) {
         console.error('Erro ao buscar configuração de vídeo:', error);
         const defaultConfig = {
-            embedCode: '' // Sem vídeo padrão
+            embedCode: '',
+            offerTriggerSeconds: 0
         };
         return JSON.parse(localStorage.getItem('admin_video_config') || JSON.stringify(defaultConfig));
     }
 }
+
 
 // Salvar configurações de popup de oferta
 async function saveOfferConfig(config) {
@@ -537,11 +575,11 @@ async function getOfferConfig() {
                 console.warn('Aviso ao buscar configuração de oferta:', error);
             }
         }
-        
+
         if (data?.dados) {
             return data.dados;
         }
-        
+
         // Retornar configuração vazia se não existir (sem valores padrão)
         const defaultConfig = {
             icon: '',
@@ -623,11 +661,11 @@ async function getWinnerMessageConfig() {
                 console.warn('Aviso ao buscar configuração de ganhador:', error);
             }
         }
-        
+
         if (data?.dados) {
             return data.dados;
         }
-        
+
         // Retornar configuração padrão se não existir
         const defaultConfig = {
             titulo: 'PARABÉNS!',
@@ -727,7 +765,7 @@ function saveAdminLoginLogLocalStorage(success, password = null) {
             device: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
             attempted: password !== null
         };
-        
+
         logs.push(logData);
         // Manter apenas os últimos 100 logs
         if (logs.length > 100) {
@@ -779,11 +817,11 @@ async function getAdminLoginLogs() {
 async function saveOfferPopupTrigger(timestamp) {
     try {
         const db = await getSupabase();
-        
+
         // Sempre salvar no localStorage também para compatibilidade
         localStorage.setItem('last_offer_popup', timestamp.toString());
         localStorage.setItem('current_offer_disparo_id', timestamp.toString()); // ID único do disparo
-        
+
         if (!db) {
             console.warn('⚠️ Supabase não disponível, salvando apenas em localStorage');
             return { success: true, disparoId: timestamp };
@@ -803,7 +841,7 @@ async function saveOfferPopupTrigger(timestamp) {
             console.error('❌ Erro ao salvar disparo de oferta no Supabase:', error);
             return { success: false, disparoId: timestamp };
         }
-        
+
         console.log('✅ Timestamp de disparo salvo no Supabase:', timestamp);
         return { success: true, disparoId: timestamp };
     } catch (error) {
@@ -816,10 +854,10 @@ async function saveOfferPopupTrigger(timestamp) {
 async function getOfferPopupTrigger() {
     try {
         const db = await getSupabase();
-        
+
         // Sempre verificar localStorage primeiro para resposta rápida
         const localTimestamp = localStorage.getItem('last_offer_popup') || '0';
-        
+
         if (!db) {
             console.warn('⚠️ Supabase não disponível, usando localStorage');
             return parseInt(localTimestamp) || 0;
@@ -838,7 +876,7 @@ async function getOfferPopupTrigger() {
             }
             return parseInt(localTimestamp) || 0;
         }
-        
+
         if (data?.dados?.timestamp) {
             const supabaseTimestamp = parseInt(data.dados.timestamp) || 0;
             // Atualizar localStorage com o valor do Supabase se for mais recente
@@ -847,7 +885,7 @@ async function getOfferPopupTrigger() {
             }
             return supabaseTimestamp;
         }
-        
+
         return parseInt(localTimestamp) || 0;
     } catch (error) {
         console.error('❌ Erro ao buscar disparo de oferta:', error);
@@ -859,7 +897,7 @@ async function getOfferPopupTrigger() {
 async function registerOfferDelivery(disparoId, disparoTimestamp, participanteNome = null, participanteCelular = null) {
     try {
         const db = await getSupabase();
-        
+
         if (!db) {
             console.warn('⚠️ Supabase não disponível, não é possível registrar entrega');
             return false;
@@ -874,7 +912,7 @@ async function registerOfferDelivery(disparoId, disparoTimestamp, participanteNo
                 .eq('disparo_id', disparoId)
                 .eq('participante_celular', phoneOnly)
                 .maybeSingle();
-                
+
             if (existing) {
                 console.log('⚠️ Entrega já registrada para este usuário neste disparo');
                 return true; // Já registrado, considerar sucesso
@@ -897,7 +935,7 @@ async function registerOfferDelivery(disparoId, disparoTimestamp, participanteNo
             console.error('❌ Erro ao registrar entrega de oferta:', error);
             return false;
         }
-        
+
         console.log('✅ Entrega de oferta registrada no Supabase');
         return true;
     } catch (error) {
@@ -910,7 +948,7 @@ async function registerOfferDelivery(disparoId, disparoTimestamp, participanteNo
 async function getOfferDeliveryCount(disparoId) {
     try {
         const db = await getSupabase();
-        
+
         if (!db) {
             console.warn('⚠️ Supabase não disponível, não é possível obter contagem');
             return 0;
@@ -925,7 +963,7 @@ async function getOfferDeliveryCount(disparoId) {
             console.error('❌ Erro ao obter contagem de entregas:', error);
             return 0;
         }
-        
+
         return count || 0;
     } catch (error) {
         console.error('❌ Erro ao obter contagem de entregas:', error);
@@ -933,3 +971,78 @@ async function getOfferDeliveryCount(disparoId) {
     }
 }
 
+// ============ COMENTÁRIOS PROGRAMADOS ============
+
+// Salvar comentários programados
+async function saveScheduledComments(comments) {
+    try {
+        const db = await getSupabase();
+
+        // Sempre salvar no localStorage primeiro
+        localStorage.setItem('scheduled_comments', JSON.stringify(comments));
+        console.log('✅ Comentários programados salvos no localStorage:', comments.length);
+
+        if (!db) {
+            return true;
+        }
+
+        const { error } = await db
+            .from('configuracoes')
+            .upsert({
+                id: 6,
+                tipo: 'comentarios_programados',
+                dados: { comments: comments },
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) {
+            console.error('Erro ao salvar comentários programados no Supabase:', error);
+            // Já salvou no localStorage
+        } else {
+            console.log('✅ Comentários programados salvos no Supabase:', comments.length);
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Erro ao salvar comentários programados:', error);
+        return false;
+    }
+}
+
+// Buscar comentários programados
+async function getScheduledComments() {
+    try {
+        const db = await getSupabase();
+
+        // Verificar localStorage primeiro
+        const localComments = JSON.parse(localStorage.getItem('scheduled_comments') || '[]');
+
+        if (!db) {
+            return localComments;
+        }
+
+        const { data, error } = await db
+            .from('configuracoes')
+            .select('*')
+            .eq('tipo', 'comentarios_programados')
+            .maybeSingle();
+
+        if (error) {
+            if (error.code !== 'PGRST116') {
+                console.warn('Aviso ao buscar comentários programados:', error);
+            }
+        }
+
+        if (data?.dados?.comments) {
+            const supabaseComments = data.dados.comments;
+            // Salvar no localStorage para uso offline
+            localStorage.setItem('scheduled_comments', JSON.stringify(supabaseComments));
+            return supabaseComments;
+        }
+
+        return localComments;
+    } catch (error) {
+        console.error('Erro ao buscar comentários programados:', error);
+        return JSON.parse(localStorage.getItem('scheduled_comments') || '[]');
+    }
+}
