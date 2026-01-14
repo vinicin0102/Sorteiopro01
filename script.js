@@ -265,12 +265,22 @@ async function loadOfferConfig() {
 // Auto trigger verification
 let offerAutoTriggered = false;
 
-function checkAutoTrigger(currentTime) {
+function checkAutoTrigger(currentSeconds) {
     if (!offerConfig || !offerConfig.triggerTime || offerAutoTriggered) return;
 
-    // Check if current time matches trigger time
-    if (currentTime === offerConfig.triggerTime) {
-        console.log('⏰ Auto trigger time reached:', currentTime);
+    // Convert trigger time string (MM:SS) to seconds
+    let triggerSeconds = 0;
+    try {
+        const parts = offerConfig.triggerTime.split(':');
+        triggerSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    } catch (e) {
+        console.error('Error parsing trigger time:', e);
+        return;
+    }
+
+    // Check if current time matches or passed trigger time
+    if (currentSeconds >= triggerSeconds) {
+        console.log('⏰ Auto trigger time reached:', currentSeconds, 'Trigger:', triggerSeconds);
         offerAutoTriggered = true;
         showOfferPopup();
     }
@@ -761,6 +771,7 @@ function updateTimer() {
     const hours = Math.floor(elapsed / 3600000);
     const minutes = Math.floor((elapsed % 3600000) / 60000);
     const seconds = Math.floor((elapsed % 60000) / 1000);
+    const totalSeconds = Math.floor(elapsed / 1000);
 
     const formattedTime =
         String(hours).padStart(2, '0') + ':' +
@@ -770,12 +781,11 @@ function updateTimer() {
     document.getElementById('stream-timer').textContent = formattedTime;
 
     // Check for auto offer trigger
-    const currentTimeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-    checkAutoTrigger(currentTimeStr);
+    checkAutoTrigger(totalSeconds);
 
     // Check for scheduled comments
     if (typeof checkScheduledComments === 'function') {
-        checkScheduledComments(currentTimeStr);
+        checkScheduledComments(totalSeconds);
     }
 
     // Check for AUTO SAD COMMENTS TRIGGER at 08:18
@@ -1266,12 +1276,21 @@ window.addEventListener('storage', function (e) {
     }
 });
 
-function checkScheduledComments(currentTime) {
+function checkScheduledComments(currentSeconds) {
     if (!scheduledCommentsData || scheduledCommentsData.length === 0) return;
 
     scheduledCommentsData.forEach(comment => {
-        // Check if time matches and wasn't fired yet
-        if (comment.time === currentTime && !firedScheduledComments.has(comment.id)) {
+        // Parse comment time to seconds
+        let commentSeconds = 0;
+        try {
+            const parts = comment.time.split(':');
+            commentSeconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        } catch (e) {
+            return; // Skip invalid time
+        }
+
+        // Check if time matches/passed and wasn't fired yet
+        if (currentSeconds >= commentSeconds && !firedScheduledComments.has(comment.id)) {
             console.log(`⏰ Disparando comentário agendado: [${comment.time}] ${comment.username}: ${comment.message}`);
 
             // Add to chat
