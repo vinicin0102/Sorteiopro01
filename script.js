@@ -455,6 +455,7 @@ async function showOfferPopup() {
 }
 
 // Hide offer popup - VERSÃO FORÇADA
+// Agora também mostra o botão flutuante para o usuário poder reabrir
 function hideOfferPopup() {
     const modal = document.getElementById('offer-modal');
     if (modal) {
@@ -462,8 +463,51 @@ function hideOfferPopup() {
         modal.style.display = 'none';
         modal.style.visibility = 'hidden';
         console.log('✅ Popup de oferta fechado');
+
+        // Mostrar o botão flutuante para o usuário poder reabrir a oferta
+        showFloatingOfferButton();
     }
 }
+
+// Mostrar o botão flutuante de oferta
+function showFloatingOfferButton() {
+    const floatingBtn = document.getElementById('offer-floating-btn');
+    if (floatingBtn) {
+        floatingBtn.style.display = 'flex';
+        console.log('✅ Botão flutuante de oferta exibido');
+
+        // Adicionar classe de atenção por alguns segundos para chamar atenção
+        floatingBtn.classList.add('attention');
+        setTimeout(() => {
+            floatingBtn.classList.remove('attention');
+        }, 5000); // Animação de atenção por 5 segundos
+    }
+}
+
+// Esconder o botão flutuante de oferta
+function hideFloatingOfferButton() {
+    const floatingBtn = document.getElementById('offer-floating-btn');
+    if (floatingBtn) {
+        floatingBtn.style.display = 'none';
+        console.log('✅ Botão flutuante de oferta escondido');
+    }
+}
+
+// Reabrir oferta a partir do botão flutuante
+async function reopenOfferFromFloatingBtn() {
+    console.log('🔄 Reabrindo oferta a partir do botão flutuante...');
+    hideFloatingOfferButton();
+    await showOfferPopup();
+}
+
+// Configurar listener do botão flutuante
+setTimeout(() => {
+    const floatingBtn = document.getElementById('offer-floating-btn');
+    if (floatingBtn) {
+        floatingBtn.addEventListener('click', reopenOfferFromFloatingBtn);
+        console.log('✅ Botão flutuante de oferta configurado');
+    }
+}, 200);
 
 // Load video configuration
 // Função para processar embed code e torná-lo "live-like" (sem controles)
