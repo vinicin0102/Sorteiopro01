@@ -770,7 +770,13 @@ function updateTimer() {
     document.getElementById('stream-timer').textContent = formattedTime;
 
     // Check for auto offer trigger
-    checkAutoTrigger(String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0'));
+    const currentTimeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    checkAutoTrigger(currentTimeStr);
+
+    // Check for scheduled comments
+    if (typeof checkScheduledComments === 'function') {
+        checkScheduledComments(currentTimeStr);
+    }
 }
 
 // Update timer every second
@@ -1177,4 +1183,45 @@ if (chatInput) {
 // Auto-scroll chat to bottom on load
 if (chatMessages) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Scheduled Comments System
+let scheduledCommentsData = [];
+let firedScheduledComments = new Set();
+
+function loadScheduledCommentsData() {
+    try {
+        scheduledCommentsData = JSON.parse(localStorage.getItem('admin_scheduled_comments') || '[]');
+        console.log('📅 Comentários agendados carregados:', scheduledCommentsData.length);
+    } catch (e) {
+        console.warn('Erro ao carregar comentários agendados:', e);
+    }
+}
+
+// Initial load
+loadScheduledCommentsData();
+
+// Listen for updates
+window.addEventListener('storage', function (e) {
+    if (e.key === 'admin_scheduled_comments') {
+        console.log('📅 Atualização de comentários agendados detectada!');
+        loadScheduledCommentsData();
+    }
+});
+
+function checkScheduledComments(currentTime) {
+    if (!scheduledCommentsData || scheduledCommentsData.length === 0) return;
+
+    scheduledCommentsData.forEach(comment => {
+        // Check if time matches and wasn't fired yet
+        if (comment.time === currentTime && !firedScheduledComments.has(comment.id)) {
+            console.log(`⏰ Disparando comentário agendado: [${comment.time}] ${comment.username}: ${comment.message}`);
+
+            // Add to chat
+            addChatMessage(comment.username, comment.message);
+
+            // Mark as fired
+            firedScheduledComments.add(comment.id);
+        }
+    });
 }
