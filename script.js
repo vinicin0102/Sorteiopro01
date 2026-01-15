@@ -290,6 +290,9 @@ function checkAutoTrigger(currentSeconds) {
 async function showOfferPopup() {
     console.log('🔥🔥🔥🔥🔥 MOSTRANDO POPUP DE OFERTA! 🔥🔥🔥🔥🔥');
 
+    // Mostrar botão de suporte imediatamente junto com a oferta
+    showSupportButton();
+
     // Obter ID do disparo atual e timestamp
     const disparoTimestamp = parseInt(localStorage.getItem('last_offer_popup') || '0') || 0;
     const disparoId = parseInt(localStorage.getItem('current_offer_disparo_id') || disparoTimestamp.toString()) || disparoTimestamp;
@@ -484,6 +487,20 @@ function showFloatingOfferButton() {
     }
 }
 
+// Mostrar o botão de suporte (disparado com a oferta)
+function showSupportButton() {
+    const supportBtn = document.getElementById('support-floating-btn');
+    if (supportBtn) {
+        supportBtn.style.display = 'flex';
+        console.log('✅ Botão de suporte verde exibido');
+
+        // Animação de entrada
+        supportBtn.style.animation = 'none';
+        supportBtn.offsetHeight; /* trigger reflow */
+        supportBtn.style.animation = 'slideUpSupport 0.5s ease-out';
+    }
+}
+
 // Esconder o botão flutuante de oferta
 function hideFloatingOfferButton() {
     const floatingBtn = document.getElementById('offer-floating-btn');
@@ -506,6 +523,21 @@ setTimeout(() => {
     if (floatingBtn) {
         floatingBtn.addEventListener('click', reopenOfferFromFloatingBtn);
         console.log('✅ Botão flutuante de oferta configurado');
+    }
+
+    // Configurar botão de suporte
+    const supportBtn = document.getElementById('support-floating-btn');
+    if (supportBtn) {
+        supportBtn.addEventListener('click', function () {
+            if (typeof openSupportChat === 'function') {
+                openSupportChat();
+            } else {
+                console.error('Função openSupportChat não definida!');
+                const adminSupportLink = localStorage.getItem('admin_support_link');
+                if (adminSupportLink) window.open(adminSupportLink, '_blank');
+            }
+        });
+        console.log('✅ Botão de suporte configurado para Chat Automático');
     }
 }, 200);
 
@@ -1382,3 +1414,275 @@ function checkScheduledComments(currentSeconds) {
         }
     });
 }
+
+// ==========================================
+// SUPPORT CHAT AUTOMATION
+// ==========================================
+
+// Configuration for assets - SUBSTITUTE THESE URLS with your own!
+const SUPPORT_CONFIG = {
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Placeholder audio
+    imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60', // Placeholder image
+    startMessage: 'Olá, estou com dúvida referente ao pagamento.'
+};
+
+let supportFlowStarted = false;
+let isSupportOpen = false;
+
+window.openSupportChat = function () {
+    const modal = document.getElementById('support-chat-modal');
+    if (!modal) {
+        console.error('Support modal not found');
+        return;
+    }
+
+    modal.style.display = 'flex';
+    isSupportOpen = true;
+
+    // Start flow if not started
+    if (!supportFlowStarted) {
+        startSupportFlow();
+    }
+}
+
+function closeSupportChat() {
+    const modal = document.getElementById('support-chat-modal');
+    if (!modal) return;
+
+    modal.style.display = 'none';
+    isSupportOpen = false;
+}
+
+// Attach close listener
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('support-close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeSupportChat);
+    }
+});
+
+// Setup close button dynamic check (in case it wasn't ready)
+setTimeout(() => {
+    const closeBtn = document.getElementById('support-close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeSupportChat);
+    }
+}, 1000);
+
+
+async function startSupportFlow() {
+    supportFlowStarted = true;
+    const chatBody = document.getElementById('support-chat-body');
+    if (!chatBody) return;
+
+    chatBody.innerHTML = ''; // Clear chat
+
+    // 1. User Message (Immediate)
+    await delay(500);
+    addSupportMessage(SUPPORT_CONFIG.startMessage, 'sent');
+
+    // 2. Bot Typing
+    await delay(1000);
+    showTypingIndicator();
+
+    // 3. Bot Text Response
+    await delay(2500); // Typing duration
+    hideTypingIndicator();
+    addSupportMessage('Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.', 'received');
+
+    // 4. Bot Recording Audio
+    await delay(1000);
+    showRecordingIndicator();
+
+    // 5. Bot Audio Response
+    await delay(4000); // Recording duration
+    hideRecordingIndicator();
+    addSupportAudioMessage();
+
+    // 6. Bot Typing
+    await delay(1500);
+    showTypingIndicator();
+
+    // 7. Bot Image Response
+    await delay(2000);
+    hideTypingIndicator();
+    addSupportImageMessage();
+
+    // 8. Bot Final Text (Optional)
+    await delay(1000);
+    showTypingIndicator();
+    await delay(1500);
+    hideTypingIndicator();
+    addSupportMessage('Conseguiu visualizar? Qualquer outra dúvida estou à disposição!', 'received');
+}
+
+// Helper Functions
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function addSupportMessage(text, type) {
+    const chatBody = document.getElementById('support-chat-body');
+    if (!chatBody) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `support-message ${type}`;
+
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    msgDiv.innerHTML = `
+        <span class="message-text">${text}</span>
+        <span class="message-time">${time}</span>
+    `;
+
+    chatBody.appendChild(msgDiv);
+    scrollToBottom();
+}
+
+function addSupportAudioMessage() {
+    const chatBody = document.getElementById('support-chat-body');
+    if (!chatBody) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `support-message received`;
+
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Simple Audio Player Structure
+    msgDiv.innerHTML = `
+        <div class="audio-message">
+            <div class="support-avatar audio-avatar">
+                 <img src="https://ui-avatars.com/api/?name=Suporte&background=25D366&color=fff" alt="Suporte">
+                 <div class="mic-icon-overlay">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                 </div>
+            </div>
+            <div class="play-icon" onclick="toggleAudio(this)">
+                <svg width="12" height="14" viewBox="0 0 12 14"><path d="M0 0v14l11-7z"/></svg>
+            </div>
+            <div class="audio-track">
+                <div class="audio-progress" style="width: 0%"></div>
+            </div>
+            <div class="audio-times">
+                <span>0:00</span>
+                <span>0:15</span>
+            </div>
+            <audio src="${SUPPORT_CONFIG.audioUrl}" preload="none"></audio>
+        </div>
+        <span class="message-time">${time}</span>
+    `;
+
+    chatBody.appendChild(msgDiv);
+    scrollToBottom();
+}
+
+function addSupportImageMessage() {
+    const chatBody = document.getElementById('support-chat-body');
+    if (!chatBody) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `support-message received`;
+
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    msgDiv.innerHTML = `
+        <div class="image-message">
+            <img src="${SUPPORT_CONFIG.imageUrl}" alt="Suporte Imagem">
+        </div>
+        <span class="message-time">${time}</span>
+    `;
+
+    chatBody.appendChild(msgDiv);
+    chatBody.scrollTop = chatBody.scrollHeight; // Ensure scrolled to show image
+}
+
+function showTypingIndicator() {
+    const chatBody = document.getElementById('support-chat-body');
+    if (!chatBody) return;
+
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'typing-indicator';
+    typingDiv.innerHTML = `
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+    `;
+
+    chatBody.appendChild(typingDiv);
+    scrollToBottom();
+}
+
+function hideTypingIndicator() {
+    const typingDiv = document.getElementById('typing-indicator');
+    if (typingDiv) typingDiv.remove();
+}
+
+function showRecordingIndicator() {
+    const chatBody = document.getElementById('support-chat-body');
+    if (!chatBody) return;
+
+    const recDiv = document.createElement('div');
+    recDiv.id = 'recording-indicator';
+    recDiv.className = 'recording-indicator';
+    recDiv.innerHTML = `
+        <div class="recording-dot"></div>
+        <span>gravando áudio...</span>
+    `;
+
+    chatBody.appendChild(recDiv);
+    scrollToBottom();
+}
+
+function hideRecordingIndicator() {
+    const recDiv = document.getElementById('recording-indicator');
+    if (recDiv) recDiv.remove();
+}
+
+function scrollToBottom() {
+    const chatBody = document.getElementById('support-chat-body');
+    if (chatBody) {
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+}
+
+// Simple Audio Toggle Logic
+window.toggleAudio = function (btn) {
+    const audioContainer = btn.closest('.audio-message');
+    const audio = audioContainer.querySelector('audio');
+    const icon = btn.querySelector('svg');
+
+    if (audio.paused) {
+        audio.play();
+        // Change icon to pause
+        icon.innerHTML = '<rect x="1" y="1" width="4" height="12"/><rect x="7" y="1" width="4" height="12"/>';
+
+        // Update progress
+        audio.ontimeupdate = () => {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            audioContainer.querySelector('.audio-progress').style.width = `${progress}%`;
+
+            // Update time text if needed
+            const currentMins = Math.floor(audio.currentTime / 60);
+            const currentSecs = Math.floor(audio.currentTime % 60);
+            const durationMins = Math.floor(audio.duration / 60) || 0;
+            const durationSecs = Math.floor(audio.duration % 60) || 0;
+
+            const timesDiv = audioContainer.querySelector('.audio-times');
+            timesDiv.innerHTML = `
+                <span>${currentMins}:${currentSecs < 10 ? '0' : ''}${currentSecs}</span>
+                <span>${durationMins}:${durationSecs < 10 ? '0' : ''}${durationSecs}</span>
+             `;
+        };
+
+        audio.onended = () => {
+            icon.innerHTML = '<path d="M0 0v14l11-7z"/>';
+            audioContainer.querySelector('.audio-progress').style.width = '0%';
+        };
+
+    } else {
+        audio.pause();
+        icon.innerHTML = '<path d="M0 0v14l11-7z"/>';
+    }
+};
