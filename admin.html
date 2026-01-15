@@ -455,7 +455,7 @@
         <div class="section-content">
             <h2>Configuração do Chat de Suporte</h2>
             <p class="section-description" style="color: #666; margin-bottom: 20px;">
-                Configure o fluxo automático do chat que aparece quando o cliente clica em suporte.
+                Monte o fluxo de conversa. Adicione mensagens, áudios, imagens ou vídeos em sequência.
             </p>
 
             <div class="editor-form">
@@ -467,30 +467,30 @@
                         o chat.</small>
                 </div>
 
-                <div class="form-group">
-                    <label>Mensagem de Boas-vindas (Bot)</label>
-                    <input type="text" id="support-welcome-msg"
-                        placeholder="Ex: Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.">
+                <label style="margin-top: 20px; display: block; font-weight: 600;">Fluxo de Resposta do Bot</label>
+                <div id="support-steps-container" class="support-steps-container"
+                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px; min-height: 100px;">
+                    <!-- Steps added dynamically -->
+                    <p style="text-align: center; color: #999; padding: 20px;">Nenhuma etapa adicionada. Clique nos
+                        botões abaixo para começar.</p>
                 </div>
 
-                <div class="form-group">
-                    <label>Link do Áudio</label>
-                    <input type="url" id="support-audio-url" placeholder="https://exemplo.com/audio.mp3">
-                    <small class="helper-text">Link direto para o arquivo de áudio (.mp3) que o bot irá "gravar" e
-                        enviar.</small>
+                <div class="support-actions" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                    <button type="button" class="disparar-btn" onclick="addSupportStep('text')"
+                        style="background: #4a5568;">💬
+                        Texto</button>
+                    <button type="button" class="disparar-btn" onclick="addSupportStep('audio')"
+                        style="background: #4299e1;">🎤
+                        Áudio</button>
+                    <button type="button" class="disparar-btn" onclick="addSupportStep('image')"
+                        style="background: #ed64a6;">📷
+                        Imagem</button>
+                    <button type="button" class="disparar-btn" onclick="addSupportStep('video')"
+                        style="background: #e53e3e;">🎬
+                        Vídeo</button>
                 </div>
 
-                <div class="form-group">
-                    <label>Link da Imagem</label>
-                    <input type="url" id="support-image-url" placeholder="https://exemplo.com/imagem.jpg">
-                    <small class="helper-text">Link direto para a imagem que o bot enviará.</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Mensagem Final (Bot)</label>
-                    <input type="text" id="support-final-msg"
-                        placeholder="Ex: Conseguiu visualizar? Qualquer outra dúvida estou à disposição!">
-                </div>
+                <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
 
                 <button id="save-support-btn" class="save-btn">Salvar Configuração do Chat</button>
             </div>

@@ -1506,47 +1506,79 @@ async function startSupportFlow() {
     // 1. User Message (Immediate)
     await delay(500);
     addSupportMessage(supportConfig.startMessage, 'sent');
-
-    // 2. Bot Typing
-    await delay(1000);
-    showTypingIndicator();
-
-    // 3. Bot Text Response
-    await delay(2500); // Typing duration
-    hideTypingIndicator();
-    addSupportMessage(supportConfig.welcomeMessage, 'received');
-
-    // 4. Bot Recording Audio
-    if (supportConfig.audioUrl) {
-        await delay(1000);
-        showRecordingIndicator();
-
-        // 5. Bot Audio Response
-        await delay(4000); // Recording duration
-        hideRecordingIndicator();
-        addSupportAudioMessage();
-    }
-
-    // 6. Bot Typing
-    await delay(1500);
-    showTypingIndicator();
-
-    // 7. Bot Image Response
-    if (supportConfig.imageUrl) {
-        await delay(2000);
-        hideTypingIndicator();
-        addSupportImageMessage();
-
-        // Extra delay
+    
+    // Check if we have dynamic steps (NEW FLOW)
+    if (supportConfig.steps && supportConfig.steps.length > 0) {
+        for (const step of supportConfig.steps) {
+            // Pre-delay logic
+            if (step.type === 'audio') {
+                 await delay(800);
+                 showRecordingIndicator();
+                 await delay(Math.max(2000, step.delay || 3000));
+                 hideRecordingIndicator();
+            } else {
+                 await delay(800);
+                 showTypingIndicator();
+                 // Simulate typing
+                 await delay(Math.max(1000, step.delay || 1500));
+                 hideTypingIndicator();
+            }
+            
+            // Show content
+            if (step.type === 'text') {
+                addSupportMessage(step.content, 'received');
+            } else if (step.type === 'audio') {
+                addSupportAudioMessage(step.content);
+            } else if (step.type === 'image') {
+                addSupportImageMessage(step.content);
+            } else if (step.type === 'video') {
+                addSupportVideoMessage(step.content);
+            }
+        }
+    } else {
+        // FALLBACK: OLD FLOW
+        // 2. Bot Typing
         await delay(1000);
         showTypingIndicator();
-    }
 
-    // 8. Bot Final Text
-    await delay(1500);
-    hideTypingIndicator();
-    addSupportMessage(supportConfig.finalMessage, 'received');
+        // 3. Bot Text Response
+        await delay(2500); 
+        hideTypingIndicator();
+        addSupportMessage(supportConfig.welcomeMessage || 'Olá! Como posso ajudar?', 'received');
+
+        // 4. Bot Recording Audio
+        if (supportConfig.audioUrl) {
+            await delay(1000);
+            showRecordingIndicator();
+            await delay(4000); 
+            hideRecordingIndicator();
+            addSupportAudioMessage(supportConfig.audioUrl);
+        }
+
+        // 6. Bot Typing
+        await delay(1500);
+        showTypingIndicator();
+
+        // 7. Bot Image Response
+        if (supportConfig.imageUrl) {
+            await delay(2000);
+            hideTypingIndicator();
+            addSupportImageMessage(supportConfig.imageUrl);
+            
+            // Extra delay
+            await delay(1000);
+            showTypingIndicator();
+        }
+
+        // 8. Bot Final Text
+        if (supportConfig.finalMessage) {
+            await delay(1500);
+            hideTypingIndicator();
+            addSupportMessage(supportConfig.finalMessage, 'received');
+        }
+    }
 }
+
 
 // Helper Functions
 
@@ -1572,7 +1604,10 @@ function addSupportMessage(text, type) {
     scrollToBottom();
 }
 
-function addSupportAudioMessage() {
+function addSupportAudioMessage(url) {
+    if (!url && supportConfig.audioUrl) url = supportConfig.audioUrl;
+    if (!url) return;
+
     const chatBody = document.getElementById('support-chat-body');
     if (!chatBody) return;
 
@@ -1600,7 +1635,7 @@ function addSupportAudioMessage() {
                 <span>0:00</span>
                 <span>0:15</span>
             </div>
-            <audio src="${supportConfig.audioUrl}" preload="none"></audio>
+            <audio src="${url}" preload="none"></audio>
         </div>
         <span class="message-time">${time}</span>
     `;
@@ -1609,7 +1644,10 @@ function addSupportAudioMessage() {
     scrollToBottom();
 }
 
-function addSupportImageMessage() {
+function addSupportImageMessage(url) {
+    if (!url && supportConfig.imageUrl) url = supportConfig.imageUrl;
+    if (!url) return;
+
     const chatBody = document.getElementById('support-chat-body');
     if (!chatBody) return;
 
@@ -1620,13 +1658,34 @@ function addSupportImageMessage() {
 
     msgDiv.innerHTML = `
         <div class="image-message">
-            <img src="${supportConfig.imageUrl}" alt="Suporte Imagem">
+            <img src="${url}" alt="Suporte Imagem">
         </div>
         <span class="message-time">${time}</span>
     `;
 
     chatBody.appendChild(msgDiv);
-    chatBody.scrollTop = chatBody.scrollHeight; // Ensure scrolled to show image
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function addSupportVideoMessage(url) {
+    if (!url) return;
+    const chatBody = document.getElementById('support-chat-body');
+    if (!chatBody) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `support-message received`;
+
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    msgDiv.innerHTML = `
+        <div class="video-message" style="max-width: 250px; background: #e9edef; padding: 5px; border-radius: 8px;">
+            <video src="${url}" controls style="width: 100%; border-radius: 4px;"></video>
+        </div>
+        <span class="message-time">${time}</span>
+    `;
+
+    chatBody.appendChild(msgDiv);
+    chatBody.scrollTop = chatBody.scrollHeight;
 }
 
 function showTypingIndicator() {

@@ -1618,42 +1618,179 @@ window.deleteScheduledComment = async function (id) {
     renderScheduledComments(comments);
 };
 
+// Global steps state
+let supportSteps = [];
+
 // Carregar configuração do chat de suporte
 async function loadSupportConfig() {
     const config = await getSupportConfig();
 
     // Configurar campos
     const startMsgEl = document.getElementById('support-start-msg');
-    const welcomeMsgEl = document.getElementById('support-welcome-msg');
-    const audioUrlEl = document.getElementById('support-audio-url');
-    const imageUrlEl = document.getElementById('support-image-url');
-    const finalMsgEl = document.getElementById('support-final-msg');
 
     if (startMsgEl) startMsgEl.value = config.startMessage || '';
-    if (welcomeMsgEl) welcomeMsgEl.value = config.welcomeMessage || '';
-    if (audioUrlEl) audioUrlEl.value = config.audioUrl || '';
-    if (imageUrlEl) imageUrlEl.value = config.imageUrl || '';
-    if (finalMsgEl) finalMsgEl.value = config.finalMessage || '';
+
+    // Load steps
+    supportSteps = config.steps || [];
+
+    // If empty (migration from old format), try to convert old format
+    if (supportSteps.length === 0 && config.welcomeMessage) {
+        supportSteps.push({ type: 'text', content: config.welcomeMessage, delay: 2500 });
+        if (config.audioUrl) supportSteps.push({ type: 'audio', content: config.audioUrl, delay: 4000 });
+        if (config.imageUrl) supportSteps.push({ type: 'image', content: config.imageUrl, delay: 2000 });
+        if (config.finalMessage) supportSteps.push({ type: 'text', content: config.finalMessage, delay: 1500 });
+    }
+
+    renderSupportSteps();
+}
+
+function renderSupportSteps() {
+    const container = document.getElementById('support-steps-container');
+    if (!container) return;
+
+    if (supportSteps.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Nenhuma etapa adicionada. Clique nos botões abaixo para começar.</p>';
+        return;
+    }
+
+    container.innerHTML = '';
+
+    supportSteps.forEach((step, index) => {
+        const div = document.createElement('div');
+        div.className = 'support-step-item';
+        div.style.cssText = 'background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;';
+
+        let icon = '💬';
+        let color = '#4a5568';
+        if (step.type === 'audio') { icon = '🎤'; color = '#4299e1'; }
+        if (step.type === 'image') { icon = '📷'; color = '#ed64a6'; }
+        if (step.type === 'video') { icon = '🎬'; color = '#e53e3e'; }
+
+        let contentInput = '';
+
+        if (step.type === 'text') {
+            contentInput = `<textarea class="step-content form-control" data-index="${index}" rows="2" placeholder="Digite a mensagem..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">${step.content || ''}</textarea>`;
+        } else {
+            // File input preview
+            let preview = '';
+            if (step.content && step.content.length > 50) { // Assume DataURI or Long URL
+                if (step.type === 'image') preview = `<img src="${step.content}" style="max-height: 50px; margin-top: 5px;">`;
+                if (step.type === 'audio') preview = `<audio controls src="${step.content}" style="height: 30px; margin-top: 5px;"></audio>`;
+                if (step.type === 'video') preview = `<video src="${step.content}" style="max-height: 50px; margin-top: 5px;"></video>`;
+            }
+
+            contentInput = `
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div style="flex: 1;">
+                         <input type="file" class="step-file-input" data-index="${index}" accept="${step.type}/*">
+                         <div class="file-preview">${preview}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="background: ${color}; color: white; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px;">${index + 1}</span>
+                    <span style="font-weight: 600; color: ${color};">${icon} ${step.type.toUpperCase()}</span>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                     <button onclick="moveSupportStep(${index}, -1)" ${index === 0 ? 'disabled' : ''} style="background: none; border: none; cursor: pointer;">⬆️</button>
+                     <button onclick="moveSupportStep(${index}, 1)" ${index === supportSteps.length - 1 ? 'disabled' : ''} style="background: none; border: none; cursor: pointer;">⬇️</button>
+                     <button onclick="removeSupportStep(${index})" style="background: none; border: none; cursor: pointer;">❌</button>
+                </div>
+            </div>
+            
+            ${contentInput}
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="font-size: 12px; color: #666;">Tempo de espera (ms):</label>
+                <input type="number" class="step-delay" data-index="${index}" value="${step.delay || 1500}" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+
+    // Attach listeners for inputs within the container
+    container.querySelectorAll('.step-content').forEach(el => {
+        el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            supportSteps[idx].content = e.target.value;
+        });
+    });
+
+    container.querySelectorAll('.step-delay').forEach(el => {
+        el.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            supportSteps[idx].delay = parseInt(e.target.value) || 0;
+        });
+    });
+
+    container.querySelectorAll('.step-file-input').forEach(el => {
+        el.addEventListener('change', (e) => {
+            handleSupportFile(e, parseInt(e.target.dataset.index));
+        });
+    });
+}
+
+window.addSupportStep = function (type) {
+    let delay = 1500;
+    if (type === 'audio') delay = 4000;
+    if (type === 'video') delay = 5000;
+
+    supportSteps.push({
+        type: type,
+        content: '',
+        delay: delay
+    });
+    renderSupportSteps();
+}
+
+window.removeSupportStep = function (index) {
+    if (confirm('Tem certeza que deseja remover esta etapa?')) {
+        supportSteps.splice(index, 1);
+        renderSupportSteps();
+    }
+}
+
+window.moveSupportStep = function (index, direction) {
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < supportSteps.length) {
+        [supportSteps[index], supportSteps[newIndex]] = [supportSteps[newIndex], supportSteps[index]];
+        renderSupportSteps();
+    }
+}
+
+async function handleSupportFile(event, index) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Simple size check (e.g. 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert('⚠️ Arquivo muito grande! Tente usar arquivos menores que 10MB para garantir que salvem corretamente.');
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        // Just store the base64 string
+        supportSteps[index].content = e.target.result;
+        renderSupportSteps(); // Force re-render to show preview
+    };
+    reader.readAsDataURL(file);
 }
 
 // Salvar configuração do chat de suporte
 async function saveSupportConfigHandler() {
     const config = {
         startMessage: document.getElementById('support-start-msg').value,
-        welcomeMessage: document.getElementById('support-welcome-msg').value,
-        audioUrl: document.getElementById('support-audio-url').value,
-        imageUrl: document.getElementById('support-image-url').value,
-        finalMessage: document.getElementById('support-final-msg').value
+        steps: supportSteps
     };
-
-    // Validar URLs básicos
-    // normalizeUrl já existe no arquivo
-    if (config.audioUrl) config.audioUrl = normalizeUrl(config.audioUrl);
-    if (config.imageUrl) config.imageUrl = normalizeUrl(config.imageUrl);
 
     const saveBtn = document.getElementById('save-support-btn');
     const originalText = saveBtn.textContent;
-    saveBtn.textContent = 'Salvando...';
+    saveBtn.textContent = 'Salvando... (pode demorar se houver arquivos)';
     saveBtn.disabled = true;
 
     try {
