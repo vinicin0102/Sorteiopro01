@@ -38,6 +38,7 @@
             <button class="nav-tab" data-section="sorteio">Sorteio</button>
             <button class="nav-tab" data-section="formulario">Formulário</button>
             <button class="nav-tab" data-section="oferta">Oferta</button>
+            <button class="nav-tab" data-section="support">Suporte</button>
             <button class="nav-tab" data-section="donate">Donate</button>
             <button class="nav-tab" data-section="m">M</button>
         </nav>
@@ -446,24 +447,72 @@
                         </div>
                     </div>
                 </div>
-            </section>
+    </div>
+    </section>
 
-            <!-- Seção Donate -->
-            <section id="donate-section" class="content-section">
-                <div class="section-content">
-                    <h2>Doações</h2>
-                    <p class="coming-soon">Funcionalidade em desenvolvimento</p>
-                </div>
-            </section>
+    <!-- Seção Suporte -->
+    <section id="support-section" class="content-section">
+        <div class="section-content">
+            <h2>Configuração do Chat de Suporte</h2>
+            <p class="section-description" style="color: #666; margin-bottom: 20px;">
+                Configure o fluxo automático do chat que aparece quando o cliente clica em suporte.
+            </p>
 
-            <!-- Seção M -->
-            <section id="m-section" class="content-section">
-                <div class="section-content">
-                    <h2>Configurações M</h2>
-                    <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+            <div class="editor-form">
+                <div class="form-group">
+                    <label>Mensagem Inicial (Cliente)</label>
+                    <input type="text" id="support-start-msg"
+                        placeholder="Ex: Olá, estou com dúvida referente ao pagamento.">
+                    <small class="helper-text">Esta é a mensagem que será enviada automaticamente pelo cliente ao abrir
+                        o chat.</small>
                 </div>
-            </section>
-        </main>
+
+                <div class="form-group">
+                    <label>Mensagem de Boas-vindas (Bot)</label>
+                    <input type="text" id="support-welcome-msg"
+                        placeholder="Ex: Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.">
+                </div>
+
+                <div class="form-group">
+                    <label>Link do Áudio</label>
+                    <input type="url" id="support-audio-url" placeholder="https://exemplo.com/audio.mp3">
+                    <small class="helper-text">Link direto para o arquivo de áudio (.mp3) que o bot irá "gravar" e
+                        enviar.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Link da Imagem</label>
+                    <input type="url" id="support-image-url" placeholder="https://exemplo.com/imagem.jpg">
+                    <small class="helper-text">Link direto para a imagem que o bot enviará.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Mensagem Final (Bot)</label>
+                    <input type="text" id="support-final-msg"
+                        placeholder="Ex: Conseguiu visualizar? Qualquer outra dúvida estou à disposição!">
+                </div>
+
+                <button id="save-support-btn" class="save-btn">Salvar Configuração do Chat</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção Donate -->
+    <section id="donate-section" class="content-section">
+        <div class="section-content">
+            <h2>Doações</h2>
+            <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+        </div>
+    </section>
+
+    <!-- Seção M -->
+    <section id="m-section" class="content-section">
+        <div class="section-content">
+            <h2>Configurações M</h2>
+            <p class="coming-soon">Funcionalidade em desenvolvimento</p>
+        </div>
+    </section>
+    </main>
     </div>
 
     <!-- Supabase JS -->

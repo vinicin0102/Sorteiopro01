@@ -664,6 +664,83 @@ async function saveWinnerMessageConfig(config) {
     }
 }
 
+// Salvar configurações do Chat de Suporte
+async function saveSupportConfig(config) {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            localStorage.setItem('admin_support_chat_config', JSON.stringify(config));
+            return true;
+        }
+
+        const { error } = await db
+            .from('configuracoes')
+            .upsert({
+                id: 6,
+                tipo: 'support_chat', // Novo tipo
+                dados: config,
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Erro ao salvar configuração do chat de suporte:', error);
+        localStorage.setItem('admin_support_chat_config', JSON.stringify(config));
+        return false;
+    }
+}
+
+// Buscar configurações do Chat de Suporte
+async function getSupportConfig() {
+    try {
+        const db = await getSupabase();
+        if (!db) {
+            const defaultConfig = {
+                startMessage: 'Olá, estou com dúvida referente ao pagamento.',
+                welcomeMessage: 'Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.',
+                audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
+                finalMessage: 'Conseguiu visualizar? Qualquer outra dúvida estou à disposição!'
+            };
+            return JSON.parse(localStorage.getItem('admin_support_chat_config') || JSON.stringify(defaultConfig));
+        }
+
+        const { data, error } = await db
+            .from('configuracoes')
+            .select('*')
+            .eq('tipo', 'support_chat')
+            .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+            console.warn('Aviso ao buscar configuração do chat de suporte:', error);
+        }
+
+        if (data?.dados) {
+            return data.dados;
+        }
+
+        const defaultConfig = {
+            startMessage: 'Olá, estou com dúvida referente ao pagamento.',
+            welcomeMessage: 'Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.',
+            audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+            imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
+            finalMessage: 'Conseguiu visualizar? Qualquer outra dúvida estou à disposição!'
+        };
+        return defaultConfig;
+    } catch (error) {
+        console.error('Erro ao buscar configuração do chat de suporte:', error);
+        const defaultConfig = {
+            startMessage: 'Olá, estou com dúvida referente ao pagamento.',
+            welcomeMessage: 'Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.',
+            audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+            imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
+            finalMessage: 'Conseguiu visualizar? Qualquer outra dúvida estou à disposição!'
+        };
+        return JSON.parse(localStorage.getItem('admin_support_chat_config') || JSON.stringify(defaultConfig));
+    }
+}
+
 // Buscar configurações de mensagem de ganhador
 async function getWinnerMessageConfig() {
     try {

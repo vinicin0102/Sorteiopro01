@@ -1419,12 +1419,38 @@ function checkScheduledComments(currentSeconds) {
 // SUPPORT CHAT AUTOMATION
 // ==========================================
 
-// Configuration for assets - SUBSTITUTE THESE URLS with your own!
-const SUPPORT_CONFIG = {
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Placeholder audio
-    imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60', // Placeholder image
-    startMessage: 'Olá, estou com dúvida referente ao pagamento.'
+// Global Support Config (defaults)
+let supportConfig = {
+    startMessage: 'Olá, estou com dúvida referente ao pagamento.',
+    welcomeMessage: 'Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
+    finalMessage: 'Conseguiu visualizar? Qualquer outra dúvida estou à disposição!'
 };
+
+async function loadSupportConfig() {
+    try {
+        if (typeof getSupportConfig === 'function') {
+            const config = await getSupportConfig();
+            if (config) {
+                // Merge with defaults
+                supportConfig = { ...supportConfig, ...config };
+            }
+        } else {
+            // Fallback
+            const stored = localStorage.getItem('admin_support_chat_config');
+            if (stored) {
+                supportConfig = { ...supportConfig, ...JSON.parse(stored) };
+            }
+        }
+        console.log('✅ Configuração de suporte carregada:', supportConfig);
+    } catch (e) {
+        console.error('Erro ao carregar configuração de suporte:', e);
+    }
+}
+
+// Load config on startup
+document.addEventListener('DOMContentLoaded', loadSupportConfig);
 
 let supportFlowStarted = false;
 let isSupportOpen = false;
@@ -1479,7 +1505,7 @@ async function startSupportFlow() {
 
     // 1. User Message (Immediate)
     await delay(500);
-    addSupportMessage(SUPPORT_CONFIG.startMessage, 'sent');
+    addSupportMessage(supportConfig.startMessage, 'sent');
 
     // 2. Bot Typing
     await delay(1000);
@@ -1488,32 +1514,38 @@ async function startSupportFlow() {
     // 3. Bot Text Response
     await delay(2500); // Typing duration
     hideTypingIndicator();
-    addSupportMessage('Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.', 'received');
+    addSupportMessage(supportConfig.welcomeMessage, 'received');
 
     // 4. Bot Recording Audio
-    await delay(1000);
-    showRecordingIndicator();
+    if (supportConfig.audioUrl) {
+        await delay(1000);
+        showRecordingIndicator();
 
-    // 5. Bot Audio Response
-    await delay(4000); // Recording duration
-    hideRecordingIndicator();
-    addSupportAudioMessage();
+        // 5. Bot Audio Response
+        await delay(4000); // Recording duration
+        hideRecordingIndicator();
+        addSupportAudioMessage();
+    }
 
     // 6. Bot Typing
     await delay(1500);
     showTypingIndicator();
 
     // 7. Bot Image Response
-    await delay(2000);
-    hideTypingIndicator();
-    addSupportImageMessage();
+    if (supportConfig.imageUrl) {
+        await delay(2000);
+        hideTypingIndicator();
+        addSupportImageMessage();
 
-    // 8. Bot Final Text (Optional)
-    await delay(1000);
-    showTypingIndicator();
+        // Extra delay
+        await delay(1000);
+        showTypingIndicator();
+    }
+
+    // 8. Bot Final Text
     await delay(1500);
     hideTypingIndicator();
-    addSupportMessage('Conseguiu visualizar? Qualquer outra dúvida estou à disposição!', 'received');
+    addSupportMessage(supportConfig.finalMessage, 'received');
 }
 
 // Helper Functions
@@ -1568,7 +1600,7 @@ function addSupportAudioMessage() {
                 <span>0:00</span>
                 <span>0:15</span>
             </div>
-            <audio src="${SUPPORT_CONFIG.audioUrl}" preload="none"></audio>
+            <audio src="${supportConfig.audioUrl}" preload="none"></audio>
         </div>
         <span class="message-time">${time}</span>
     `;
@@ -1588,7 +1620,7 @@ function addSupportImageMessage() {
 
     msgDiv.innerHTML = `
         <div class="image-message">
-            <img src="${SUPPORT_CONFIG.imageUrl}" alt="Suporte Imagem">
+            <img src="${supportConfig.imageUrl}" alt="Suporte Imagem">
         </div>
         <span class="message-time">${time}</span>
     `;

@@ -233,6 +233,10 @@ function initializeEventListeners() {
     if (refreshLogsBtn) {
         refreshLogsBtn.addEventListener('click', loadAccessLogs);
     }
+    const saveSupportBtn = document.getElementById('save-support-btn');
+    if (saveSupportBtn) {
+        saveSupportBtn.addEventListener('click', saveSupportConfigHandler);
+    }
 }
 
 async function handleLogin() {
@@ -365,6 +369,9 @@ async function switchSection(section) {
     }
     if (section === 'logs') {
         await loadAccessLogs(); // Carrega logs de acesso
+    }
+    if (section === 'support') {
+        await loadSupportConfig(); // Carrega config de suporte
     }
 }
 
@@ -1610,3 +1617,57 @@ window.deleteScheduledComment = async function (id) {
     await updateScheduledComments(comments);
     renderScheduledComments(comments);
 };
+
+// Carregar configuração do chat de suporte
+async function loadSupportConfig() {
+    const config = await getSupportConfig();
+
+    // Configurar campos
+    const startMsgEl = document.getElementById('support-start-msg');
+    const welcomeMsgEl = document.getElementById('support-welcome-msg');
+    const audioUrlEl = document.getElementById('support-audio-url');
+    const imageUrlEl = document.getElementById('support-image-url');
+    const finalMsgEl = document.getElementById('support-final-msg');
+
+    if (startMsgEl) startMsgEl.value = config.startMessage || '';
+    if (welcomeMsgEl) welcomeMsgEl.value = config.welcomeMessage || '';
+    if (audioUrlEl) audioUrlEl.value = config.audioUrl || '';
+    if (imageUrlEl) imageUrlEl.value = config.imageUrl || '';
+    if (finalMsgEl) finalMsgEl.value = config.finalMessage || '';
+}
+
+// Salvar configuração do chat de suporte
+async function saveSupportConfigHandler() {
+    const config = {
+        startMessage: document.getElementById('support-start-msg').value,
+        welcomeMessage: document.getElementById('support-welcome-msg').value,
+        audioUrl: document.getElementById('support-audio-url').value,
+        imageUrl: document.getElementById('support-image-url').value,
+        finalMessage: document.getElementById('support-final-msg').value
+    };
+
+    // Validar URLs básicos
+    // normalizeUrl já existe no arquivo
+    if (config.audioUrl) config.audioUrl = normalizeUrl(config.audioUrl);
+    if (config.imageUrl) config.imageUrl = normalizeUrl(config.imageUrl);
+
+    const saveBtn = document.getElementById('save-support-btn');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Salvando...';
+    saveBtn.disabled = true;
+
+    try {
+        const success = await saveSupportConfig(config);
+        if (success) {
+            alert('✅ Configuração do Chat de Suporte salva com sucesso!');
+        } else {
+            alert('⚠️ Erro ao salvar configuração. Tente novamente.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Erro ao salvar.');
+    } finally {
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+    }
+}
