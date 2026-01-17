@@ -667,9 +667,11 @@ async function saveWinnerMessageConfig(config) {
 // Salvar configurações do Chat de Suporte
 async function saveSupportConfig(config) {
     try {
+        // Always save to localStorage first (immediate update/backup)
+        localStorage.setItem('admin_support_chat_config', JSON.stringify(config));
+
         const db = await getSupabase();
         if (!db) {
-            localStorage.setItem('admin_support_chat_config', JSON.stringify(config));
             return true;
         }
 
@@ -686,7 +688,7 @@ async function saveSupportConfig(config) {
         return true;
     } catch (error) {
         console.error('Erro ao salvar configuração do chat de suporte:', error);
-        localStorage.setItem('admin_support_chat_config', JSON.stringify(config));
+        // We already saved to localStorage, so partial success
         return false;
     }
 }
@@ -717,7 +719,23 @@ async function getSupportConfig() {
         }
 
         if (data?.dados) {
+            // Check if steps are present (essential for new flow)
+            if (data.dados.steps && data.dados.steps.length > 0) {
+                return data.dados;
+            }
+            // If connected to Supabase but no steps, try localStorage as potential fallback (mixed mode)
+            const localData = JSON.parse(localStorage.getItem('admin_support_chat_config') || '{}');
+            if (localData.steps && localData.steps.length > 0) {
+                console.log('⚠️ Usando configuração local do suporte pois a do Banco não tem passos.');
+                return localData;
+            }
             return data.dados;
+        }
+
+        console.warn('⚠️ Configuração de suporte não encontrada no banco, tentando localStorage...');
+        const stored = localStorage.getItem('admin_support_chat_config');
+        if (stored) {
+            return JSON.parse(stored);
         }
 
         const defaultConfig = {
@@ -730,6 +748,13 @@ async function getSupportConfig() {
         return defaultConfig;
     } catch (error) {
         console.error('Erro ao buscar configuração do chat de suporte:', error);
+
+        // Final fallback to localStorage in case of error
+        const stored = localStorage.getItem('admin_support_chat_config');
+        if (stored) {
+            return JSON.parse(stored);
+        }
+
         const defaultConfig = {
             startMessage: 'Olá, estou com dúvida referente ao pagamento.',
             welcomeMessage: 'Olá! Tudo bem? Sou do suporte. Claro, posso te ajudar com isso.',
@@ -737,7 +762,7 @@ async function getSupportConfig() {
             imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
             finalMessage: 'Conseguiu visualizar? Qualquer outra dúvida estou à disposição!'
         };
-        return JSON.parse(localStorage.getItem('admin_support_chat_config') || JSON.stringify(defaultConfig));
+        return defaultConfig;
     }
 }
 

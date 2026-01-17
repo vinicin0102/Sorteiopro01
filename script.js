@@ -1497,6 +1497,9 @@ setTimeout(() => {
 
 
 async function startSupportFlow() {
+    // Reload config to ensure we have the latest version (e.g. if updated in Admin)
+    await loadSupportConfig();
+
     supportFlowStarted = true;
     const chatBody = document.getElementById('support-chat-body');
     if (!chatBody) return;
@@ -1506,24 +1509,24 @@ async function startSupportFlow() {
     // 1. User Message (Immediate)
     await delay(500);
     addSupportMessage(supportConfig.startMessage, 'sent');
-    
+
     // Check if we have dynamic steps (NEW FLOW)
     if (supportConfig.steps && supportConfig.steps.length > 0) {
         for (const step of supportConfig.steps) {
             // Pre-delay logic
             if (step.type === 'audio') {
-                 await delay(800);
-                 showRecordingIndicator();
-                 await delay(Math.max(2000, step.delay || 3000));
-                 hideRecordingIndicator();
+                await delay(800);
+                showRecordingIndicator();
+                await delay(Math.max(2000, step.delay || 3000));
+                hideRecordingIndicator();
             } else {
-                 await delay(800);
-                 showTypingIndicator();
-                 // Simulate typing
-                 await delay(Math.max(1000, step.delay || 1500));
-                 hideTypingIndicator();
+                await delay(800);
+                showTypingIndicator();
+                // Simulate typing
+                await delay(Math.max(1000, step.delay || 1500));
+                hideTypingIndicator();
             }
-            
+
             // Show content
             if (step.type === 'text') {
                 addSupportMessage(step.content, 'received');
@@ -1542,7 +1545,7 @@ async function startSupportFlow() {
         showTypingIndicator();
 
         // 3. Bot Text Response
-        await delay(2500); 
+        await delay(2500);
         hideTypingIndicator();
         addSupportMessage(supportConfig.welcomeMessage || 'Olá! Como posso ajudar?', 'received');
 
@@ -1550,7 +1553,7 @@ async function startSupportFlow() {
         if (supportConfig.audioUrl) {
             await delay(1000);
             showRecordingIndicator();
-            await delay(4000); 
+            await delay(4000);
             hideRecordingIndicator();
             addSupportAudioMessage(supportConfig.audioUrl);
         }
@@ -1564,7 +1567,7 @@ async function startSupportFlow() {
             await delay(2000);
             hideTypingIndicator();
             addSupportImageMessage(supportConfig.imageUrl);
-            
+
             // Extra delay
             await delay(1000);
             showTypingIndicator();
@@ -1577,6 +1580,10 @@ async function startSupportFlow() {
             addSupportMessage(supportConfig.finalMessage, 'received');
         }
     }
+
+    // Call CTA function at the end of flow
+    await delay(1000);
+    showFinalSupportCTA();
 }
 
 
@@ -1620,7 +1627,7 @@ function addSupportAudioMessage(url) {
     msgDiv.innerHTML = `
         <div class="audio-message">
             <div class="support-avatar audio-avatar">
-                 <img src="https://ui-avatars.com/api/?name=Suporte&background=25D366&color=fff" alt="Suporte">
+                 <img src="support-avatar.jpg" alt="Suporte">
                  <div class="mic-icon-overlay">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
                  </div>
@@ -1777,3 +1784,29 @@ window.toggleAudio = function (btn) {
         icon.innerHTML = '<path d="M0 0v14l11-7z"/>';
     }
 };
+
+// Function to show final CTA in support chat
+function showFinalSupportCTA() {
+    const inputWrapper = document.querySelector('.support-input-wrapper');
+    const sendBtn = document.getElementById('support-send-btn');
+    const ctaBtn = document.getElementById('support-final-cta');
+
+    if (ctaBtn) {
+        if (inputWrapper) inputWrapper.style.display = 'none';
+        if (sendBtn) sendBtn.style.display = 'none';
+
+        ctaBtn.style.display = 'block';
+
+        // Add click listener if not already added
+        ctaBtn.onclick = function () {
+            // Use same link as main offer or default
+            let link = '#';
+            if (offerConfig && offerConfig.ctaLink) {
+                link = offerConfig.ctaLink;
+            }
+            window.open(link, '_blank');
+        };
+
+        console.log('✅ Botão CTA do suporte exibido');
+    }
+}

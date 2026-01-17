@@ -1767,9 +1767,9 @@ async function handleSupportFile(event, index) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Simple size check (e.g. 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        alert('⚠️ Arquivo muito grande! Tente usar arquivos menores que 10MB para garantir que salvem corretamente.');
+    // Simple size check (limit to 2MB for safe localStorage limit)
+    if (file.size > 2 * 1024 * 1024) {
+        alert('⚠️ Arquivo muito grande! Recomendamos arquivos menores que 2MB para garantir que salvem corretamente (especialmente áudios e imagens).');
     }
 
     const reader = new FileReader();
