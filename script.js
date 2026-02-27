@@ -657,38 +657,42 @@ function processEmbedForLive(embedCode) {
 
 async function loadVideoEmbed() {
     try {
+        const defaultVideo = `<vturb-smartplayer id="vid-69a0c8f1c4b02ade5c61ba89" style="display: block; margin: 0 auto; width: 100%; "></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/e6498671-4054-4f88-a3da-e606dc0c11ee/players/69a0c8f1c4b02ade5c61ba89/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`;
+        
+        let embedToLoad = defaultVideo;
+        
         if (typeof getVideoConfig === 'function') {
             const config = await getVideoConfig();
-            const videoContainer = document.getElementById('video-container');
-            if (videoContainer) {
-                // Se houver código embed, usar. Senão, deixar vazio
-                if (config.embedCode && config.embedCode.trim()) {
-                    // Processar embed para parecer live (sem controles)
-                    const processedEmbed = processEmbedForLive(config.embedCode);
-                    videoContainer.innerHTML = processedEmbed;
-                    console.log('✅ Vídeo embed carregado como LIVE (sem controles):', config.embedCode.substring(0, 50) + '...');
-                } else {
-                    // Sem vídeo configurado - deixar container vazio
-                    videoContainer.innerHTML = '';
-                    console.log('ℹ️ Nenhum vídeo configurado no admin');
-                }
+            if (config && config.embedCode && config.embedCode.trim()) {
+                embedToLoad = config.embedCode;
             }
         } else {
-            // Fallback para localStorage
             const stored = localStorage.getItem('admin_video_config');
             if (stored) {
                 const config = JSON.parse(stored);
-                const videoContainer = document.getElementById('video-container');
-                if (videoContainer) {
-                    if (config.embedCode && config.embedCode.trim()) {
-                        // Processar embed para parecer live
-                        const processedEmbed = processEmbedForLive(config.embedCode);
-                        videoContainer.innerHTML = processedEmbed;
-                    } else {
-                        videoContainer.innerHTML = '';
-                    }
+                if (config && config.embedCode && config.embedCode.trim()) {
+                    embedToLoad = config.embedCode;
                 }
             }
+        }
+        
+        const videoContainer = document.getElementById('video-container');
+        if (videoContainer) {
+            const processedEmbed = processEmbedForLive(embedToLoad);
+            videoContainer.innerHTML = processedEmbed;
+            
+            // Garantir que scripts injetados no innerHTML sejam executados (necessário para vturb, etc)
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = embedToLoad;
+            const scripts = tempDiv.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                newScript.textContent = oldScript.textContent;
+                document.body.appendChild(newScript);
+            });
+            
+            console.log('✅ Vídeo embed carregado com sucesso (incluindo scripts)');
         }
     } catch (error) {
         console.error('Erro ao carregar configuração de vídeo:', error);
