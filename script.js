@@ -1075,63 +1075,50 @@ function getUniqueMessage(messages) {
 }
 
 // Get random participant names for messages (for automatic messages only)
-const automaticNames = ['Maria', 'João', 'Ana', 'Pedro', 'Julia', 'Carlos', 'Fernanda', 'Lucas', 'Beatriz', 'Rafael', 'Mariana', 'Bruno'];
+const automaticNames = ['Maria', 'João', 'Ana', 'Pedro', 'Julia', 'Carlos', 'Fernanda', 'Lucas', 'Beatriz', 'Rafael', 'Mariana', 'Bruno', 'Tiago', 'Camila', 'Felipe', 'Amanda', 'Rodrigo', 'Letícia'];
+let recentNames = [];
 
 function getRandomParticipantName() {
-    // Obter nome do usuário atual para excluir
     let currentUserName = '';
     try {
         const registrationData = localStorage.getItem('webinar_registration');
         if (registrationData) {
             const data = JSON.parse(registrationData);
-            currentUserName = (data.nome || '').trim().toLowerCase();
+            currentUserName = (data.nome || '').split(' ')[0].trim().toLowerCase();
         }
-    } catch (e) {
-        // Ignorar erro
-    }
+    } catch (e) { }
+
+    let allNames = [...automaticNames];
 
     try {
         const participantes = JSON.parse(localStorage.getItem('webinar_participantes') || '[]');
-
-        // Filtrar participantes válidos excluindo o usuário atual
-        const availableParticipants = participantes.filter(p => {
-            if (!p || !p.nome) return false;
-            const participantName = (p.nome || '').trim().toLowerCase();
-            const participantFirstName = participantName.split(' ')[0];
-            return participantName !== currentUserName &&
-                participantFirstName !== currentUserName &&
-                participantName !== '';
-        });
-
-        if (availableParticipants.length > 0) {
-            const random = availableParticipants[Math.floor(Math.random() * availableParticipants.length)];
-            const firstName = random.nome.split(' ')[0].trim();
-            if (firstName) {
-                return firstName;
+        participantes.forEach(p => {
+            if (p && p.nome) {
+                const firstName = p.nome.split(' ')[0].trim();
+                if (firstName && firstName.toLowerCase() !== currentUserName && !allNames.includes(firstName)) {
+                    allNames.push(firstName);
+                }
             }
-        }
-    } catch (e) {
-        console.warn('Erro ao buscar participantes:', e);
-    }
+        });
+    } catch (e) { }
 
-    // Filtrar nomes automáticos excluindo o primeiro nome do usuário atual
-    const userFirstName = currentUserName.split(' ')[0];
-    const availableNames = automaticNames.filter(name => {
-        const nameLower = name.toLowerCase();
-        return nameLower !== currentUserName && nameLower !== userFirstName;
-    });
+    // Excluir nome do atual e nomes recentemente usados
+    const availableNames = allNames.filter(name => name.toLowerCase() !== currentUserName && !recentNames.includes(name));
 
+    let chosenName = 'Usuário';
     if (availableNames.length > 0) {
-        return availableNames[Math.floor(Math.random() * availableNames.length)];
+        chosenName = availableNames[Math.floor(Math.random() * availableNames.length)];
+    } else if (allNames.length > 0) {
+        recentNames = []; // clear history if all used
+        chosenName = allNames[Math.floor(Math.random() * allNames.length)];
     }
 
-    // Se não houver nomes disponíveis, retornar um aleatório mesmo (garantir que sempre retorna algo)
-    if (automaticNames.length > 0) {
-        return automaticNames[Math.floor(Math.random() * automaticNames.length)];
+    recentNames.push(chosenName);
+    if (recentNames.length > 8) {
+        recentNames.shift();
     }
 
-    // Fallback final - nunca deve chegar aqui
-    return 'Usuário';
+    return chosenName;
 }
 
 // Process pending messages from admin

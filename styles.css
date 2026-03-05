@@ -108,25 +108,29 @@ body {
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    background-color: #fff;
+    background-color: #000;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Garantir que o vídeo preencha todo o espaço */
+    /* Garantir que o vídeo preencha todo o espaço sem bordas brancas */
 }
 
-/* Garantir que iframes e vídeos preencham completamente */
+/* Garantir que iframes e vídeos preencham perfeitamente sem ultrapassar proporção */
 .video-container>iframe,
 .video-container>video {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.video-container>div {
+    width: 100%;
+    /* Permitir wrapper responsivo funcionar sem bugs de altura 100% fixa */
+    background-color: transparent;
 }
 
 /* Overlay para bloquear completamente controles do vídeo */
@@ -267,7 +271,7 @@ body {
 
 .video-container>* {
     width: 100%;
-    height: 100%;
+    /* Removido height 100% para não bugar height de wrappers com padding */
 }
 
 /* Live Status Bar */
@@ -1594,7 +1598,9 @@ body {
     max-width: 100%;
     height: auto;
     display: block;
-}/* Support Final CTA Button */
+}
+
+/* Support Final CTA Button */
 .support-final-cta {
     width: 100%;
     background-color: #25D366;
