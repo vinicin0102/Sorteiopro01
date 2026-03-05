@@ -330,7 +330,8 @@ async function showOfferPopup() {
     }
 
     if (titleEl) {
-        const titleValue = (offerConfig && offerConfig.titulo) ? String(offerConfig.titulo).trim() : '';
+        let titleValue = (offerConfig && offerConfig.titulo) ? String(offerConfig.titulo).trim() : '';
+        if (titleValue === 'Oferta Especial') titleValue = 'PARABÉNS GANHADOR!';
         if (titleValue) {
             titleEl.textContent = titleValue;
             titleEl.style.display = '';
@@ -340,7 +341,8 @@ async function showOfferPopup() {
     }
 
     if (subtitleEl) {
-        const subtitleValue = (offerConfig && offerConfig.subtitulo) ? String(offerConfig.subtitulo).trim() : '';
+        let subtitleValue = (offerConfig && offerConfig.subtitulo) ? String(offerConfig.subtitulo).trim() : '';
+        if (subtitleValue === 'Aproveite Agora!') subtitleValue = 'Você foi sorteado!';
         if (subtitleValue) {
             subtitleEl.textContent = subtitleValue;
             subtitleEl.style.display = '';
@@ -351,11 +353,12 @@ async function showOfferPopup() {
 
     if (messageEl) {
         const messageValue = (offerConfig && offerConfig.mensagem) ? String(offerConfig.mensagem).trim() : '';
-        if (messageValue) {
+        if (messageValue && messageValue !== 'Não perca esta oportunidade única!') {
             messageEl.textContent = messageValue;
             messageEl.style.display = '';
         } else {
-            messageEl.style.display = 'none';
+            messageEl.textContent = 'parabens grande ganhador, do iphone, clique no botao abaixo e resgate seu premio antes que o tempo acabe, qualquer coisa temos o suporte aqui mesmo no app,';
+            messageEl.style.display = '';
         }
     }
 
