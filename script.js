@@ -657,7 +657,7 @@ function processEmbedForLive(embedCode) {
 
 async function loadVideoEmbed() {
     try {
-        const defaultVideo = `<iframe id="panda-805fd40d-24e4-4005-aaed-b1652bddbaa1" src="https://player-vz-41174eb7-d5d.tv.pandavideo.com.br/embed/?v=805fd40d-24e4-4005-aaed-b1652bddbaa1" style="border:none;" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture" allowfullscreen=true width="720" height="360" fetchpriority="high"></iframe>`;
+        const defaultVideo = `<div style="position:relative;padding-top:56.25%;"><iframe id="panda-805fd40d-24e4-4005-aaed-b1652bddbaa1" src="https://player-vz-41174eb7-d5d.tv.pandavideo.com.br/embed/?v=805fd40d-24e4-4005-aaed-b1652bddbaa1" style="border:none;position:absolute;top:0;left:0;" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture" allowfullscreen=true width="100%" height="100%" fetchpriority="high"></iframe></div>`;
 
         let embedToLoad = defaultVideo;
 
