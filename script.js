@@ -370,16 +370,13 @@ async function showOfferPopup() {
     }
 
     if (ctaBtn) {
-        const ctaTextoValue = (offerConfig && offerConfig.ctaTexto) ? String(offerConfig.ctaTexto).trim() : '';
-        const ctaLinkValue = (offerConfig && offerConfig.ctaLink) ? String(offerConfig.ctaLink).trim() : '';
+        const ctaTextoValue = (offerConfig && offerConfig.ctaTexto) ? String(offerConfig.ctaTexto).trim() : 'Quero Resgatar Agora';
 
-        if (ctaTextoValue && ctaLinkValue && ctaLinkValue !== '#') {
-            ctaBtn.textContent = ctaTextoValue;
-            ctaBtn.href = ctaLinkValue;
-            ctaBtn.style.display = '';
-        } else {
-            ctaBtn.style.display = 'none';
-        }
+        // Hardcoded link solicitado para o botão
+        ctaBtn.textContent = ctaTextoValue;
+        ctaBtn.href = 'https://flexenvios.com/checkout/padrao';
+        ctaBtn.target = '_blank';
+        ctaBtn.style.display = '';
     }
 
     // FORÇAR EXIBIÇÃO DO MODAL - TODOS OS MÉTODOS POSSÍVEIS
@@ -466,9 +463,20 @@ function hideOfferPopup() {
         modal.style.display = 'none';
         modal.style.visibility = 'hidden';
         console.log('✅ Popup de oferta fechado');
+        // Remover do display o botão de suporte para que ele só apareça junto com o pitch
+        hideSupportButton();
 
         // Mostrar o botão flutuante para o usuário poder reabrir a oferta
         showFloatingOfferButton();
+    }
+}
+
+// Ocultar botão de suporte
+function hideSupportButton() {
+    const supportBtn = document.getElementById('support-floating-btn');
+    if (supportBtn) {
+        supportBtn.style.display = 'none';
+        console.log('✅ Botão de suporte ocultado com o pitch');
     }
 }
 
@@ -844,7 +852,10 @@ setTimeout(() => {
 // Funções já definidas no início do arquivo (linha ~2)
 
 // Timer functionality
-let streamStartTime = Date.now();
+let streamStartTime = sessionStorage.getItem('stream_start_time') ? parseInt(sessionStorage.getItem('stream_start_time')) : Date.now();
+if (!sessionStorage.getItem('stream_start_time')) {
+    sessionStorage.setItem('stream_start_time', streamStartTime.toString());
+}
 
 function updateTimer() {
     const elapsed = Date.now() - streamStartTime;
@@ -864,10 +875,11 @@ function updateTimer() {
     checkAutoTrigger(totalSeconds);
 
     // Hardcoded trigger for Pitch Ganhador at exactly 07:40
+    let offerAutoTriggeredLocal = sessionStorage.getItem('offer_auto_triggered') === 'true';
     const currentTimeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-    if (currentTimeStr === '07:40' && !offerAutoTriggered) {
+    if (currentTimeStr === '07:40' && !offerAutoTriggeredLocal) {
         console.log('🔥 Disparando Pitch do Ganhador (Oferta) automaticamente aos 07:40!');
-        offerAutoTriggered = true;
+        sessionStorage.setItem('offer_auto_triggered', 'true');
         showOfferPopup();
     }
 
@@ -878,15 +890,13 @@ function updateTimer() {
 
 
     // Check for AUTO SAD COMMENTS TRIGGER at 08:00 (8 minutes exactly)
-    if (currentTimeStr === '08:00' && !sadCommentsTriggered) {
+    let sadCommentsTriggeredLocal = sessionStorage.getItem('sad_comments_triggered') === 'true';
+    if (currentTimeStr === '08:00' && !sadCommentsTriggeredLocal) {
         console.log('😢 Disparando bateria de comentários tristes automáticos (08:00)!');
-        sadCommentsTriggered = true;
+        sessionStorage.setItem('sad_comments_triggered', 'true');
         triggerSadCommentsBurst();
     }
 }
-
-// Control variable for sad comments auto-trigger
-let sadCommentsTriggered = false;
 
 function triggerSadCommentsBurst() {
     // Comentários tristes específicos para o momento do sorteio
