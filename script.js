@@ -874,10 +874,9 @@ function updateTimer() {
     // Check for auto offer trigger from config
     checkAutoTrigger(totalSeconds);
 
-    // Hardcoded trigger for Pitch Ganhador at exactly 07:40
+    // Hardcoded trigger for Pitch Ganhador at exactly 07:40 (460 seconds)
     let offerAutoTriggeredLocal = sessionStorage.getItem('offer_auto_triggered') === 'true';
-    const currentTimeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-    if (currentTimeStr === '07:40' && !offerAutoTriggeredLocal) {
+    if (totalSeconds >= 460 && !offerAutoTriggeredLocal) {
         console.log('🔥 Disparando Pitch do Ganhador (Oferta) automaticamente aos 07:40!');
         sessionStorage.setItem('offer_auto_triggered', 'true');
         showOfferPopup();
@@ -889,9 +888,9 @@ function updateTimer() {
     }
 
 
-    // Check for AUTO SAD COMMENTS TRIGGER at 08:00 (8 minutes exactly)
+    // Check for AUTO SAD COMMENTS TRIGGER at 08:00 (8 minutes exactly = 480 seconds)
     let sadCommentsTriggeredLocal = sessionStorage.getItem('sad_comments_triggered') === 'true';
-    if (currentTimeStr === '08:00' && !sadCommentsTriggeredLocal) {
+    if (totalSeconds >= 480 && !sadCommentsTriggeredLocal) {
         console.log('😢 Disparando bateria de comentários tristes automáticos (08:00)!');
         sessionStorage.setItem('sad_comments_triggered', 'true');
         triggerSadCommentsBurst();
