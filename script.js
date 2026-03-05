@@ -657,10 +657,10 @@ function processEmbedForLive(embedCode) {
 
 async function loadVideoEmbed() {
     try {
-        const defaultVideo = `<vturb-smartplayer id="vid-69a0c8f1c4b02ade5c61ba89" style="display: block; margin: 0 auto; width: 100%; "></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/e6498671-4054-4f88-a3da-e606dc0c11ee/players/69a0c8f1c4b02ade5c61ba89/v4/player.js", s.async=!0,document.head.appendChild(s); <\/script>`;
-        
+        const defaultVideo = `<iframe id="panda-805fd40d-24e4-4005-aaed-b1652bddbaa1" src="https://player-vz-41174eb7-d5d.tv.pandavideo.com.br/embed/?v=805fd40d-24e4-4005-aaed-b1652bddbaa1" style="border:none;" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture" allowfullscreen=true width="100%" height="360" fetchpriority="high"></iframe>`;
+
         let embedToLoad = defaultVideo;
-        
+
         if (typeof getVideoConfig === 'function') {
             const config = await getVideoConfig();
             if (config && config.embedCode && config.embedCode.trim()) {
@@ -675,12 +675,12 @@ async function loadVideoEmbed() {
                 }
             }
         }
-        
+
         const videoContainer = document.getElementById('video-container');
         if (videoContainer) {
             const processedEmbed = processEmbedForLive(embedToLoad);
             videoContainer.innerHTML = processedEmbed;
-            
+
             // Garantir que scripts injetados no innerHTML sejam executados (necessário para vturb, etc)
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = embedToLoad;
@@ -691,7 +691,7 @@ async function loadVideoEmbed() {
                 newScript.textContent = oldScript.textContent;
                 document.body.appendChild(newScript);
             });
-            
+
             console.log('✅ Vídeo embed carregado com sucesso (incluindo scripts)');
         }
     } catch (error) {
