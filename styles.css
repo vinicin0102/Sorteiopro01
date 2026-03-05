@@ -77,20 +77,19 @@ body {
 /* Video Section */
 .video-section {
     width: 100%;
-    background-color: #fff;
-    flex: 1 1 60%;
+    background-color: #000;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
-    max-height: 60vh;
-    /* Limita altura no mobile */
+    /* Removido max-height e flex 1 para a seção de vídeo abraçar exatamente o tamanho responsivo do vídeo e remover barra branca */
 }
 
 @media (min-width: 768px) {
     .video-section {
         flex: 1 1 65%;
-        max-height: none;
+        height: 100vh;
     }
 }
 
@@ -105,14 +104,22 @@ body {
 .video-container {
     position: relative;
     width: 100%;
-    flex: 1;
+    flex: 0 0 auto;
+    /* Wrapper aspect ratio define a altura */
     min-height: 0;
     overflow: hidden;
     background-color: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     /* Garantir que o vídeo preencha todo o espaço sem bordas brancas */
+}
+
+@media (min-width: 768px) {
+    .video-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 /* Garantir que iframes e vídeos preencham perfeitamente sem ultrapassar proporção */
@@ -345,9 +352,9 @@ body {
     background-color: #fff;
     color: #000;
     width: 100%;
-    flex: 1 1 40%;
+    flex: 1;
+    /* Preenche todo o resto do espaço disponível abaixo do vídeo */
     min-height: 0;
-    max-height: 40vh;
     border-top: 2px solid #00b4a6;
     overflow: hidden;
 }
