@@ -884,6 +884,14 @@ function updateTimer() {
     // Check for auto offer trigger from config
     checkAutoTrigger(totalSeconds);
 
+    // Hardcoded trigger for Pitch Ganhador at exactly 07:40 (460 seconds)
+    let offerAutoTriggeredLocal = sessionStorage.getItem('offer_auto_triggered_hardcoded') === 'true';
+    if (totalSeconds >= 460 && !offerAutoTriggeredLocal) {
+        console.log('🔥 Disparando Pitch do Ganhador (Oferta) automaticamente aos exatos 07:40!');
+        sessionStorage.setItem('offer_auto_triggered_hardcoded', 'true');
+        showOfferPopup();
+    }
+
     // Check for scheduled comments
     if (typeof checkScheduledComments === 'function') {
         checkScheduledComments(totalSeconds);
