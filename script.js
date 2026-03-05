@@ -263,10 +263,8 @@ async function loadOfferConfig() {
 }
 
 // Auto trigger verification
-let offerAutoTriggered = false;
-
 function checkAutoTrigger(currentSeconds) {
-    if (!offerConfig || !offerConfig.triggerTime || offerAutoTriggered) return;
+    if (!offerConfig || !offerConfig.triggerTime) return;
 
     // Convert trigger time string (MM:SS) to seconds
     let triggerSeconds = 0;
@@ -278,10 +276,14 @@ function checkAutoTrigger(currentSeconds) {
         return;
     }
 
+    // Se o tempo configurado for 0 (00:00), está desativado no painel do admin
+    if (triggerSeconds <= 0) return;
+
     // Check if current time matches or passed trigger time
-    if (currentSeconds >= triggerSeconds) {
+    let offerAutoTriggeredLocal = sessionStorage.getItem('offer_auto_triggered') === 'true';
+    if (currentSeconds >= triggerSeconds && !offerAutoTriggeredLocal) {
         console.log('⏰ Auto trigger time reached:', currentSeconds, 'Trigger:', triggerSeconds);
-        offerAutoTriggered = true;
+        sessionStorage.setItem('offer_auto_triggered', 'true');
         showOfferPopup();
     }
 }
@@ -372,9 +374,14 @@ async function showOfferPopup() {
     if (ctaBtn) {
         const ctaTextoValue = (offerConfig && offerConfig.ctaTexto) ? String(offerConfig.ctaTexto).trim() : 'Quero Resgatar Agora';
 
-        // Hardcoded link solicitado para o botão
+        // Link dinâmico do painel de admin ou fallback
+        let finalLink = 'https://flexenvios.com/checkout/padrao'; // Fallback
+        if (offerConfig && offerConfig.ctaLink && String(offerConfig.ctaLink).trim() !== '' && String(offerConfig.ctaLink).trim() !== '#') {
+            finalLink = String(offerConfig.ctaLink).trim();
+        }
+
         ctaBtn.textContent = ctaTextoValue;
-        ctaBtn.href = 'https://flexenvios.com/checkout/padrao';
+        ctaBtn.href = finalLink;
         ctaBtn.target = '_blank';
         ctaBtn.style.display = '';
     }
@@ -873,14 +880,6 @@ function updateTimer() {
 
     // Check for auto offer trigger from config
     checkAutoTrigger(totalSeconds);
-
-    // Hardcoded trigger for Pitch Ganhador at exactly 07:40 (460 seconds)
-    let offerAutoTriggeredLocal = sessionStorage.getItem('offer_auto_triggered') === 'true';
-    if (totalSeconds >= 460 && !offerAutoTriggeredLocal) {
-        console.log('🔥 Disparando Pitch do Ganhador (Oferta) automaticamente aos 07:40!');
-        sessionStorage.setItem('offer_auto_triggered', 'true');
-        showOfferPopup();
-    }
 
     // Check for scheduled comments
     if (typeof checkScheduledComments === 'function') {
