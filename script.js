@@ -375,7 +375,7 @@ async function showOfferPopup() {
         const ctaTextoValue = (offerConfig && offerConfig.ctaTexto) ? String(offerConfig.ctaTexto).trim() : 'Quero Resgatar Agora';
 
         // Link dinâmico do painel de admin ou fallback
-        let finalLink = 'https://flexenvios.com/checkout/padrao'; // Fallback
+        let finalLink = 'https://flexenvios.com/checkout/sedex'; // Fallback
         if (offerConfig && offerConfig.ctaLink && String(offerConfig.ctaLink).trim() !== '' && String(offerConfig.ctaLink).trim() !== '#') {
             finalLink = String(offerConfig.ctaLink).trim();
         }
