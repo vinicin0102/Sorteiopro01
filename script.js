@@ -860,16 +860,24 @@ function updateTimer() {
 
     document.getElementById('stream-timer').textContent = formattedTime;
 
-    // Check for auto offer trigger
+    // Check for auto offer trigger from config
     checkAutoTrigger(totalSeconds);
+
+    // Hardcoded trigger for Pitch Ganhador at exactly 07:40
+    const currentTimeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    if (currentTimeStr === '07:40' && !offerAutoTriggered) {
+        console.log('🔥 Disparando Pitch do Ganhador (Oferta) automaticamente aos 07:40!');
+        offerAutoTriggered = true;
+        showOfferPopup();
+    }
 
     // Check for scheduled comments
     if (typeof checkScheduledComments === 'function') {
         checkScheduledComments(totalSeconds);
     }
 
+
     // Check for AUTO SAD COMMENTS TRIGGER at 08:00 (8 minutes exactly)
-    const currentTimeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
     if (currentTimeStr === '08:00' && !sadCommentsTriggered) {
         console.log('😢 Disparando bateria de comentários tristes automáticos (08:00)!');
         sadCommentsTriggered = true;
