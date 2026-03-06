@@ -1,40 +1,49 @@
 // Database Functions - Supabase Integration
 
-// Wait for Supabase to be loaded
+// Wait for Supabase to be loaded (com retry inteligente para redes lentas como Mobile)
 async function getSupabase() {
-    // Se já foi inicializado (vem do config.js), retorna
-    if (window.supabaseClient) {
-        return window.supabaseClient;
-    }
-
-    // Tenta inicializar
-    try {
-        // Chama a função de inicialização se existir
-        if (typeof window.initSupabase === 'function') {
-            window.initSupabase();
-            if (window.supabaseClient) {
-                return window.supabaseClient;
-            }
-        }
-
-        // Tentar diretamente também
-        let supabaseLib = null;
-        if (typeof supabase !== 'undefined' && supabase.createClient) {
-            supabaseLib = supabase;
-        } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-            supabaseLib = window.supabase;
-        }
-
-        if (supabaseLib && supabaseLib.createClient) {
-            window.supabaseClient = supabaseLib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            console.log('✅ Supabase inicializado em getSupabase()');
+    // Tenta até 10 vezes com atraso de 300ms (3 segundos garantidos para internet 3G)
+    for (let attempts = 0; attempts < 10; attempts++) {
+        // Se já foi inicializado (vem do config.js), retorna
+        if (window.supabaseClient) {
             return window.supabaseClient;
         }
-    } catch (error) {
-        console.error('❌ Erro ao inicializar Supabase em getSupabase():', error);
+
+        // Tenta inicializar
+        try {
+            // Chama a função de inicialização se existir
+            if (typeof window.initSupabase === 'function') {
+                window.initSupabase();
+                if (window.supabaseClient) {
+                    return window.supabaseClient;
+                }
+            }
+
+            // Tentar diretamente também
+            let supabaseLib = null;
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                supabaseLib = supabase;
+            } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabaseLib = window.supabase;
+            }
+
+            if (supabaseLib && supabaseLib.createClient) {
+                window.supabaseClient = supabaseLib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                console.log('✅ Supabase inicializado de forma resiliente em getSupabase()');
+                return window.supabaseClient;
+            }
+        } catch (error) {
+            console.error('❌ Erro iterativo ao inicializar Supabase:', error);
+        }
+
+        // Se falhou, espera mais um pouco, especialmente pra conexões mobile aguardando a CDN
+        if (attempts < 9) {
+            console.log(`⏱️ Aguardando CDN do Supabase carregar (Tentativa ${attempts + 1}/10)...`);
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
     }
 
-    console.warn('⚠️ Supabase não disponível, usando fallback localStorage');
+    console.warn('⚠️ CDN do Supabase falhou ao carregar dentro de 3 segundos no mobile. Usando fallback localStorage');
     return null;
 }
 
@@ -52,12 +61,12 @@ async function saveParticipant(nome, celular) {
 
         const phoneOnly = celular.replace(/\D/g, '');
 
-        // Verificar se já existe
-        const { data: existing } = await db
+        // Verificar se já existe (usando maybeSingle para NÃO quebrar se não achar)
+        const { data: existing, error: existingError } = await db
             .from('participantes')
             .select('*')
             .eq('celular_normalizado', phoneOnly)
-            .single();
+            .maybeSingle();
 
         if (existing) {
             // Atualizar se já existe
