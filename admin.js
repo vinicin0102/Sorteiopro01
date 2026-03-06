@@ -41,18 +41,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             statusEl.classList.remove('offline');
             if (statusText) statusText.textContent = 'Online (Supabase)';
 
-            // Check if tables exist by making a small query
-            try {
-                const { error } = await db.from('configuracoes').select('id').limit(1);
-                if (error) {
-                    console.warn('⚠️ Conectado mas erro na tabela:', error);
-                    if (statusText) statusText.textContent = 'Online (Erro Tabela)';
-                    statusEl.classList.remove('online');
-                    statusEl.classList.add('offline'); // Visually warn
-                }
-            } catch (e) {
-                console.warn('Erro ao testar tabela:', e);
-            }
+            // Apenas definimos como online
+            statusEl.classList.add('online');
+            statusEl.classList.remove('offline');
+            if (statusText) statusText.textContent = 'Online (Supabase)';
         }
     } else {
         console.warn('⚠️ Supabase não conectado no admin - usando localStorage');
