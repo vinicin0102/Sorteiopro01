@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             // Check if tables exist by making a small query
             try {
-                const { error } = await db.from('participantes').select('*', { count: 'exact', head: true });
+                const { error } = await db.from('configuracoes').select('id').limit(1);
                 if (error) {
                     console.warn('⚠️ Conectado mas erro na tabela:', error);
                     if (statusText) statusText.textContent = 'Online (Erro Tabela)';
