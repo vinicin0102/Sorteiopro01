@@ -32,11 +32,19 @@ if (registrationData) {
         userName = data.nome || 'Visitante';
         userPhone = data.celular || '';
         console.log('📝 Dados de registro carregados:', { nome: userName, celular: userPhone });
+
+        // Se ainda assim burlaram e os dados não existem de fato, reverter
+        if (!userPhone || userPhone.trim() === '') {
+            window.location.href = 'index.html';
+        }
     } catch (e) {
         console.error('Error parsing registration data:', e);
+        window.location.href = 'index.html'; // redirect force
     }
 } else {
-    console.warn('⚠️ Nenhum registro encontrado no localStorage');
+    // FORCE REGISTRATION: block anonymous viewers and ensure they give their cell and name!
+    console.warn('⚠️ Tentativa de acesso sem registro identificada. Redirecionando...');
+    window.location.href = 'index.html';
 }
 
 // Update greeting with user name

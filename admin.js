@@ -193,6 +193,14 @@ function initializeEventListeners() {
         });
     }
 
+    // Auto-refresh timer para live (atualizar a cada 10 segundos para o admin ver quem tá entrando)
+    setInterval(() => {
+        const adminPage = window.location.pathname;
+        if (adminPage.includes('admin') && document.getElementById('participantes-list')) {
+            loadParticipantes();
+        }
+    }, 10000);
+
     // Salvar mensagem de ganhador
     const saveWinnerMessageBtn = document.getElementById('save-winner-message-btn');
     if (saveWinnerMessageBtn) {
